@@ -1,0 +1,227 @@
+﻿@model ARJ.Pianopoli.Admin._6.Models.CompradorViewModel
+
+@using (Html.BeginForm(null, null, FormMethod.Post, new { Id = "formComprador", IDataTokensMetadata = "formComprador" }))
+{
+    <div class="row">
+        @Html.HiddenFor(e=>e.Id)
+        @Html.HiddenFor(e=>e.PropostaId)
+    </div>
+    <div class="row">
+        <div class="col-sm-4">
+            <div class="ConteudoMensagem"></div>
+            @Html.LabelFor(c => c.Cpf)
+            @Html.TextBoxFor(c => c.Cpf, new { @class = "form-control cpf", @maxlength = "11", size = "15", @onblur="ValidarCpfComprador()", @onchange="LimpaErroCpf()" })
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-8">
+            @Html.LabelFor(c => c.Nome)
+            @Html.TextBoxFor(c => c.Nome, new { @class = "form-control", @maxlength = "60", @size = "60" })
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-4">
+            @Html.LabelFor(c => c.Rg)
+            @Html.TextBoxFor(c => c.Rg, new { @class = "form-control", @maxlength = "20", @size = "20" })
+        </div>
+        <div class="col-sm-4">
+            @Html.LabelFor(c => c.Celular)
+            @Html.TextBoxFor(c => c.Celular, new { @class = "form-control telefone", @maxlength = "20", @size = "20" })
+        </div>
+        <div class="col-sm-4">
+            @Html.LabelFor(c => c.TelefoneFixo)
+            @Html.TextBoxFor(c => c.TelefoneFixo, new { @class = "form-control telefone", @maxlength = "20", @size = "20" })
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            @Html.LabelFor(c => c.Nacionalidade)
+            @Html.TextBoxFor(c => c.Nacionalidade, new { @class = "form-control", @maxlength = "60", @size = "60" })
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            @Html.LabelFor(c => c.Email)
+            @Html.TextBoxFor(c => c.Email, new { @class = "form-control", @maxlength = "60", @size = "60" })
+        </div>
+        <div class="col-sm-6">
+            @Html.LabelFor(c => c.Profissao)
+            @Html.TextBoxFor(c => c.Profissao, new { @class = "form-control", @maxlength = "60", @size = "60" })
+        </div>
+
+    </div>
+    <div class="row">
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">
+            @Html.LabelFor(c => c.Cep)
+            @Html.TextBoxFor(c => c.Cep, new { @class = "form-control cep", @maxlength = "8", @size = "8", @onchange = "BuscarCep()" })
+        </div>
+        <div class="col-sm-8">
+            @Html.LabelFor(c => c.Logradouro)
+            @Html.TextBoxFor(c => c.Logradouro, new { @class = "form-control", @maxlength = "60", @size = "60"})
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-2">
+            @Html.LabelFor(c => c.Numero)
+            @Html.TextBoxFor(c => c.Numero, new { @class = "form-control", @maxlength = "20", @size = "20" })
+        </div>
+        <div class="col-sm-4">
+            @Html.LabelFor(c => c.Complemento)
+            @Html.TextBoxFor(c => c.Complemento, new { @class = "form-control", @maxlength = "20", @size = "20" })
+        </div>
+        <div class="col-sm-4">
+            @Html.LabelFor(c => c.Bairro)
+            @Html.TextBoxFor(c => c.Bairro, new { @class = "form-control", @maxlength = "40", @size = "40" })
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            @Html.LabelFor(c => c.Municipio)
+            @Html.TextBoxFor(c => c.Municipio, new { @class = "form-control", @maxlength = "60", @size = "60" })
+        </div>
+        <div class="col-sm-2">
+            @Html.LabelFor(c => c.Estado)
+            @Html.TextBoxFor(c => c.Estado, new { @class = "form-control", @maxlength = "2", @size = "4"})
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-4">
+            @Html.LabelFor(c => c.DtNasc)
+            @Html.TextBoxFor(c => c.DtNasc, new { @class = "form-control datepicker", @maxlength = "10", @size = "10"})
+        </div>
+
+        <div class="col-sm-4">
+            @Html.LabelFor(c => c.EstadoCivil)
+            @Html.DropDownList("EstadoCivil", (IEnumerable<SelectListItem>)ViewBag.EstadoCivil,"--Selecione--",new{@class="form-control", @onchange="ValidarEcivil(this.value)" })
+        </div>
+    </div>
+    <br />
+    @*Seção dos dados do casamento*@
+    <div id="SecaoCasamento" style="padding:25px 0px 25px 25px;background-color:#EEEEEE;" hidden>
+        <div class="row casamento"><h5>Dados do Casamento</h5></div>
+        <div class="row casamento">
+            <div class="col-sm-4">
+                @Html.LabelFor(c => c.CasamentoData)
+                @Html.TextBoxFor(c => c.CasamentoData, new { @class = "form-control datepicker", @maxlength = "10", @size = "10" })
+            </div>
+            <div class="col-sm-2">
+                @Html.LabelFor(c => c.CasamentoLivro)
+                @Html.TextBoxFor(c => c.CasamentoLivro, new { @class = "form-control", @maxlength = "20", @size = "20" })
+            </div>
+            <div class="col-sm-2">
+                @Html.LabelFor(c => c.CasamentoFolhas)
+                @Html.TextBoxFor(c => c.CasamentoFolhas, new { @class = "form-control", @maxlength = "20", @size = "20" })
+            </div>
+        </div>
+        <div class="row casamento">
+            <div class="col-sm-6">
+                @Html.LabelFor(c => c.CasamentoEscrTabeliao)
+                @Html.TextBoxFor(c => c.CasamentoEscrTabeliao, new { @class = "form-control", @maxlength = "60", @size = "60" })
+            </div>
+        </div>
+        <div class="row casamento">
+            <div class="col-sm-6">
+                @Html.LabelFor(c => c.CasamentoEscrRegistro)
+                @Html.TextBoxFor(c => c.CasamentoEscrRegistro, new { @class = "form-control", @maxlength = "60", @size = "60" })
+            </div>
+        </div>
+
+    </div>
+    <br />
+    @*Dados do Cônjuge*@
+    <div id="SecaoConjuge" style="padding:25px 0px 25px 25px;background-color:#EEEEEE;" hidden>
+        <div class="row conjuge"><h5>Dados do Cônjuge</h5></div>
+        <div class="row conjuge">
+            <div class="col-sm-8">
+                @Html.LabelFor(c => c.ConjugeNome)
+                @Html.TextBoxFor(c => c.ConjugeNome, new { @class = "form-control", @maxlength = "60", @size = "60" })
+            </div>
+        </div>
+        <div class="row conjuge">
+            <div class="col-sm-4">
+                @Html.LabelFor(c => c.ConjugeNacionalidade)
+                @Html.TextBoxFor(c => c.ConjugeNacionalidade, new { @class = "form-control", @maxlength = "30", @size = "30" })
+            </div>
+            <div class="col-sm-4">
+                @Html.LabelFor(c => c.ConjugeProfissao)
+                @Html.TextBoxFor(c => c.ConjugeProfissao, new { @class = "form-control", @maxlength = "30", @size = "30" })
+            </div>
+        </div>
+        <div class="row conjuge">
+            <div class="col-sm-4">
+                @Html.LabelFor(c => c.ConjugeRg)
+                @Html.TextBoxFor(c => c.ConjugeRg, new { @class = "form-control", @maxlength = "30", @size = "30" })
+            </div>
+            <div class="col-sm-4">
+                @Html.LabelFor(c => c.ConjugeRgExpPor)
+                @Html.TextBoxFor(c => c.ConjugeRgExpPor, new { @class = "form-control", @maxlength = "30", @size = "30" })
+            </div>
+        </div>
+        <div class="row conjuge">
+            <div class="col-sm-4">
+                <div class="ConteudoMensagemConjuge"></div>
+                @Html.LabelFor(c => c.ConjugeCpf)
+                @Html.TextBoxFor(c => c.ConjugeCpf, new { @class = "form-control cpf", @maxlength = "30", @size = "30",  @onblur="ValidarCpfConjuge()", @onchange="LimpaErroCpfConjuge()"  })
+            </div>
+        </div>
+        @*<div class="row conjuge">
+    <div class="col-sm-3">
+    @Html.LabelFor(c => c.ConjugeCep)
+    @Html.TextBoxFor(c => c.ConjugeCep, new { @class = "form-control cep", @maxlength = "8", @size = "8", @onchange = "BuscarCep2()" })
+    </div>
+    <div class="col-sm-8">
+    @Html.LabelFor(c => c.ConjugeLogradouro)
+    @Html.TextBoxFor(c => c.ConjugeLogradouro, new { @class = "form-control", @maxlength = "60", @size = "60"})
+    </div>
+    </div>
+    <div class="row conjuge">
+    <div class="col-sm-2">
+    @Html.LabelFor(c => c.ConjugeNumero)
+    @Html.TextBoxFor(c => c.ConjugeNumero, new { @class = "form-control", @maxlength = "20", @size = "20" })
+    </div>
+    <div class="col-sm-4">
+    @Html.LabelFor(c => c.ConjugeComplemento)
+    @Html.TextBoxFor(c => c.ConjugeComplemento, new { @class = "form-control", @maxlength = "20", @size = "20" })
+    </div>
+    <div class="col-sm-4">
+    @Html.LabelFor(c => c.ConjugeBairro)
+    @Html.TextBoxFor(c => c.ConjugeBairro, new { @class = "form-control", @maxlength = "40", @size = "40" })
+    </div>
+    </div>
+    <div class="row conjuge">
+    <div class="col-sm-6">
+    @Html.LabelFor(c => c.ConjugeMunicipio)
+    @Html.TextBoxFor(c => c.ConjugeMunicipio, new { @class = "form-control", @maxlength = "60", @size = "60" })
+    </div>
+    <div class="col-sm-2">
+    @Html.LabelFor(c => c.ConjugeEstado)
+    @Html.TextBoxFor(c => c.ConjugeEstado, new { @class = "form-control", @maxlength = "2", @size = "4"})
+    </div>
+    </div>*@
+        <div class="row conjuge">
+            <div class="col-sm-4">
+                @Html.LabelFor(c => c.ConjugeCelular)
+                @Html.TextBoxFor(c => c.ConjugeCelular, new { @class = "form-control telefone", @maxlength = "20", @size = "20" })
+            </div>
+        </div>
+
+
+    </div>
+
+    <div class="row">
+        <div class="col-sm-4" style="margin: 20px 0px 20px 0px">
+            <div class="btn btn-primary" onclick="SalvarComprador()">Salvar Dados</div>
+        </div>
+        <div class="col-sm-4" style="margin: 20px 0px 20px 0px">
+            <div class="btn btn-secondary" onclick="LimparComprador()">Limpar Formumlário</div>
+        </div>
+    </div>
+}
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+
+

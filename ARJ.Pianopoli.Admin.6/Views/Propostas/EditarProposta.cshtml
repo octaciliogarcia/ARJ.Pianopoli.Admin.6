@@ -1,0 +1,90 @@
+﻿@model ARJ.Pianopoli.Admin._6.Models.PropostaViewModel
+
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="ibox ">
+                @*<div>Quadra: <div id="Quadra" style="font-size:16pt">@Model.Quadra</div>  - Lote: @Model.Lote*@<h5 style="text-align:right"><small>Situação:&nbsp;<partial style="background-color:green;color:white;font-weight: bold;"><spam>&nbsp;@Model.StatusNoSite&nbsp;</spam></partial></small></h5>
+            </div>
+
+            <div class="ibox-content">
+                <input type="text" value="@Model.LoteamentoId" id="LoteamentoId" hidden>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label"><b>Quadra</b></label>
+                    <div class="col-1">
+                        <b><input type="text" class="form-control" style="font-size:14pt;background-color:#fff;min-width:40px;" value="@Model.Quadra" id="Quadra" disabled></b>
+                    </div>
+                    <label class="col-lg-1 col-form-label"><b>Lote</b></label>
+                    <div class="col-1">
+                        <b><input type="text" class="form-control" style="font-size:14pt;background-color : #fff;min-width:40px;" value="@Model.Lote" id="Lote" disabled></b>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Área (m2)</label>
+                    <div class="col-3">
+                        <input type="text" class="form-control money direita" value="@Model.Area" id="Area" disabled>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Preço (m2)</label>
+                    <div class="col-3">
+                        <input type="text" class="form-control money direita" style="background-color:@Model.CorFundo" value="@Model.PrecoM2" id="PrecoM2" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Valor de Venda</label>
+                    <div class="col-3">
+                        <input type="text" class="form-control money direita" value="@(Model.ValorTotal)" id="Total" disabled>
+                    </div>
+                </div>
+
+                <form>
+                    <p><b>Preencha a condição comercial da proposta</b></p>
+                    <div class="form-group row">
+                        <label class="col-lg-2 col-form-label">Valor da Entrada</label>
+                        <div class="col-3">
+                            <input type="text" placeholder="Entrada R$" class="form-control money direita" onchange="CalculaEntrada()" id="Entrada"><span class="form-text m-b-none" style="color:red;" hidden id="Entrada-msg">Valor não permitido.</span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-2 col-form-label">Saldo a pagar </label>
+                        <div class="col-3">
+                            <input type="text" placeholder="Saldo R$" class="form-control money direita" id="SaldoPagar" name="SaldoPagar" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group row" id="TipoPagto" hidden>
+                        <label class="col-lg-2 col-form-label">Forma Pagamento </label>
+                        <div class="col-3" style="text-align:left;">
+                            @Html.DropDownList("TipoPagamento", new List<SelectListItem>()
+                            { new SelectListItem() { Value = "1", Text= "A vista" },
+                            new SelectListItem() { Value = "2", Text= "A prazo" },
+                            },"--Selecione--",new{@class="form-control", @onchange="ValidarCondicoes(this.value)"})
+                        </div>
+                    </div>
+                    <div class="form-group row" id="TipoParcelamento" hidden>
+                        <label class="col-lg-2 col-form-label">Parcelas </label>
+                        <div class="col-5">
+                            @Html.DropDownList("Parcelamento", (IEnumerable<SelectListItem>)ViewBag.Mensais,"--Selecione--",new{@class="form-control" })
+                        </div>
+                    </div>
+                    <div class="btn btn-primary" id="btn-validar" onclick="ValidarProposta()">Continuar </div>
+                    <div class="btn btn-secondary" id="btn-voltar" onclick="Inicio()">Voltar </div>
+
+                    <div class="form-group row" id="continuar" hidden>
+                        <div class="col-3">
+                            <div class="btn btn-primary" id="btn-descartar" onclick="Inicio()"><i class="fa-solid fa-reply"></i>&nbsp; Descartar </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="btn btn-success botoeshide" id="btn-comprador" onclick="Compradores()"><i class="fa-solid fa-plus"></i>&nbsp; Adicionar Comprador </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+

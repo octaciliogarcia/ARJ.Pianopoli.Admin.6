@@ -1,0 +1,128 @@
+﻿@model ARJ.Pianopoli.Admin._6.Models.PropostaViewModel
+
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="ibox ">
+                <h5 style="text-align:right"><small>Situação:&nbsp;<partial style="background-color:orange;color:black;font-weight: bold;"><spam>&nbsp;@Model.StatusNoSite&nbsp;</spam></partial></small></h5>
+            </div>
+            <div class="ibox-content">
+                <input type="text" value="@Model.LoteamentoId" id="LoteamentoId" hidden>
+                <input type="text" value="@Model.PropostaId" id="PropostaId" hidden>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label"><b>Quadra</b></label>
+                    <div class="col-1">
+                        <b><input type="text" class="form-control" style="font-size:14pt;background-color: #fff;min-width:40px;" value="@Model.Quadra" id="Quadra" disabled></b>
+                    </div>
+                    <label class="col-lg-1 col-form-label"><b>Lote</b></label>
+                    <div class="col-1">
+                        <b><input type="text" class="form-control" style="font-size:14pt;background-color: #fff;min-width:40px;" value="@Model.Lote" id="Lote" disabled></b>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Área (m2)</label>
+                    <div class="col-3">
+                        <input type="text" class="form-control money direita" value="@Model.Area" id="Area" disabled>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Preço (m2)</label>
+                    <div class="col-3">
+                        <input type="text" class="form-control money direita" style="backgroud-color:@Model.CorFundo"  value="@Model.PrecoM2" id="PrecoM2" readonly>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Valor de Venda</label>
+                    <div class="col-3">
+                        <input type="text" class="form-control money direita" value="@(Model.ValorTotal)" id="Total" disabled>
+                    </div>
+                </div>
+
+                <p><b>Condições comerciais da proposta</b></p>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Valor da Entrada</label>
+                    <div class="col-3">
+                        <input type="text" placeholder="Entrada R$" class="form-control money direita" id="Entrada" value="@(Model.Entrada)" disabled>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Saldo a pagar </label>
+                    <div class="col-3">
+                        <input type="text" placeholder="Saldo R$" class="form-control money direita" id="SaldoPagar" name="SaldoPagar" value="@(Model.SaldoPagar)" disabled>
+                    </div>
+                </div>
+                <div class="form-group row" id="TipoPagto" >
+                    <label class="col-lg-2 col-form-label">Forma Pagamento </label>
+                    <div class="col-3" style="text-align:left;">
+                        <input type="text" class="form-control direita" id="FormaPagamento" value="@(Model.TipoPagamento)" disabled>
+                    </div>
+                </div>
+                <div class="form-group row" id="TipoParcelamento" >
+                    <label class="col-lg-2 col-form-label">Parcelas </label>
+                    <div class="col-5">
+                        <input type="text" class="form-control" id="parcelamento" value="@(Model.Parcelamento)" disabled>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <p><b>Compradores</b></p>
+                @{
+                    if (Model.Compradores.Count > 0)
+                    {
+                            <table class="table table-bordered table-striped" style="width:900px;">
+                                <tr>
+                                    <th style="width:20px;text-align:center;"></th>
+                                    <th style="width:200px!important; font-size: .9rem;max-width:200px;">
+                                        Nome Comprador
+                                    </th>
+                                    <th style="width: 100px; text-align: right; font-size: .9rem;">
+                                        CPF
+                                    </th>
+                                    <th style="width: 100px; text-align: right; font-size: .9rem;">
+                                        Celular
+                                    </th>
+                                    <th style="width:20px;text-align:center;"></th>
+                                </tr>
+                                @{
+                                int i = 1;
+                                }
+                                @foreach (var item in Model.Compradores)
+                            {
+                                    <tr>
+                                        <td style="font-size:1.1rem;">@i</td>
+                                        <td>
+                                            @item.Nome
+                                        </td>
+                                        <td>
+                                            @item.Cpf
+                                        </td>
+                                        <td>
+                                            @item.Celular
+                                        </td>
+                                        <td>
+                                            <button onclick="VisualizarComprador(@item.Id)" class="btn btn-warning btn-action editar">
+                                                <i class="fa-solid fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {
+                                    i++;
+                                }
+
+                            }
+
+                            </table>
+                    }
+                }
+
+            </div>
+            <div class="btn btn-secondary" id="btn-voltar" onclick="Inicio()">Voltar </div>
+            <div class="btn btn-primary" id="btn-imprimir" onclick="Imprimir()">Imprimir Proposta</div>
+            <div class="btn btn-primary" id="btn-imprimir" onclick="ImprimirContrato()">Imprimir Contrato</div>
+        </div>
+    </div>
+</div>
+
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+

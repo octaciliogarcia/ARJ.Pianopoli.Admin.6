@@ -1,0 +1,1149 @@
+﻿<div class="container">
+    <div class="grid-left">
+        <div id="grid">
+            <table id="proposta" class="display" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Loteamento</th>
+                        <th>Quadra</th>
+                        <th>Lote</th>
+                        <th>Area</th>
+                        <th>Situação no site</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="formproposta" hidden>
+</div>
+
+<div id="formpropostacompradores" class="mx-auto" hidden>
+</div>
+
+
+<div id="formulario" hidden>
+    <button class="btn btn-primary" onclick=Voltar()>
+        <i class="fa-solid fa-arrow-rotate-left"></i>
+    </button>
+    <form>
+        <div class="row">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="col-4">
+                <label>Loteamento</label>
+                <input type="hidden" id="Id" name="Id" />
+                <input type="hidden" id="Area" name="Area" />
+                <input type="hidden" id="Acao" name="Acao" />
+
+                @Html.DropDownList("Loteamento", (IEnumerable<SelectListItem>)ViewBag.Loteamento,"--Selecione--",new{@class="form-control",@readonly="readonly"})
+            </div>
+            <div class="col">
+                <label>Quadra</label>
+                <input type="text" class="form-control" readonly="readonly" placeholder="Quadra" name="Quadra" id="Quadra" />
+            </div>
+            <div class="col">
+                <label>Lote</label>
+                <input type="text" class="form-control" readonly="readonly" placeholder="Lote" name="Lote" id="Lote" />
+            </div>
+            <div class="col-4">
+                <label>Corretor</label>
+                @Html.DropDownList("Corretor", (IEnumerable<SelectListItem>)ViewBag.Corretor,"--Selecione--",new{@class="form-control" })
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4">
+                <label>Tipo de Pagamento</label>
+                @Html.DropDownList("TipoPagamento", new List<SelectListItem>()
+                { new SelectListItem() { Value = "1", Text= "A vista" },
+                new SelectListItem() { Value = "2", Text= "A prazo" },
+                },"--Selecione--",new{@class="form-control", @onchange="BuscarFormaPagamento(this.value)"})
+            </div>
+            <div class="col-3">
+                <label>Qtde Parcelas</label>
+                @Html.DropDownList("Parcelamento", new List<SelectListItem>(){} ,"--Selecione--",new{@class="form-control", @onchange="BuscarParcelaValores(this.value)",@disabled=true})
+            </div>
+
+
+            <div class="col-2">
+                <label>Entrada</label>
+                <input type="text" class="form-control money" placeholder="Entrada" onchange=BuscarParcelaValoresEntrada() name="Entrada" id="Entrada" />
+            </div>
+            <div class="col-1">
+                <label>Vencimento</label>
+                <input type="text" class="form-control doisNumeros" placeholder="Vencimento" name="Vencimento" id="Vencimento" />
+            </div>
+
+            <div class="col-2">
+                <label>Vlr. Parcela</label>
+                <input type="text" class="form-control money" readonly="readonly" placeholder="Parcela" name="Parcela" id="Parcela" />
+            </div>
+        </div>
+        <div class="form-group" style="margin-top:20px">
+            <button type="button" onclick="Salvar()" class="btn btn-primary botoeshide">Salvar</button>
+            <button type="button" style="display:none;" onclick="Imprimir()" class="btn btn-primary btnimprimir">Imprimir</button>
+
+        </div>
+    </form>
+
+
+    <div style="margin-top:20px; background-color:#ccc; text-align:center;" class="botoeshide">
+        <h3>Enviar Documento</h3>
+        <label for="imagem" class="custom-file-upload" style="background-color:#fff;">
+            Selecionar Documento
+        </label>
+        <input id="imagem" name="imagem" type="file" accept="image/*;capture=camera">
+        <div id="imagemexibir" style="width:100%; height:100%; text-align:center "></div>
+        <button type="button" id="salvardocumento" onclick="SalvarImagem()" style="display:none;" class="btn btn-primary">Salvar</button>
+
+    </div>
+    <div id="imagensdocumentos"></div>
+</div>
+
+
+<div id="formproposta" hidden>
+</div>
+
+<div id="formpropostapreenchida" hidden>
+</div>
+
+<div id="Compradores" style="display:none;">
+
+    <div class="row" style="margin-bottom:30px; margin-top:20px;">
+        <div class="col-5">
+            <label>CPF Comprador</label>
+            <input type="text" class="form-control cpfOuCnpj" onchange="VerificarComprador()" placeholder="CPF Comprador" name="CpfComprador" id="CpfComprador" />
+        </div>
+        <div class="col" style="padding-top: 24px!important;">
+            <button type="button" onclick="VerificarComprador()" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="col-4">
+            <label>Nome Comprador</label>
+            <input type="hidden" id="IdComprador" name="IdComprador" />
+            <input type="text" class="form-control cpf" readonly="readonly" placeholder="Nome Comprador" name="NomeComprador" id="NomeComprador" />
+        </div>
+        <div class="col-1" style="padding-top: 24px!important;">
+            <button type="button" onclick="SalvarCompradorSelecionado()" class="btn btn-primary botoeshide">Cadastrar</button>
+        </div>
+    </div>
+
+    <table id="compradores" class="display" style="width:100%;">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nome</th>
+                <th></th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+
+<div class="modal" id="cadastroComprador" role="dialog" tabindex="-1">
+    <div class="modal-dialog-centered modal-lg" style="width:900px;" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dados Comprador</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="conteudocomprador">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<div class="modal fade" id="cadastroComprador" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalToggleLabel2">Cadastrar Novo Comprador</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="editarcomprador">
+            </div>
+        </div>
+    </div>
+</div>
+*@
+
+
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.7.1/js/bootstrap-datepicker.min.js"></script>
+
+<script type="text/javascript">
+
+    function CalculaEntrada() {
+
+        var valor = $("#Total").val();
+        var number = valor.replace(".", "");
+        number = number.replace(/,/, ".");
+        var total = parseFloat(number).toFixed(2);
+        var entradapermitida = total * 0.15;
+
+        var entradadigitada = $("#Entrada").val();
+        number = entradadigitada.replace(".", "").replace(/,/, ".");
+        var valorentrada = parseFloat(number).toFixed(2);
+
+        if (valorentrada < entradapermitida) {
+            $("#Entrada-msg").attr("hidden", false);
+        }
+        else {
+            $("#Entrada-msg").attr("hidden", true);
+            $("#TipoPagto").attr("hidden", false);
+            $("#Entrada").attr("disabled", true);
+
+            if (valorentrada == total) {
+                // mostra apenas a condição a vista e desabilita o componente
+                $("#TipoPagamento").attr("disabled", true);
+                $("#TipoPagamento").val(1);
+            }
+            else {
+                $("#TipoPagamento").attr("disabled", true);
+                $("#TipoPagamento").val(2);
+            }
+
+            var quadra = $("#Quadra").val();
+            var lote = $("#Lote").val();
+
+            $.ajax({
+                cache: false,
+                type: 'POST',
+                data: {
+                    Quadra: quadra,
+                    Lote: lote,
+                    Entrada: $("#Entrada").val()
+                },
+                url: urlbase + '/Propostas/CalcularPrecos',
+                success: function (data) {
+                    if (data.result == false) {
+                        SwalPopUpErro("Atenção", data.message, "success");
+                    }
+                    else {
+                        $("#SaldoPagar").val(data.retorno.saldoPagar);
+                        $("#Entrada").val(data.retorno.entrada);
+                        $("#btn-validar").attr("hidden", false);
+                        $("#TipoPagamento").attr("readonly", true);
+
+                        if (data.retorno.tipoPgtoPermitido == "1") {
+                            $("#TipoPagamento").val(1)
+                        }
+                        else {
+                            $("#TipoPagamento").val(2);
+                            document.getElementById('TipoPagamento').onchange(this.value);
+                            $("#Parcelamento").attr("readonly", false);
+                        }
+
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                }
+            });
+
+        }
+    }
+
+    function ValidarCpfConjuge() {
+        var cpf = $("#ConjugeCpf").val();
+
+        if (cpf != "") {
+            if (TestaCPF(cpf) == false) {
+                $("#ConjugeCpf").val("");
+                $("#ConjugeCpf").focus();
+                $('<div class="alert alert-danger alert-dismissible mensagemconjuge">   <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><br/></div >').appendTo('.ConteudoMensagemConjuge');
+                $("<div class='row'> CPF Inválido</div>").appendTo(".mensagemconjuge");
+            }
+        }
+
+    }
+
+    function ValidarCpfComprador() {
+        var cpf = $("#Cpf").val();
+
+        if (cpf != "") {
+            if (TestaCPF(cpf) == false) {
+                $(".cpf").val("");
+                $("#Cpf").focus();
+                $('<div class="alert alert-danger alert-dismissible mensagem">   <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><br/></div >').appendTo('.ConteudoMensagem');
+                $("<div class='row'> CPF Inválido</div>").appendTo(".mensagem");
+            }
+        }
+
+    }
+
+
+    function LimpaErroCpf() {
+        $(".mensagem").remove();
+    }
+
+    function LimpaErroCpfConjuge() {
+        $(".mensagemconjuge").remove();
+    }
+
+
+    function ValidarCondicoes(id) {
+
+        $("#Entrada").attr("disabled", true);
+
+        if (id == "") {
+            $("#TipoParcelamento").attr("hidden", true);
+        }
+        else {
+            if (id == 1) {
+                $("#TipoParcelamento").attr("hidden", true);
+            }
+            else {
+                $("#TipoParcelamento").attr("hidden", false);
+            }
+
+        }
+        return true;
+    }
+    function ValidarProposta() {
+        var entrada = $("#Entrada").val();
+        var number = entrada.replace(".", "");
+        number = number.replace(/,/, ".");
+
+        var valorentrada = parseFloat(number).toFixed(2);
+        var parcelas = $("#Parcelamento").val();
+        if (valorentrada > 0) {
+            $("#TipoPagamento").attr("disabled", true);
+            if (parcelas > '') {
+                $("#Parcelamento").attr("disabled", true);
+                $("#btn-validar").attr("hidden", true);
+                $("#btn-voltar").attr("hidden", true);
+                $("#continuar").attr("hidden", false);
+            }
+
+        }
+        else {
+            $("#Entrada").focus();
+        }
+    }
+
+    function Compradores() {
+        var quadra = $("#Quadra").val();
+        var lote = $("#Lote").val();
+        var entrada = $("#Entrada").val();
+        var tipopagto = $("#TipoPagamento").val();
+        var parcelamento = $("#Parcelamento").val();
+        var loteamento = $("#LoteamentoId").val();
+        var id = $("#PropostaId").val();
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Loteamento: loteamento,
+                Quadra: quadra,
+                Lote: lote,
+                Entrada: entrada,
+                TipoPagamento: tipopagto,
+                Parcelamento: parcelamento,
+            },
+            url: urlbase + '/propostas/Compradores',
+            success: function (data) {
+                $("#grid").hide();
+                $("#formproposta").hide();
+                $("#formpropostapreenchida").removeAttr('hidden')
+                $("#formpropostapreenchida").html(data);
+                $("#formpropostapreenchida").show();
+                $("#parcial").html('&nbsp;&nbsp;Reservado&nbsp;&nbsp;');
+                $("#fundo-partial").attr("style", "background-color:orange;color:black;font-weight: bold;");
+                BuscarCompradores();
+            }
+
+        });
+
+    }
+
+
+
+    function BuscarCep() {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                cep: $("#Cep").val()
+            },
+            url: urlbase + '/Propostas/BuscarCep',
+            success: function (data) {
+                $("#Logradouro").val(data.endereco);
+                $("#Bairro").val(data.bairro);
+                $("#Municipio").val(data.cidade);
+                $("#Estado").val(data.uf);
+                $("#Numero").focus();
+
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+            }
+        });
+    }
+
+    function BuscarCep2() {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                cep: $("#ConjugeCep").val()
+            },
+            url: urlbase + '/Propostas/BuscarCep',
+            success: function (data) {
+                $("#ConjugeLogradouro").val(data.endereco);
+                $("#ConjugeBairro").val(data.bairro);
+                $("#ConjugeMunicipio").val(data.cidade);
+                $("#ConjugeEstado").val(data.uf);
+                $("#ConjugeNumero").focus();
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+            }
+        });
+    }
+
+
+    $('.datepicker').datepicker({
+        format: 'dd/mm/yyyy',
+        startDate: '-3d'
+    });
+
+    $(document).ready(function () {
+        $("#formulario").hide();
+        $('#proposta').DataTable({
+            "lengthChange": false,
+            "ajax": urlbase + '/Propostas/ListarPropostas',
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }, {
+                    "targets": [1],
+                    "visible": false,
+                    "searchable": false
+                }],
+            "columns": [
+                { "data": "id" },
+                { "data": "loteamentoId" },
+                { "data": "quadra" },
+                { "data": "lote" },
+                { "data": "area" },
+                { "data": "situacaoNoSite" },
+                {
+                    "render": function (data, type, row, meta) {
+
+                        return row.situacaoNoSite == "Disponível" ? '<div style="width:100%; text-align:right" > <button onclick="Proposta(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-plus"></i></button></div>' : '<div style="width:100%; text-align:right"> <button onclick="Proposta(this)" class="btn btn-warning btn-action editar"><i class="fa-solid fa-edit"></i></button></div>';
+                    }
+                }
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.11.4/i18n/pt_br.json",
+
+            }
+        });
+    });
+
+    //function AdicionarProposta(e) {
+    //    Novo();
+    //    $('#comprador').dataTable().fnDestroy();
+    //    var dataRow = $('#proposta').DataTable().row($(e).closest('tr')).data();
+    //    $("#Loteamento").val(dataRow.loteamentoId);
+    //    $("#Quadra").val(dataRow.quadra);
+    //    $("#Lote").val(dataRow.lote);
+    //    $("#Area").val(dataRow.area);
+    //    $("#Compradores").hide();
+    //}
+
+    function Proposta(e) {
+
+        var dataRow = $('#proposta').DataTable().row($(e).closest('tr')).data();
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Lote: dataRow.lote,
+                Quadra: dataRow.quadra,
+                Loteamento: dataRow.loteamentoId
+            },
+            url: urlbase + '/propostas/EditarProposta',
+            success: function (data) {
+                $("#grid").hide();
+                $("#formproposta").removeAttr('hidden')
+                $("#formproposta").html(data);
+                $("#formproposta").show();
+                $("#Entrada").focus();
+            }
+
+        });
+    }
+
+
+    function EditarProposta(e) {
+        Novo();
+        $('#comprador').dataTable().fnDestroy();
+        $("Editar").val("S");
+        var dataRow = $('#proposta').DataTable().row($(e).closest('tr')).data();
+
+        if (dataRow.situacaoNoSite == "Vendido") {
+            console.log("Entrou")
+            $(".botoeshide").hide();
+        } else {
+            $(".botoeshide").show();
+        }
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Lote: dataRow.lote,
+                Quadra: dataRow.quadra,
+                Loteamento: dataRow.loteamentoId
+            },
+            url: urlbase + '/proposta/EditarProposta',
+            success: function (data) {
+                $("#Loteamento").val(data.loteamentoId);
+                $("#Quadra").val(data.quadra);
+                $("#Lote").val(data.lote);
+                $("#Id").val(data.id);
+                $("#Area").val(data.area);
+                $("#Quadra").val(data.quadra);
+                $("#Corretor").val(data.corretor);
+                $("#TipoPagamento").val(data.tipoPagamento);
+                $("#Parcelamento").val(data.parcelamento);
+                $("#Entrada").val(data.entrada);
+                $("#Vencimento").val(data.vencimento);
+                $("#Parcela").val(data.parcela);
+                $("#Compradores").show();
+                GridCompradores(data.id);
+                BuscarImagens();
+
+                //Refresh2();
+            }
+        });
+
+    }
+
+    function BuscarImagens() {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: $("#Id").val()
+            },
+            url: urlbase + '/proposta/GetImagens',
+            success: function (data) {
+                $("#imagensdocumentos").empty();
+                $("#imagensdocumentos").html(data);
+            }
+        });
+    }
+
+
+    function NovoComprador() {
+        Aguarde();
+        var proposta = $("#PropostaId").val();
+        number = proposta.replace(".", "").replace(/,/, ".");
+        // var propostaid = parseInt(number);
+
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                PropostaId: number,
+                Id: 0
+            },
+            url: '' + urlbase + '/Propostas/EditarComprador',
+            success: function (data) {
+                RemoveAguarde();
+                $('#cadastroComprador').modal('show')
+                $("#conteudocomprador").html(data);
+                $("#Cpf").focus();
+
+            },
+            error: function (data) {
+                RemoveAguarde();
+                SwalPopUpErro("Erro", data.Message, "Error");
+            }
+        });
+
+    }
+
+
+
+    //function EditarComprador(e) {
+    //    Novo();
+    //    var dataRow = $('#comprador').DataTable().row($(e).closest('tr')).data();
+    //    $.ajax({
+    //        cache: false,
+    //        type: 'POST',
+    //        data: {
+    //            Id: dataRow.id
+    //        },
+    //        url: urlbase + '/propostas/EditarComprador',
+    //        success: function (data) {
+    //            $('#cadastroComprador').modal('show')
+    //            $("#Nome").val(data.nome);
+    //            $("#cadastro #Id").val(data.id)
+    //            $("#Cpf").val(data.cpf);
+    //            $("#DtNasc").val(new Date(data.dtNasc).toLocaleDateString());
+    //            $("#Rg").val(data.rg);
+    //            $("#DtExpRg").val(new Date(data.dtExpRg).toLocaleDateString());
+    //            $("#ExpRg").val(data.expRg);
+    //            $("#NomePai").val(data.nomePai);
+    //            $("#NomeMae").val(data.nomeMae);
+    //            $("#FoneFixo").val(data.foneFixo);
+    //            $("#Celular").val(data.celular);
+    //            $("#Email").val(data.email);
+    //            $("#Profissao").val(data.profissao);
+    //            $("#Nacionalidade").val(data.nacionalidade);
+    //            $("#Ecivil").val(data.ecivil);
+    //            $("#DtCasamento").val(new Date(data.dtCasamento).toLocaleDateString());
+    //            $("#RegimeCasamento").val(data.regimeCasamento);
+    //            $("#NomeConjuge").val(data.nomeConjuge);
+    //            $("#CpfConjuge").val(data.cpfConjuge);
+    //            $("#DtNascConjuge").val(new Date(data.dtNascConjuge).toLocaleDateString())
+
+    //            $("#RgConjuge").val(data.rgConjuge);
+    //            $("#ProfissaoConjuge").val(data.profissaoConjuge);
+    //            $("#NacionalidadeConjuge").val(data.nacionalidadeConjuge);
+    //            $("#CepRes").val(data.cepRes);
+    //            $("#EnderecoRes").val(data.enderecoRes);
+    //            $("#NumeroRes").val(data.numeroRes);
+    //            $("#ComplementoRes").val(data.complementoRes);
+    //            $("#BairroRes").val(data.bairroRes);
+    //            $("#CidadeRes").val(data.cidadeRes);
+    //            $("#UfRes").val(data.ufRes);
+    //            $("#CepCom").val(data.cepCom);
+    //            $("#EnderecoCom").val(data.enderecoCom);
+    //            $("#NumeroCom").val(data.numeroCom);
+    //            $("#ComplementoCom").val(data.complementoCom);
+    //            $("#BairroCom").val(data.bairroCom);
+    //            $("#CidadeCom").val(data.cidadeCom);
+    //            $("#UfCom").val(data.ufCom);
+
+    //        }
+    //    });
+
+    //}
+
+    function EditarComprador(id) {
+        alert("editar");
+    }
+
+
+
+    function BuscarFormaPagamento(id) {
+        $("#Entrada").val("");
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Loteamento: $("#Loteamento").val(),
+                Quadra: $("#Quadra").val(),
+                Lote: $("#Lote").val(),
+                Entrada: $("#Entrada").val(),
+            },
+            url: urlbase + '/proposta/GetDadosPagamento',
+            success: function (data) {
+                if (id == 1) {
+                    $("#Entrada").val(data[0].precoVista.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
+                    $("#Parcelamento").prop("disabled", true);
+                } else {
+                    $("#Parcelamento").prop("disabled", false);
+                    $.each(data, function (i, item) {
+                        $('#Parcelamento').append($('<option>', {
+                            value: item.nrParcelas,
+                            text: item.nrParcelas + " X"
+                        }));
+                    });
+                }
+            }
+        });
+    }
+
+    function BuscarParcelaValores(id) {
+
+        $("#Entrada").val("");
+        $("#Parcela").val("");
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Loteamento: $("#Loteamento").val(),
+                Quadra: $("#Quadra").val(),
+                Lote: $("#Lote").val(),
+                Parcelas: id
+            },
+            url: urlbase + '/proposta/GetValorParcela',
+            success: function (data) {
+                console.log(data)
+                $("#Entrada").val(data.entradaMinima.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
+                $("#Parcela").val(data.valorParcela.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
+
+            }
+        });
+    }
+
+    function BuscarParcelaValoresEntrada() {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Loteamento: $("#Loteamento").val(),
+                Quadra: $("#Quadra").val(),
+                Lote: $("#Lote").val(),
+                Entrada: $("#Entrada").val(),
+                Parcelas: $("#Parcelamento").val()
+            },
+            url: urlbase + '/proposta/GetValorParcela',
+            success: function (data) {
+                console.log(data)
+                $("#Entrada").val(data.entradaMinima.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
+                $("#Parcela").val(data.valorParcela.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
+
+            }
+        });
+    }
+
+
+    function VerificarComprador() {
+        if ($("#CpfComprador").val() == "") {
+            SwalPopUpErro("Erro", "Cpf Inválido", "success");
+            return;
+        }
+        $("#Cpf").val($("#CpfComprador").val())
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                cpf: $("#CpfComprador").val(),
+
+            },
+            url: urlbase + '/proposta/GetComprador',
+            success: function (data) {
+                if (data) {
+                    $("#NomeComprador").val(data.nome);
+                    $("#IdComprador").val(data.id);
+
+                } else {
+                    SwalPopUpConfirm("Comprador Não Cadastrado", "Gostaria de cadastrar um novo comprador", CadastrarComprador, $("#CpfComprador").val(), "Cadastrar")
+
+                }
+            }
+        });
+
+    }
+
+    function CadastrarComprador(e) {
+        $('#cadastroComprador').modal('show')
+        $("#Cpf").val(e);
+    }
+
+
+
+    function Refresh() {
+        $('#proposta').DataTable().ajax.reload();
+        setTimeout(() => {
+            var table = $('#comprador').DataTable();
+            if (!table.data().any()) {
+                $(".btnimprimir").hide();
+
+            } else {
+                $(".btnimprimir").show();
+            }
+        }, 300);
+    }
+
+
+    function Refresh2() {
+        $('#comprador').DataTable().ajax.reload();
+        if ($("#comprador > tbody > tr").length > 0) {
+            $(".btnimprimir").show();
+        } else {
+            $(".btnimprimir").show();
+        }
+    }
+
+
+    function Salvar() {
+        var form = $("form").serialize();
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: form,
+            url: urlbase + '/proposta/Salvar',
+            success: function (data) {
+                if (data.result == true) {
+                    Refresh();
+                    $("#Compradores").show();
+                    $("#Id").val(data.id);
+                    GridCompradores(data.id);
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                    // Voltar();
+                } else {
+                    SwalPopUpErro("Sucesso", data.message, "success");
+                }
+            }
+        });
+    }
+
+
+    function SalvarImagem() {
+        Aguarde();
+        var model = new FormData();
+        var files = $("#imagem")[0].files;
+        if (files.length > 0) {
+            model.append("Imagem", files[0]);
+        }
+        var form = $('form');
+        var token = $('input[name="__RequestVerificationToken"]', form).val();
+        model.append("__RequestVerificationToken", token);
+
+        model.append("id", $("#Id").val());
+        $.ajax({
+            cache: false,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            data: model,
+            url: urlbase + '/proposta/SalvarImagem',
+            success: function (data) {
+                RemoveAguarde();
+                if (data.result == true) {
+                    BuscarImagens();
+                    $("#imagemexibir").empty();
+                    document.getElementById('imagem').value = null;
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                }
+            }, error: function (request, status, error) {
+                RemoveAguarde();
+            }
+        });
+
+    }
+
+
+
+    //function Compradores() {
+    //    $.ajax({
+    //        cache: false,
+    //        type: 'POST',
+    //        data: {
+    //            CompradorId: $("#IdComprador").val(),
+    //            PropostaId: $("#Id").val(),
+    //        },
+    //        url: urlbase + '/proposta/SalvarCompradorProposta',
+    //        success: function (data) {
+    //            if (data.result == true) {
+    //                Refresh2();
+
+    //                SwalPopUpSucess("Sucesso", data.message, "success");
+    //                // Voltar();
+    //            } else {
+    //                SwalPopUpErro("Sucesso", data.message, "success");
+    //            }
+    //        }
+    //    });
+    //}
+
+    function ConfirmaExcluirComprador(e) {
+        var dataRow = $('#comprador').DataTable().row($(e).closest('tr')).data();
+        SwalPopUpConfirm("Excluir", "Confirma a Exclusao", ExcluirComprador, dataRow.id)
+    }
+
+    function ExcluirComprador(id) {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: id
+            },
+            url: urlbase + '/Proposta/ExcluirComprador',
+            success: function (data) {
+                Refresh2();
+                SwalPopUpSucess("Sucesso", data.message, "success");
+            }
+        });
+    }
+
+
+    function ConfirmaExcluirImagem(id) {
+        SwalPopUpConfirm("Excluir", "Confirma a Exclusao", ExcluirImagem, id)
+    }
+
+    function ExcluirImagem(id) {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: id
+            },
+            url: urlbase + '/Proposta/ExcluirImagem',
+            success: function (data) {
+                BuscarImagens();
+                SwalPopUpSucess("Sucesso", data.message, "success");
+            }
+        });
+    }
+
+
+
+
+    function SalvarComprador() {
+        var form = $("#formComprador").serialize();
+        var proposta = $("#Id").val();
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: form + "&PropostaId=" + $("#Id").val(),
+            url: urlbase + '/propostas/SalvarComprador',
+            success: function (data) {
+                if (data.result == true) {
+                    Refresh2();
+                    $('#cadastro').trigger("reset");
+                    $('#cadastroComprador').modal('hide')
+                    BuscarCompradores();
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                    $("#btn-finalizar").attr("hidden", false);
+
+                } else {
+                    SwalPopUpErro("Sucesso", data.message, "success");
+                }
+            }
+        });
+    }
+
+    function AtualizarGridCompradores(propostaid) {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: { id: propostaid },
+            url: urlbase + '/propostas/AtualizarGridCompradores',
+            success: function (data) {
+                if (data.result == true) {
+                    Refresh2();
+                    $('#cadastro').trigger("reset");
+                    $('#cadastroComprador').modal('hide')
+
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+
+                } else {
+                    SwalPopUpErro("Sucesso", data.message, "success");
+                }
+            }
+        });
+
+    }
+
+    function Imprimir() {
+        window.location = urlbase + "/Proposta/Imprimir?Proposta=" + $("#Id").val();
+    }
+
+    function ValidarEcivil(id) {
+        if (id == '2') {
+            $('#SecaoCasamento').attr("hidden", false);
+            $('#SecaoConjuge').attr("hidden", false);
+        }
+        else {
+            $('#SecaoCasamento').attr("hidden", true);
+            $('#SecaoConjuge').attr("hidden", true);
+            LimparConjuge();
+        }
+    }
+
+    function LimparComprador() {
+
+
+        $("#Rg").val("");
+        $("#Nome").val("");
+        $("#Nacionalidade").val("");
+        $("#DtNasc").val("");
+        $("#EstadoCivil").val("");
+        $("#Celular").val("");
+        $("#Email").val("");
+        $("#Profissao").val("");
+        $("#TelefoneFixo").val("");
+        $("#Cep").val("");
+        $("#Logradouro").val("");
+        $("#Numero").val("");
+        $("#Complemento").val("");
+        $("#Bairro").val("");
+        $("#Municipio").val("");
+        $("#Estado").val("");
+        LimparConjuge();
+        if ($('#Cpf').is('[readonly]')) {
+            $("#Nome").focus();
+        }
+        else {
+            $("#Cpf").val("");
+            $("#Cpf").focus();
+        }
+
+    }
+
+    function LimparConjuge() {
+        $("#CasamentoData").val("");
+        $("#CasamentoLivro").val("");
+        $("#CasamentoFolhas").val("");
+        $("#CasamentoEscrTabeliao").val("");
+        $("#CasamentoEscrRegistro").val("");
+        $("#ConjugeNome").val("");
+        $("#ConjugeNacionalidade").val("");
+        $("#ConjugeProfissao").val("");
+        $("#ConjugeRg").val("");
+        $("#ConjugeRgExpPor").val("");
+        $("#ConjugeCpf").val("");
+        $("#ConjugeCep").val("");
+        $("#ConjugeLogradouro").val("");
+        $("#ConjugeNumero").val("");
+        $("#ConjugeComplemento").val("");
+        $("#ConjugeBairro").val("");
+        $("#ConjugeMunicipio").val("");
+        $("#ConjugeEstado").val("");
+        $("#ConjugeEmail").val("");
+        $("#ConjugeCelular").val("");
+    }
+
+    function BuscarCompradores() {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                propostaid: $("#PropostaId").val()
+            },
+            url: '' + urlbase + '/Propostas/ListarCompradores',
+            success: function (data) {
+                $("#temp-container").html(data);
+                RemoveAguarde();
+                if (data.Result == false) {
+                    SwalPopUpErro("Erro", data.Message, "error");
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                RemoveAguarde();
+            }
+        });
+    }
+
+    function Inicio() {
+        window.location = urlbase + "/Propostas";
+    }
+
+    function Imprimir() {
+        var Id = $("#PropostaId").val();
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                id: Id
+            },
+            url: '' + urlbase + '/Propostas/ImprimirProposta',
+            success: function (data) {
+                $("#temp-container").html(data);
+                RemoveAguarde();
+                if (data.Result == false) {
+                    SwalPopUpErro("Erro", data.Message, "error");
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                RemoveAguarde();
+            }
+        });
+    }
+
+    function ImprimirContrato() {
+        
+        window.open(urlbase + "/Propostas/ImprimirContrato?Id=" + $("#PropostaId").val(), '_blank');
+    }
+
+
+    //function GridCompradores(id) {
+
+    //    var propostaId = $("#PropostaId").val();
+
+    //    $('#compradores').DataTable({
+    //        "lengthChange": false,
+    //        "ajax": {
+    //            "url": urlbase + "/propostas/BuscarCompradores",
+    //            "data": {
+    //                "id": propostaId
+    //            }
+    //        }, "columnDefs": [
+    //            {
+    //                "targets": [0],
+    //                "visible": false,
+    //                "searchable": false
+    //            }],
+    //        "columns": [
+    //            { "data": "id" },
+    //            { "data": "nome" },
+    //            { defaultContent: '<div style="width:100%; text-align:right"> <button onclick="EditarComprador(this)" class="btn btn-warning btn-action editar"><i class="fa-solid fa-edit"></i></button> <button onclick="ConfirmaExcluirComprador(this)" class="btn btn-danger btn-action editar"><i class="fa-solid fa-eraser"></i></button></div>' }
+    //        ],
+    //        "language": {
+    //            "url": "//cdn.datatables.net/plug-ins/1.11.4/i18n/pt_br.json",
+    //        }
+    //    });
+
+    //    setTimeout(() => {
+    //        var table = $('#comprador').DataTable();
+    //        if (!table.data().any()) {
+    //            $(".btnimprimir").hide();
+
+    //        } else {
+    //            $(".btnimprimir").show();
+    //        }
+    //    }, 300);
+    //}
+
+
+    $("#imagem").on('change', function () {
+        if (typeof (FileReader) != "undefined") {
+            $("#salvardocumento").show();
+            var image_holder = $("#imagemexibir");
+            image_holder.empty();
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $("<img  />", {
+                    "src": e.target.result,
+                    "style": "width:200px"
+                }).appendTo(image_holder);
+            }
+            image_holder.show();
+            reader.readAsDataURL($(this)[0].files[0]);
+        } else {
+            alert("Este navegador nao suporta FileReader.");
+        }
+    });
+
+</script>
+
+<style type="text/css">
+    input[type="file"] {
+        display: none;
+    }
+
+    .custom-file-upload {
+        border: 1px solid #ccc;
+        display: inline-block;
+        padding: 6px 12px;
+        cursor: pointer;
+    }
+
+    .casamento {
+        padding: 10px 0px 10px 25px;
+    }
+
+    .conjuge {
+        padding: 10px 0px 10px 25px;
+    }
+
+</style>
+
+

@@ -1,0 +1,123 @@
+﻿@model ARJ.Pianopoli.Admin._6.Models.PropostaViewModel
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="ibox ">
+                @*<div>Quadra: <div id="Quadra" style="font-size:16pt">@Model.Quadra</div>  - Lote: @Model.Lote*@<h5 style="text-align:right"><small>Situação:&nbsp;<partial id="fundo-partial" style="background-color:green;color:white;font-weight: bold;"><spam id="parcial">&nbsp;@Model.StatusNoSite&nbsp;</spam></partial></small></h5>
+            </div>
+
+            <div class="ibox-content">
+                <input type="text" value="@Model.LoteamentoId" id="LoteamentoId" hidden>
+                <input type="text" value="@Model.Id" id="PropostaId" hidden>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label"><b>Quadra</b></label>
+                    <div class="col-1">
+                        <b><input type="text" class="form-control" style="font-size:14pt;background-color : #fff;" value="@Model.Quadra" id="Quadra" disabled></b>
+                    </div>
+                    <label class="col-lg-1 col-form-label"><b>Lote</b></label>
+                    <div class="col-1">
+                        <b><input type="text" class="form-control" style="font-size:14pt;background-color : #fff;" value="@Model.Lote" id="Lote" disabled></b>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Área (m2)</label>
+                    <div class="col-3">
+                        <input type="text" class="form-control money direita" value="@Model.Area" id="Area" disabled>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Valor de Venda</label>
+                    <div class="col-3">
+                        <input type="text" class="form-control money direita" value="@(Model.ValorTotal)" id="Total" disabled>
+                    </div>
+                </div>
+
+                <form>
+                    <p><b>Preencha a condição comercial da proposta</b></p>
+                    <div class="form-group row">
+                        <label class="col-lg-2 col-form-label">Valor da Entrada</label>
+                        <div class="col-3">
+                            <input type="text" placeholder="Entrada R$" class="form-control money direita" value="@(Model.Entrada)" id="Entrada" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-2 col-form-label">Saldo a pagar </label>
+                        <div class="col-3">
+                            <input type="text" placeholder="Saldo R$" class="form-control money direita" id="SaldoPagar" value="@(Model.SaldoPagar)" name="SaldoPagar" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group row" id="TipoPagto" hidden>
+                        <label class="col-lg-2 col-form-label">Forma Pagamento </label>
+                        <div class="col-3" style="text-align:left;">
+                            @Html.DropDownList("TipoPagamento", new List<SelectListItem>()
+                            { new SelectListItem() { Value = "1", Text= "A vista" },
+                            new SelectListItem() { Value = "2", Text= "A prazo" },
+                            },"--Selecione--",new{@class="form-control", @onchange="ValidarCondicoes(this.value)"})
+                        </div>
+                    </div>
+                    <div class="form-group row" id="TipoParcelamento">
+                        <label class="col-lg-2 col-form-label">Parcelas </label>
+                        <div class="col-5">
+                            @Html.DropDownList("Parcelamento", (IEnumerable<SelectListItem>)ViewBag.Mensais,"--Selecione--",new{@class="form-control", @disabled=true })
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-2 col-form-label">Corretor </label>
+                        <div class="col-5">
+                            @Html.DropDownList("Corretor", (IEnumerable<SelectListItem>)ViewBag.Corretor,"--Selecione--",new{@class="form-control" , @disbled=false } )
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div>
+        <button class="btn btn-success" onclick="NovoComprador()">Novo Comprador</button>
+        <button class="btn btn-secondary" id="btn-finalizar" onclick="Inicio()" hidden>Finalizar</button>
+    </div>
+
+    <div class="col-md-12" style="margin-top:60px;" id="temp-container"></div>
+
+@*    <div class="grid-left">
+        <div id="grid">
+            <table id="compradores" class="display" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Nome</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+*@
+</div>
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+
+@*<script type="text/javascript">
+    $(document).ready(function () {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                propostaid: $("#PropostaId").val()
+            },
+            url: '' + urlbase + '/Propostas/ListarCompradores',
+            success: function (data) {
+                $("#temp-container").html(data);
+                RemoveAguarde();
+                if (data.Result == false) {
+                    SwalPopUpErro("Erro", data.Message, "error");
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                RemoveAguarde();
+            }
+        });
+    });
+
+</script>
+*@
+

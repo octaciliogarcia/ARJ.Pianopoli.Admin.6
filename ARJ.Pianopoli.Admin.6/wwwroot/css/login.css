@@ -1,0 +1,39 @@
+﻿html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+.login {
+    background-color: #04144E;
+    border-radius: 10px;
+    padding: 40px 20px;
+    margin-top: 40px;
+    align-content:center;
+}
+
+    .login h2 {
+        color: #fff;
+    }
+
+    .login label {
+        color: #fff;
+    }
+
+.btn-action {
+    margin-left: 20px;
+    right: 0;
+}
