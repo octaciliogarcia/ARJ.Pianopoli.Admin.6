@@ -15,6 +15,10 @@ namespace ARJ.Pianopoli.Admin._6.Models
         public DateTime DataProposta { get; set; }
         public string Entrada { get; set; }
         public string SaldoPagar { get; set; }
+        public string TotalParcelas { get; set; }
+        public string SaldoQuitacao { get; set; }
+        public string PrecoVendaCorrigido { get; set; }
+        public string JurosCobrados { get; set; }
         public int Status { get; set; } = 1;
         public string StatusNoSite { get; set; }
         public List<Comprador> Compradores { get; set; }
@@ -31,5 +35,15 @@ namespace ARJ.Pianopoli.Admin._6.Models
         public string Usuario { get; set; }
         public bool result { get; set; }
     }
+
+    public class PlanosParcelasViewModel
+    {
+        public string Plano { get; set; }
+        public int NrParcelasMensais { get; set; }
+        public double VrParcelaMensal { get; set; }
+        public int NrParcelasSemestrais { get; set; }
+        public double VrParcelaSemestral { get; set; }
+    }
+   
 
 }

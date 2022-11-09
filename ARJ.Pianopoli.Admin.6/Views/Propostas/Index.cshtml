@@ -159,20 +159,6 @@
     </div>
 </div>
 
-@*<div class="modal fade" id="cadastroComprador" role="dialog">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalToggleLabel2">Cadastrar Novo Comprador</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="editarcomprador">
-            </div>
-        </div>
-    </div>
-</div>
-*@
-
 
 <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.7.1/js/bootstrap-datepicker.min.js"></script>
@@ -235,9 +221,12 @@
                             $("#TipoPagamento").val(1)
                         }
                         else {
+                            var conteudo = data.retorno.parcelas;
                             $("#TipoPagamento").val(2);
-                            document.getElementById('TipoPagamento').onchange(this.value);
+                            $("#Parcelamento").empty().append(conteudo);
                             $("#Parcelamento").attr("readonly", false);
+                            document.getElementById('TipoPagamento').onchange(this.value);
+
                         }
 
                     }
@@ -325,6 +314,48 @@
         else {
             $("#Entrada").focus();
         }
+    }
+
+    function CalcularRestante(){
+
+        var quadra = $("#Quadra").val();
+        var lote = $("#Lote").val();
+        var entrada = $("#Entrada").val();
+        var tipopagto = $("#TipoPagamento").val();
+        var parcelamento = $("#Parcelamento").val();
+        var loteamento = $("#LoteamentoId").val();
+        var id = $("#PropostaId").val();
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Loteamento: loteamento,
+                Quadra: quadra,
+                Lote: lote,
+                Entrada: entrada,
+                TipoPagamento: tipopagto,
+                Parcelamento: parcelamento,
+            },
+            url: urlbase + '/propostas/ValidarRestante',
+            success: function (data) {
+                if (data.result == false) {
+                    $("#TotalParcelas").val("Erro");
+                    $("#SaldoQuitacao").val("Erro");
+                    $("#PrecoVendaCorrigido").val("Erro");
+                    $("#JurosCobrados").val("Erro");
+
+                    SwalPopUpErro("Atenção", data.message, "success");
+                }
+                else {
+                    var totalParcelas = data.totalparcelas;
+                    $("#TotalParcelas").val(totalParcelas);
+                    $("#SaldoQuitacao").val(data.saldoquitacao);
+                    $("#PrecoVendaCorrigido").val(data.precovendacorrigido);
+                    $("#JurosCobrados").val(data.juroscobrados);
+                }
+            }
+        });
+
     }
 
     function Compradores() {
@@ -446,17 +477,6 @@
             }
         });
     });
-
-    //function AdicionarProposta(e) {
-    //    Novo();
-    //    $('#comprador').dataTable().fnDestroy();
-    //    var dataRow = $('#proposta').DataTable().row($(e).closest('tr')).data();
-    //    $("#Loteamento").val(dataRow.loteamentoId);
-    //    $("#Quadra").val(dataRow.quadra);
-    //    $("#Lote").val(dataRow.lote);
-    //    $("#Area").val(dataRow.area);
-    //    $("#Compradores").hide();
-    //}
 
     function Proposta(e) {
 
@@ -1145,5 +1165,6 @@
     }
 
 </style>
+
 
 

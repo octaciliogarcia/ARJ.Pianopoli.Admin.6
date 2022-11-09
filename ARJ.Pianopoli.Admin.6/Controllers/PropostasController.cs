@@ -2,12 +2,14 @@
 using ARJ.Pianopoli.Admin._6.Data;
 using ARJ.Pianopoli.Admin._6.Models;
 using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using Newtonsoft.Json;
@@ -19,6 +21,9 @@ using System.Runtime.ConstrainedExecution;
 using System.Security.Claims;
 using System.Text;
 using System.Xml.Linq;
+using Document = iTextSharp.text.Document;
+using PageSize = iTextSharp.text.PageSize;
+using Paragraph = iTextSharp.text.Paragraph;
 
 namespace ARJ.Pianopoli.Admin._6.Controllers
 {
@@ -108,17 +113,73 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 {
                     modelo.StatusNoSite = "Disponível";
                     // busca o valor total do lote quando este ainda está disponível e sem proposta enviada.
-                    var precoVenda = db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault().PrecoVenda;
+                    var precoVenda = Math.Round(modelo.PrecoM2 * lote.Area,2); //db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault().PrecoVenda;
 
                     modelo.ValorTotal = (precoVenda);
 
-                    ViewBag.Mensais = (from f in db.TabelaPrecoLotes
-                                       where f.Quadra == Quadra && f.Lote == Lote
-                                       select new SelectListItem
-                                       {
-                                           Text = " " + f.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasMensais) + " +   " + f.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasSemestrais) + "   ",
-                                           Value = f.Id.ToString()
-                                       });
+                    double vlrParcSemestral = 7500.00;   // deverár ser parametrizado
+                    double jurosAM = 0.0025;
+                    double constante = 1;
+                    var entradaPadrao = Math.Round(precoVenda*0.15m,2);
+                    var saldoPadrao = precoVenda - entradaPadrao;
+
+
+                    // var indice = Math.Pow((constante + jurosAM), 6) ;
+
+                    var VP6  = Math.Round((vlrParcSemestral/ Math.Pow((constante + jurosAM), 6)),2);
+                    var VP12 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 12)), 2);
+                    var VP18 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 18)), 2);
+                    var VP24 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 24)), 2);
+                    var VP30 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 30)), 2);
+                    var VP36 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 36)), 2);
+                    var VP42 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 42)), 2);
+                    var VP48 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 48)), 2);
+                    var VP54 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 54)), 2);
+                    var VP60 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 60)), 2);
+
+                    var parc12 = 7000.00m;
+                    var parc24 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24)) * (((jurosAM * (Math.Pow(1 + jurosAM, 24))) / Math.Pow(1 + jurosAM, 24))- 1))/-24,2) ;
+                    var parc36 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36)) * (((jurosAM * (Math.Pow(1 + jurosAM, 36))) / Math.Pow(1 + jurosAM, 36)) - 1)) / -36, 2);
+                    var parc48 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48)) * (((jurosAM * (Math.Pow(1 + jurosAM, 48))) / Math.Pow(1 + jurosAM, 48)) - 1)) / -48, 2);
+                    var parc60 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48 + VP54 + VP60)) * (((jurosAM * (Math.Pow(1 + jurosAM, 60))) / Math.Pow(1 + jurosAM, 60)) - 1)) / -60, 2);
+
+                    var listaTabela = new List<SelectListItem>();
+                    listaTabela.Add(new SelectListItem
+                    {
+                        Text = " 12 x R$ " + String.Format("{0:0,0.00}", parc12) + " +  2 x R$ " + String.Format("{0:0,0.00}", vlrParcSemestral) + "   ",
+                        Value = "1"
+                    });
+                    listaTabela.Add(new SelectListItem
+                    {
+                        Text = " 24 x R$ " + String.Format("{0:0,0.00}", parc24) + " +  4 x R$ " + String.Format("{0:0,0.00}", vlrParcSemestral) + "   ",
+                        Value = "2"
+                    });
+                    listaTabela.Add(new SelectListItem
+                    {
+                        Text = " 36 x R$ " + String.Format("{0:0,0.00}", parc36) + " +  6 x R$ " + String.Format("{0:0,0.00}", vlrParcSemestral) + "   ",
+                        Value = "3"
+                    });
+                    listaTabela.Add(new SelectListItem
+                    {
+                        Text = " 48 x R$ " + String.Format("{0:0,0.00}", parc48) + " +  8 x R$ " + String.Format("{0:0,0.00}", vlrParcSemestral) + "   ",
+                        Value = "4"
+                    });
+                    listaTabela.Add(new SelectListItem
+                    {
+                        Text = " 60 x R$ " + String.Format("{0:0,0.00}", parc60) + " + 10 x R$ " + String.Format("{0:0,0.00}", vlrParcSemestral) + "   ",
+                        Value = "5"
+                    });
+
+                    ViewBag.Mensais = listaTabela;
+
+
+                    //ViewBag.Mensais = (from f in db.TabelaPrecoLotes
+                    //                   where f.Quadra == Quadra && f.Lote == Lote
+                    //                   select new SelectListItem
+                    //                   {
+                    //                       Text = " " + f.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasMensais) + " +   " + f.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasSemestrais) + "   ",
+                    //                       Value = f.Id.ToString()
+                    //                   });
                     return PartialView("EditarProposta", modelo);
 
                 }
@@ -135,6 +196,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         var propostaCondicoes = db.PropostasCondicoesComerciais.Where(c => c.PropostaId == proposta.Id).FirstOrDefault();
                         var compradores = (from x in db.PropostasCompradores
                                            join c in db.Comprador on x.CompradorId equals c.Id
+                                           where x.PropostaId == proposta.Id
                                            select c).ToList();
 
 
@@ -201,9 +263,14 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 }
 
                 //verifica se valor da entrada é compatível e permitida
-                var valoresLote = db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == lote).FirstOrDefault();
+                // var valoresLote = db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == lote).FirstOrDefault();
 
-                if (entrada < valoresLote.Entrada)
+                var retorno = new PrecoRetonar();
+                retorno.PrecoM2 = db.TabelaM2.Where(c => c.CategoriaId == dadosLote.CategoriaId).FirstOrDefault().ValorM2;
+                var precoVenda = Math.Round(retorno.PrecoM2 * dadosLote.Area, 2);
+
+
+                if (entrada < (precoVenda*0.15m))
                 {
                     return Json(new
                     {
@@ -212,9 +279,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     });
 
                 }
+                retorno.Entrada = String.Format("{0:0,0.00}", entrada);
 
-                var retorno = new PrecoRetonar();
-                var saldo = valoresLote.PrecoVenda - entrada;
+
+                var saldo = precoVenda - entrada;
 
                 if (saldo > 0)
                     retorno.TipoPgtoPermitido = "0";
@@ -222,9 +290,63 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     retorno.TipoPgtoPermitido = "1";
 
                 retorno.SaldoPagar = String.Format("{0:0,0.00}", saldo);
-                retorno.Entrada = String.Format("{0:0,0.00}", entrada);
-                retorno.PrecoM2 = db.TabelaM2.Where(c => c.CategoriaId == dadosLote.CategoriaId).FirstOrDefault().ValorM2;
                 retorno.CorFundo = db.TabelaM2.Where(c => c.CategoriaId == dadosLote.CategoriaId).FirstOrDefault().CorFundo ?? "#ffffff";
+
+                retorno.PrecoVenda = precoVenda;
+
+                double vlrParcSemestral = 7500.00;   // deverár ser parametrizado
+                double jurosAM = 0.0025;
+                double constante = 1;
+                var entradaPadrao = Math.Round(precoVenda * 0.15m, 2);
+
+                var VP6 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 6)), 2);
+                var VP12 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 12)), 2);
+                var VP18 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 18)), 2);
+                var VP24 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 24)), 2);
+                var VP30 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 30)), 2);
+                var VP36 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 36)), 2);
+                var VP42 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 42)), 2);
+                var VP48 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 48)), 2);
+                var VP54 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 54)), 2);
+                var VP60 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 60)), 2);
+
+                var parc12 = 7000.00m;
+                var parc24 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24)) * (((jurosAM * (Math.Pow(1 + jurosAM, 24))) / Math.Pow(1 + jurosAM, 24)) - 1)) / -24, 2);
+                var parc36 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36)) * (((jurosAM * (Math.Pow(1 + jurosAM, 36))) / Math.Pow(1 + jurosAM, 36)) - 1)) / -36, 2);
+                var parc48 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48)) * (((jurosAM * (Math.Pow(1 + jurosAM, 48))) / Math.Pow(1 + jurosAM, 48)) - 1)) / -48, 2);
+                var parc60 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48 + VP54 + VP60)) * (((jurosAM * (Math.Pow(1 + jurosAM, 60))) / Math.Pow(1 + jurosAM, 60)) - 1)) / -60, 2);
+
+                var listaTabela = new List<SelectListItem>();
+                listaTabela.Add(new SelectListItem
+                {
+                    Text = " Selecione um plano de pagamento... ",
+                    Value = "0"
+                });
+                listaTabela.Add(new SelectListItem
+                {
+                    Text = " 12 x R$ " + String.Format("{0:0,0.00}", parc12) + " +  2 x R$ " + String.Format("{0:0,0.00}", vlrParcSemestral) + "   ",
+                    Value = "1"
+                });
+                listaTabela.Add(new SelectListItem
+                {
+                    Text = " 24 x R$ " + String.Format("{0:0,0.00}", parc24) + " +  4 x R$ " + String.Format("{0:0,0.00}", vlrParcSemestral) + "   ",
+                    Value = "2"
+                });
+                listaTabela.Add(new SelectListItem
+                {
+                    Text = " 36 x R$ " + String.Format("{0:0,0.00}", parc36) + " +  6 x R$ " + String.Format("{0:0,0.00}", vlrParcSemestral) + "   ",
+                    Value = "3"
+                });
+                listaTabela.Add(new SelectListItem
+                {
+                    Text = " 48 x R$ " + String.Format("{0:0,0.00}", parc48) + " +  8 x R$ " + String.Format("{0:0,0.00}", vlrParcSemestral) + "   ",
+                    Value = "4"
+                });
+                listaTabela.Add(new SelectListItem
+                {
+                    Text = " 60 x R$ " + String.Format("{0:0,0.00}", parc60) + " + 10 x R$ " + String.Format("{0:0,0.00}", vlrParcSemestral) + "   ",
+                    Value = "5"
+                });
 
 
                 // Calcular a condição de parcelamento baseado no valor de entrada
@@ -234,15 +356,19 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 if (saldo > 0)
                 {
 
-                    var condicoespagto = (from f in db.TabelaPrecoLotes
-                                          where f.Quadra == Quadra && f.Lote == lote
-                                          select new SelectListItem
-                                          {
-                                              Text = " " + f.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasMensais) + " +   " + f.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasSemestrais) + "   ",
-                                              Value = f.Id.ToString()
-                                          });
+                    //var condicoespagto = (from f in db.TabelaPrecoLotes
+                    //                      where f.Quadra == Quadra && f.Lote == lote
+                    //                      select new SelectListItem
+                    //                      {
+                    //                          Text = " " + f.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasMensais) + " +   " + f.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasSemestrais) + "   ",
+                    //                          Value = f.Id.ToString()
+                    //                      });
 
-                    ViewBag.Mensais = condicoespagto;
+                    //ViewBag.Mensais = condicoespagto;
+
+                    ViewBag.Mensais = listaTabela;
+                    
+
 
                 }
                 else
@@ -257,6 +383,15 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     ViewBag.Mensais = condicoespagto;
                 }
 
+               // gera um html para substituir no combobox
+
+               var conteudo = "";
+                foreach (var item in listaTabela)
+                {
+                    conteudo = conteudo + "<option value = '" + item.Value + "' > " + item.Text + " </option>";
+                }
+
+                retorno.Parcelas = conteudo + "</select>";
 
                 retorno.result = true;
 
@@ -277,10 +412,191 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
         }
 
+        
+        [HttpPost]
+        [Authorize]
+        public IActionResult ValidarRestante(int Loteamento, string Quadra, string Lote, string Entrada, string TipoPagamento, string Parcelamento)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var lote = int.Parse( Lote);
+
+
+                    //verifica se o lote foi vendido ou ainda está disponível
+                    var disponivel = db.Lotes.Where(c => c.Quadra == Quadra && c.Lote == lote).FirstOrDefault().SituacaoNoSite;
+                    if (disponivel != "1")
+                    {
+                        return Json(new
+                        {
+                            result = false,
+                            message = "Esse lote não está mais disponível!"
+                        });
+                    }
+
+                    // verifica todos os valores novamente, para evitar "injeções" no jQuery
+
+                    var dadosLote = db.Lotes.Where(c=>c.Quadra==Quadra && c.Lote == lote).FirstOrDefault();  
+
+                    var stringEntrada = Entrada.Replace(".", "").Replace(",", ".");
+                    var entrada = decimal.Parse(stringEntrada) / 100;
+                    
+                    var precoM2 = db.TabelaM2.Where(c => c.CategoriaId == dadosLote.CategoriaId).FirstOrDefault().ValorM2;
+                    var precoVenda = Math.Round(precoM2 * dadosLote.Area, 2);
+                    double vlrParcSemestral = 7500.00;   // deverár ser parametrizado
+                    double jurosAM = 0.0025;
+                    double constante = 1;
+                    var entradaPadrao = Math.Round(precoVenda * 0.15m, 2);
+                    var saldo = precoVenda - entrada;
+
+
+                    //verifica se valor da entrada é compatível e permitida
+                    if (entrada < entradaPadrao)
+                    {
+                        return Json(new
+                        {
+                            result = false,
+                            message = "Valor da entrada não permitido!"
+                        });
+                    }
+
+                    if (entrada > precoVenda)
+                    {
+                        return Json(new
+                        {
+                            result = false,
+                            message = "Valor da entrada está maior que o valor do Lote!"
+                        });
+                    }
+
+                    var VP6 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 6)), 2);
+                    var VP12 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 12)), 2);
+                    var VP18 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 18)), 2);
+                    var VP24 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 24)), 2);
+                    var VP30 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 30)), 2);
+                    var VP36 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 36)), 2);
+                    var VP42 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 42)), 2);
+                    var VP48 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 48)), 2);
+                    var VP54 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 54)), 2);
+                    var VP60 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 60)), 2);
+
+                    var parc12 = (double)7000.00m;
+                    var parc24 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24)) * (((jurosAM * (Math.Pow(1 + jurosAM, 24))) / Math.Pow(1 + jurosAM, 24)) - 1)) / -24, 2);
+                    var parc36 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36)) * (((jurosAM * (Math.Pow(1 + jurosAM, 36))) / Math.Pow(1 + jurosAM, 36)) - 1)) / -36, 2);
+                    var parc48 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48)) * (((jurosAM * (Math.Pow(1 + jurosAM, 48))) / Math.Pow(1 + jurosAM, 48)) - 1)) / -48, 2);
+                    var parc60 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48 + VP54 + VP60)) * (((jurosAM * (Math.Pow(1 + jurosAM, 60))) / Math.Pow(1 + jurosAM, 60)) - 1)) / -60, 2);
+
+                    var listaTabela = new List<PlanosParcelasViewModel>();
+                    listaTabela.Add(new PlanosParcelasViewModel
+                    {
+                        Plano = "1",
+                        NrParcelasMensais = 12,
+                        VrParcelaMensal = parc12,
+                        NrParcelasSemestrais = 2,
+                        VrParcelaSemestral = vlrParcSemestral
+                    });
+                    listaTabela.Add(new PlanosParcelasViewModel
+                    {
+                        Plano = "2",
+                        NrParcelasMensais = 24,
+                        VrParcelaMensal = parc24,
+                        NrParcelasSemestrais = 4,
+                        VrParcelaSemestral = vlrParcSemestral
+                    }); 
+                    listaTabela.Add(new PlanosParcelasViewModel
+                    {
+                        Plano = "3",
+                        NrParcelasMensais = 36,
+                        VrParcelaMensal = parc36,
+                        NrParcelasSemestrais = 6,
+                        VrParcelaSemestral = vlrParcSemestral
+                    });
+                    listaTabela.Add(new PlanosParcelasViewModel
+                    {
+                        Plano = "4",
+                        NrParcelasMensais = 48,
+                        VrParcelaMensal = parc48,
+                        NrParcelasSemestrais = 8,
+                        VrParcelaSemestral = vlrParcSemestral
+                    }); 
+                    listaTabela.Add(new PlanosParcelasViewModel
+                    {
+                        Plano = "5",
+                        NrParcelasMensais = 60,
+                        VrParcelaMensal = parc60,
+                        NrParcelasSemestrais = 10,
+                        VrParcelaSemestral = vlrParcSemestral
+                    });
+
+                    var planoEscolhido = listaTabela.Where(c => c.Plano == Parcelamento).FirstOrDefault();
+                    if(planoEscolhido!=null)
+                    {
+
+                    }
+                    else
+                    {
+                        return Json(new
+                        {
+                            result = false,
+                            message = "Erro na escolha do plano!"
+                        });
+                    }
+                    double totalParcelas;
+                    double saldoQuitacao;// = Math.Round(((double)(saldo * 0.4m)) * Math.Pow(constante + jurosAM, planoEscolhido.NrParcelasMensais), 2);
+                    double precoVendaCorrigido;// = Math.Round(totalParcelas + saldoQuitacao + (double)entrada, 2);
+                    double jurosPeriodo;// = precoVendaCorrigido - (double)precoVenda;
+
+                    if (planoEscolhido.Plano=="1")
+                    {
+                        totalParcelas = (planoEscolhido.NrParcelasMensais * planoEscolhido.VrParcelaMensal) + (planoEscolhido.NrParcelasSemestrais * planoEscolhido.VrParcelaSemestral);
+                        saldoQuitacao = (double)saldo - totalParcelas;
+                        precoVendaCorrigido = Math.Round(totalParcelas + saldoQuitacao + (double)entrada, 2);
+                        jurosPeriodo = precoVendaCorrigido - (double)precoVenda;
+                    }
+                    else
+                    {
+                        totalParcelas = (planoEscolhido.NrParcelasMensais * planoEscolhido.VrParcelaMensal) + (planoEscolhido.NrParcelasSemestrais * planoEscolhido.VrParcelaSemestral);
+                        saldoQuitacao = Math.Round(((double)(saldo * 0.4m)) * Math.Pow(constante + jurosAM, planoEscolhido.NrParcelasMensais), 2);
+                        precoVendaCorrigido = Math.Round(totalParcelas + saldoQuitacao + (double)entrada, 2);
+                        jurosPeriodo = precoVendaCorrigido - (double)precoVenda;
+                    }
+
+                    return Json(new { 
+                        result = true,
+                        juroscobrados = String.Format("{0:0,0.00}", jurosPeriodo),
+                        precovendacorrigido = String.Format("{0:0,0.00}", precoVendaCorrigido),
+                        saldoquitacao = String.Format("{0:0,0.00}", saldoQuitacao),
+                        totalparcelas = String.Format("{0:0,0.00}", totalParcelas)
+                    });
+                }
+                catch (Exception)
+                {
+
+                    return Json(new
+                    {
+                        result = false,
+                        message = "Erro no processamento!"
+                    });
+                }
+            }
+            else
+            {
+                return Json(new
+                {
+                    result = false,
+                    message = "Erro no processamento!"
+                });
+
+            }
+
+        }
+
         [HttpPost]
         [Authorize]
         public IActionResult Compradores(int Loteamento, string Quadra, int Lote, string Entrada, string TipoPagamento, string Parcelamento)
         {
+
             if (ModelState.IsValid)
             {
                 try
@@ -300,13 +616,22 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     // verifica todos os valores novamente, para evitar "injeções" no jQuery
 
+                    var dadosLote = db.Lotes.Where(c => c.Quadra == Quadra && c.Lote == lote).FirstOrDefault();
+
                     var stringEntrada = Entrada.Replace(".", "").Replace(",", ".");
                     var entrada = decimal.Parse(stringEntrada) / 100;
 
                     //verifica se valor da entrada é compatível e permitida
-                    var valoresLote = db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == lote).FirstOrDefault();
+                    var precoM2 = db.TabelaM2.Where(c => c.CategoriaId == dadosLote.CategoriaId).FirstOrDefault().ValorM2;
+                    var precoVenda = Math.Round(precoM2 * dadosLote.Area, 2);
+                    double vlrParcSemestral = 7500.00;   // deverár ser parametrizado
+                    double jurosAM = 0.0025;
+                    double constante = 1;
+                    var entradaPadrao = Math.Round(precoVenda * 0.15m, 2);
+                    var saldo = precoVenda - entrada;
 
-                    if (entrada < valoresLote.Entrada)
+
+                    if (entrada < entradaPadrao)
                     {
                         return Json(new
                         {
@@ -315,7 +640,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         });
                     }
 
-                    if (entrada > valoresLote.PrecoVenda)
+                    if (entrada > precoVenda)
                     {
                         return Json(new
                         {
@@ -324,14 +649,114 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         });
                     }
 
-                    var UserId = _user.GetUserId();
+                    //return Json(new
+                    //{
+                    //    result = false,
+                    //    message = "Esta etapa está sendo concluída, baseado nas mudanças de cálculos!"
+                    //});
 
-                    var parcelaId = int.Parse(Parcelamento);
+                    var VP6 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 6)), 2);
+                    var VP12 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 12)), 2);
+                    var VP18 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 18)), 2);
+                    var VP24 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 24)), 2);
+                    var VP30 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 30)), 2);
+                    var VP36 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 36)), 2);
+                    var VP42 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 42)), 2);
+                    var VP48 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 48)), 2);
+                    var VP54 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 54)), 2);
+                    var VP60 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 60)), 2);
 
-                    var parcelas = (from f in db.TabelaPrecoLotes
-                                    where f.Quadra == Quadra && f.Lote == Lote
-                                    where f.Id == parcelaId
-                                    select f).FirstOrDefault();
+                    var parc12 = (double)7000.00m;
+                    var parc24 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24)) * (((jurosAM * (Math.Pow(1 + jurosAM, 24))) / Math.Pow(1 + jurosAM, 24)) - 1)) / -24, 2);
+                    var parc36 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36)) * (((jurosAM * (Math.Pow(1 + jurosAM, 36))) / Math.Pow(1 + jurosAM, 36)) - 1)) / -36, 2);
+                    var parc48 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48)) * (((jurosAM * (Math.Pow(1 + jurosAM, 48))) / Math.Pow(1 + jurosAM, 48)) - 1)) / -48, 2);
+                    var parc60 = Math.Round(((((double)(saldo * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48 + VP54 + VP60)) * (((jurosAM * (Math.Pow(1 + jurosAM, 60))) / Math.Pow(1 + jurosAM, 60)) - 1)) / -60, 2);
+
+                    var listaTabela = new List<PlanosParcelasViewModel>();
+                    listaTabela.Add(new PlanosParcelasViewModel
+                    {
+                        Plano = "1",
+                        NrParcelasMensais = 12,
+                        VrParcelaMensal = parc12,
+                        NrParcelasSemestrais = 2,
+                        VrParcelaSemestral = vlrParcSemestral
+                    });
+                    listaTabela.Add(new PlanosParcelasViewModel
+                    {
+                        Plano = "2",
+                        NrParcelasMensais = 24,
+                        VrParcelaMensal = parc24,
+                        NrParcelasSemestrais = 4,
+                        VrParcelaSemestral = vlrParcSemestral
+                    });
+                    listaTabela.Add(new PlanosParcelasViewModel
+                    {
+                        Plano = "3",
+                        NrParcelasMensais = 36,
+                        VrParcelaMensal = parc36,
+                        NrParcelasSemestrais = 6,
+                        VrParcelaSemestral = vlrParcSemestral
+                    });
+                    listaTabela.Add(new PlanosParcelasViewModel
+                    {
+                        Plano = "4",
+                        NrParcelasMensais = 48,
+                        VrParcelaMensal = parc48,
+                        NrParcelasSemestrais = 8,
+                        VrParcelaSemestral = vlrParcSemestral
+                    });
+                    listaTabela.Add(new PlanosParcelasViewModel
+                    {
+                        Plano = "5",
+                        NrParcelasMensais = 60,
+                        VrParcelaMensal = parc60,
+                        NrParcelasSemestrais = 10,
+                        VrParcelaSemestral = vlrParcSemestral
+                    });
+
+                    var planoEscolhido = listaTabela.Where(c => c.Plano == Parcelamento).FirstOrDefault();
+                    if (planoEscolhido != null)
+                    {
+
+                    }
+                    else
+                    {
+                        return Json(new
+                        {
+                            result = false,
+                            message = "Erro na escolha do plano!"
+                        });
+                    }
+                    double totalParcelas;
+                    double saldoQuitacao;
+                    double precoVendaCorrigido;
+                    double jurosPeriodo;
+
+                    if (planoEscolhido.Plano == "1")
+                    {
+                        totalParcelas = (planoEscolhido.NrParcelasMensais * planoEscolhido.VrParcelaMensal) + (planoEscolhido.NrParcelasSemestrais * planoEscolhido.VrParcelaSemestral);
+                        saldoQuitacao = (double)saldo - totalParcelas;
+                        precoVendaCorrigido = Math.Round(totalParcelas + saldoQuitacao + (double)entrada, 2);
+                        jurosPeriodo = precoVendaCorrigido - (double)precoVenda;
+                    }
+                    else
+                    {
+                        totalParcelas = (planoEscolhido.NrParcelasMensais * planoEscolhido.VrParcelaMensal) + (planoEscolhido.NrParcelasSemestrais * planoEscolhido.VrParcelaSemestral);
+                        saldoQuitacao = Math.Round(((double)(saldo * 0.4m)) * Math.Pow(constante + jurosAM, planoEscolhido.NrParcelasMensais), 2);
+                        precoVendaCorrigido = Math.Round(totalParcelas + saldoQuitacao + (double)entrada, 2);
+                        jurosPeriodo = precoVendaCorrigido - (double)precoVenda;
+                    }
+
+
+
+                    Guid UserId = _user.GetUserId();
+
+                    //var parcelaId = int.Parse(Parcelamento);
+
+                    //var parcelas = (from f in db.TabelaPrecoLotes
+                    //                where f.Quadra == Quadra && f.Lote == Lote
+                    //                where f.Id == parcelaId
+                    //                select f).FirstOrDefault();
 
 
                     // se tudo estiver correto - grava a proposta com as condições comerciais e mostra grid para preencher com compradores
@@ -344,7 +769,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     obj.Lote = Lote;
                     obj.LoteamentoId = Loteamento;
                     obj.Usuario = UserId.ToString();
-                    obj.ValorTotal = valoresLote.PrecoVenda;
+                    obj.ValorTotal = precoVenda;
                     db.Add(obj);
                     db.SaveChanges();
 
@@ -353,12 +778,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     objcm.PropostaId = obj.Id;
                     objcm.DataHora = DateTime.Now;
                     objcm.Usuario = UserId.ToString();
-                    objcm.ValorTotal = valoresLote.PrecoVenda;
+                    objcm.ValorTotal = precoVenda;
                     objcm.ValorEntrada = entrada;
-                    objcm.NrParcelasMensais = entrada == valoresLote.PrecoVenda ? 0 : parcelas.NrParcelasMensais;
-                    objcm.NrParcelasSemestrais = entrada == valoresLote.PrecoVenda ? 0 : parcelas.NrParcelasSemestrais;
-                    objcm.ValorParcelaMensal = entrada == valoresLote.PrecoVenda ? 0 : parcelas.VrParcelasMensais; ;
-                    objcm.ValorParcelaSemestral = entrada == valoresLote.PrecoVenda ? 0 : parcelas.VrParcelasSemestrais;
+                    objcm.NrParcelasMensais = entrada == precoVenda ? 0 : planoEscolhido.NrParcelasMensais;
+                    objcm.NrParcelasSemestrais = entrada == precoVenda ? 0 : planoEscolhido.NrParcelasSemestrais;
+                    objcm.ValorParcelaMensal = entrada == precoVenda ? 0 : (decimal)planoEscolhido.VrParcelaMensal; ;
+                    objcm.ValorParcelaSemestral = entrada == precoVenda? 0 : (decimal)planoEscolhido.VrParcelaSemestral;
                     db.Add(objcm);
                     db.SaveChanges();
 
@@ -370,7 +795,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     var retorno = new PropostaViewModel();
 
-                    var saldo = valoresLote.PrecoVenda - entrada;
+                    //var saldo = precoVenda - entrada;
 
                     retorno.Id = obj.Id;
                     retorno.SaldoPagar = String.Format("{0:0,0.00}", saldo);
@@ -380,7 +805,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     retorno.Quadra = objlote.Quadra;
                     retorno.LoteamentoId = objlote.LoteamentoId;
                     retorno.Status = int.Parse(disponivel);
-                    retorno.ValorTotal = valoresLote.PrecoVenda;
+                    retorno.ValorTotal = precoVenda;
                     retorno.Parcelamento = Parcelamento;
                     retorno.TipoPagamento = TipoPagamento;
                     retorno.result = true;
@@ -404,13 +829,8 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                                             Value = f.Id.ToString()
                                         });
 
-                    ViewBag.Mensais = (from f in db.TabelaPrecoLotes
-                                       where f.Quadra == Quadra && f.Lote == Lote
-                                       select new SelectListItem
-                                       {
-                                           Text = " " + f.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasMensais) + " +   " + f.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasSemestrais) + "   ",
-                                           Value = f.Id.ToString()
-                                       });
+                    var auxiliar= listaTabela.Where(c => c.Plano == Parcelamento).FirstOrDefault();
+                    retorno.TipoPagamento = auxiliar.NrParcelasMensais.ToString() + " X R$ " + String.Format("{0:0,0.00}", auxiliar.VrParcelaMensal) + " + " + auxiliar.NrParcelasSemestrais.ToString() + " X R$ " + String.Format("{0:0,0.00}", auxiliar.VrParcelaSemestral);
 
                     return PartialView("Compradores", retorno);
 
@@ -1058,10 +1478,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 return File(ms, "application/pdf", nome_arquivo);
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
 
-                throw ex;
+                throw;
             }
 
         }
@@ -1081,6 +1501,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
         public string TipoPgtoPermitido { get; set; }
         public string TipoPagamento { get; set; }
         public string TipoParcelamento { get; set; }
+        public string Parcelas { get; set; }
 
     }
 

@@ -65,9 +65,34 @@
                     <div class="form-group row" id="TipoParcelamento" hidden>
                         <label class="col-lg-2 col-form-label">Parcelas </label>
                         <div class="col-5">
-                            @Html.DropDownList("Parcelamento", (IEnumerable<SelectListItem>)ViewBag.Mensais,"--Selecione--",new{@class="form-control" })
+                            @Html.DropDownList("Parcelamento", (IEnumerable<SelectListItem>)ViewBag.Mensais,"--Selecione--",new{@class="form-control", @onchange="CalcularRestante()" })
                         </div>
                     </div>
+                    <div class="form-group row">
+                        <label class="col-lg-2 col-form-label">Valor total das parcelas</label>
+                        <div class="col-3">
+                            <input type="text" placeholder="Vr total parcelas R$" class="form-control money direita" id="TotalParcelas" name="TotalParcelas" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-2 col-form-label">Saldo para Quitação R$</label>
+                        <div class="col-3">
+                            <input type="text" placeholder="Saldo Quitação R$" class="form-control money direita" id="SaldoQuitacao" name="SaldoQuitacao" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-2 col-form-label">Preço Venda Corrigido R$</label>
+                        <div class="col-3">
+                            <input type="text" placeholder="Preço Corrigido R$" class="form-control money direita" id="PrecoVendaCorrigido" name="PrecoVendaCorrigido" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-lg-2 col-form-label">Juros no período R$</label>
+                        <div class="col-3">
+                            <input type="text" placeholder="Juros R$" class="form-control money direita" id="JurosCobrados" name="JurosCobrados" disabled>
+                        </div>
+                    </div>
+
                     <div class="btn btn-primary" id="btn-validar" onclick="ValidarProposta()">Continuar </div>
                     <div class="btn btn-secondary" id="btn-voltar" onclick="Inicio()">Voltar </div>
 

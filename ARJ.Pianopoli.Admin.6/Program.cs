@@ -1,5 +1,6 @@
 using ARJ.Pianopoli.Admin._6.Core;
 using ARJ.Pianopoli.Admin._6.Data;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,24 @@ builder.Services.AddScoped<IAspNetUser, AspNetUser>();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false).AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
+
+// 27/10/2022 - para controlar o tempo de sessão
+builder.Services.AddDistributedMemoryCache();
+builder.Services.ConfigureApplicationCookie(opts =>
+{
+    opts.LoginPath = "/Identity/Account/Login";
+    opts.AccessDeniedPath = "/";
+    opts.ExpireTimeSpan = TimeSpan.FromMinutes(90);
+});
+builder.Services.AddSession(options =>
+{
+    // Set a short timeout for easy testing.
+    options.IdleTimeout = TimeSpan.FromMinutes(90);
+    options.Cookie.HttpOnly = true;
+    // Make the session cookie essential
+    options.Cookie.IsEssential = true;
+});
+
 
 //builder.Services.AddAuthentication("").AddCookie("ArjCoockie", config =>
 //{

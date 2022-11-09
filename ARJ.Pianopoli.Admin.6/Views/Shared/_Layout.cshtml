@@ -1,22 +1,25 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Pianopoli - Admin</title>
-
-    <link href="css/bootstrap.min.css" rel="stylesheet" asp-append-version="true">
-    <link href="font-awesome/css/font-awesome.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/css/bootstrap.min.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/font-awesome/css/font-awesome.css" rel="stylesheet" asp-append-version="true">
     <script src="https://kit.fontawesome.com/c82fa94686.js" crossorigin="anonymous"></script>
 
     <!-- Toastr style -->
-    <link href="css/plugins/toastr/toastr.min.css" rel="stylesheet">
+    <link href="~/css/plugins/toastr/toastr.min.css" rel="stylesheet">
 
     <!-- Gritter -->
-    <link href="js/plugins/gritter/jquery.gritter.css" rel="stylesheet">
+    <link href="~/js/plugins/gritter/jquery.gritter.css" rel="stylesheet">
 
-    <link href="css/animate.css" rel="stylesheet" asp-append-version="true">
-    <link href="css/style.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/css/animate.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/css/style.css" rel="stylesheet" asp-append-version="true">
 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/jquery.ui/1.13.1/themes/flick/jquery-ui.css" />
@@ -30,39 +33,43 @@
     <div id="wrapper">
         <nav class="navbar-default navbar-static-side" role="navigation">
             <div class="sidebar-collapse">
-                <ul class="nav metismenu" id="side-menu">
-                    <li class="nav-header">
-                        <div class="dropdown profile-element">
-                            <a href="/"> <img alt="image" src="~/images/logo.jpg" width="130" /></a>
-                        </div>
-                        <div class="logo-element">
-                            ARJ+
-                        </div>
-                    </li>
-                    <li>
-                        <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Propostas</span><span class="fa arrow"></span></a>
-                        <ul class="nav nav-second-level collapse">
-                            <li><a href="~/Propostas">Lista de Propostas</a></li>
-                            <li><a href="~/Mapa">Mapa dos lotes</a></li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Tabelas</span><span class="fa arrow"></span></a>
-                        <ul class="nav nav-second-level collapse">
-                            <li><a href="#">Imobiliárias</a></li>
-                            <li><a href="#">Corretores</a></li>
-                        </ul>
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <ul class="nav metismenu" id="side-menu">
+                        <li class="nav-header">
+                            <div class="dropdown profile-element">
+                                <a href="/"> <img alt="image" src="~/images/logo.jpg" width="130" /></a>
+                            </div>
+                            <div class="logo-element">
+                                ARJ+
+                            </div>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Propostas</span><span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level collapse">
+                                <li><a href="~/Propostas">Lista de Lotes</a></li>
+                                <li><a href="~/Mapa">Mapa dos lotes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Tabelas</span><span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level collapse">
+                                <li><a href="#">Imobiliárias</a></li>
+                                <li><a href="#">Corretores</a></li>
+                                <li><a asp-area="" asp-controller="Tabelas" asp-action="Precos">Preços m2 *</a></li>
+                            </ul>
 
-                    </li>
-                    <li>
-                        <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Preços</span><span class="fa arrow"></span></a>
-                        <ul class="nav nav-second-level collapse">
-                            <li><a href="#">Tabela de preços</a></li>
-                        </ul>
+                        </li>
+                        <li>
+                            <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Preços</span><span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level collapse">
+                                <li><a href="#">Tabela de preços</a></li>
+                            </ul>
 
-                    </li>
-                </ul>
+                        </li>
+                    </ul>
 
+                }
             </div>
         </nav>
 

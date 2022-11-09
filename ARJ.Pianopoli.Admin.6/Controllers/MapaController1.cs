@@ -44,19 +44,30 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 var proposta = propostas.Where(c => c.Lote == item.lote).FirstOrDefault();
                 if (proposta != null)
                 {
-                    DateTime datadaproposta = proposta.DataProposta.Date;
-                    if (item.situacao == "2" && DateTime.Now.Date <= datadaproposta.AddDays(5).Date  )
+                    if (item.situacao == "2" )
                     {
-                        item.mensagem = item.mensagem + " Rsv até " + datadaproposta.AddDays(5).ToShortDateString();
-                    }
-                    else if (item.situacao == "2" && DateTime.Now.Date > datadaproposta.AddDays(5).Date )
-                    {
-                        item.situacao = "1";
+                        item.mensagem = item.mensagem + " Reservado";
                     }
                     else if (item.situacao == "3")
                     {
                         item.mensagem = item.mensagem + " Vendido";
                     }
+
+
+                    // não é para usar a reserva com fim automático após 5 dias
+                    //DateTime datadaproposta = proposta.DataProposta.Date;
+                    //if (item.situacao == "2" && DateTime.Now.Date <= datadaproposta.AddDays(5).Date  )
+                    //{
+                    //    item.mensagem = item.mensagem + " Rsv até " + datadaproposta.AddDays(5).ToShortDateString();
+                    //}
+                    //else if (item.situacao == "2" && DateTime.Now.Date > datadaproposta.AddDays(5).Date )
+                    //{
+                    //    item.situacao = "1";
+                    //}
+                    //else if (item.situacao == "3")
+                    //{
+                    //    item.mensagem = item.mensagem + " Vendido";
+                    //}
                 }
 
                 lista.Add(item);
