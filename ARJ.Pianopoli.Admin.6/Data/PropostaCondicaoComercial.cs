@@ -19,6 +19,15 @@ namespace ARJ.Pianopoli.Admin._6.Data
         public int NrParcelasSemestrais { get; set; }
         [Column(TypeName = "decimal(18,2)")]
         public decimal ValorParcelaSemestral { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalParcelas { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal SaldoQuitacao { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal PrecoVendaCorrigido { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal JurosPeriodo { get; set; }
+
         public DateTime DataHora { get; set; } = DateTime.Now;
         public string Usuario { get; set; }
         public DateTime? DataExclusao { get; set; }

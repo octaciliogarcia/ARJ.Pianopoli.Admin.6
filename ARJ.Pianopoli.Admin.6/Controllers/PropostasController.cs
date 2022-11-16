@@ -1,6 +1,7 @@
 ﻿using ARJ.Pianopoli.Admin._6.Core;
 using ARJ.Pianopoli.Admin._6.Data;
 using ARJ.Pianopoli.Admin._6.Models;
+using DocumentFormat.OpenXml.EMMA;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using iTextSharp.text;
@@ -14,8 +15,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using Newtonsoft.Json;
 using OpenXmlPowerTools;
+using Org.BouncyCastle.Utilities;
 using SelectPdf;
 using System.Globalization;
+using System.IO;
 using System.Net;
 using System.Runtime.ConstrainedExecution;
 using System.Security.Claims;
@@ -113,20 +116,20 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 {
                     modelo.StatusNoSite = "Disponível";
                     // busca o valor total do lote quando este ainda está disponível e sem proposta enviada.
-                    var precoVenda = Math.Round(modelo.PrecoM2 * lote.Area,2); //db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault().PrecoVenda;
+                    var precoVenda = Math.Round(modelo.PrecoM2 * lote.Area, 2); //db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault().PrecoVenda;
 
                     modelo.ValorTotal = (precoVenda);
 
                     double vlrParcSemestral = 7500.00;   // deverár ser parametrizado
                     double jurosAM = 0.0025;
                     double constante = 1;
-                    var entradaPadrao = Math.Round(precoVenda*0.15m,2);
+                    var entradaPadrao = Math.Round(precoVenda * 0.15m, 2);
                     var saldoPadrao = precoVenda - entradaPadrao;
 
 
                     // var indice = Math.Pow((constante + jurosAM), 6) ;
 
-                    var VP6  = Math.Round((vlrParcSemestral/ Math.Pow((constante + jurosAM), 6)),2);
+                    var VP6 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 6)), 2);
                     var VP12 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 12)), 2);
                     var VP18 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 18)), 2);
                     var VP24 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 24)), 2);
@@ -138,7 +141,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var VP60 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 60)), 2);
 
                     var parc12 = 7000.00m;
-                    var parc24 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24)) * (((jurosAM * (Math.Pow(1 + jurosAM, 24))) / Math.Pow(1 + jurosAM, 24))- 1))/-24,2) ;
+                    var parc24 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24)) * (((jurosAM * (Math.Pow(1 + jurosAM, 24))) / Math.Pow(1 + jurosAM, 24)) - 1)) / -24, 2);
                     var parc36 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36)) * (((jurosAM * (Math.Pow(1 + jurosAM, 36))) / Math.Pow(1 + jurosAM, 36)) - 1)) / -36, 2);
                     var parc48 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48)) * (((jurosAM * (Math.Pow(1 + jurosAM, 48))) / Math.Pow(1 + jurosAM, 48)) - 1)) / -48, 2);
                     var parc60 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48 + VP54 + VP60)) * (((jurosAM * (Math.Pow(1 + jurosAM, 60))) / Math.Pow(1 + jurosAM, 60)) - 1)) / -60, 2);
@@ -199,6 +202,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                                            where x.PropostaId == proposta.Id
                                            select c).ToList();
 
+                        foreach (var item in compradores)
+                        {
+                            item.Celular = Convert.ToUInt64(item.Celular).ToString(@"(00) 00000-0000");
+                            item.Cpf = Convert.ToUInt64(item.Cpf).ToString(@"000\.000\.000\-00");
+                        }
+
 
                         var statusnosite = "";
                         if (proposta.Status == 2)
@@ -225,7 +234,11 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                             SaldoPagar = String.Format("{0:0,0.00}", (propostaCondicoes.ValorTotal - propostaCondicoes.ValorEntrada)),
                             TipoPagamento = propostaCondicoes.ValorTotal == propostaCondicoes.ValorEntrada ? "a vista" : "a prazo",
                             Parcelamento = propostaCondicoes.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaMensal) + " + " + propostaCondicoes.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaSemestral),
-                            Compradores = compradores
+                            Compradores = compradores,
+                            TotalParcelas = String.Format("{0:0,0.00}", propostaCondicoes.TotalParcelas),
+                            SaldoQuitacao = String.Format("{0:0,0.00}", propostaCondicoes.SaldoQuitacao),
+                            PrecoVendaCorrigido = String.Format("{0:0,0.00}", propostaCondicoes.PrecoVendaCorrigido),
+                            JurosCobrados = String.Format("{0:0,0.00}", propostaCondicoes.JurosPeriodo)
                         };
                         return PartialView("EditarPropostaPreenchida", retorno);
                     }
@@ -270,7 +283,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 var precoVenda = Math.Round(retorno.PrecoM2 * dadosLote.Area, 2);
 
 
-                if (entrada < (precoVenda*0.15m))
+                if (entrada < (precoVenda * 0.15m))
                 {
                     return Json(new
                     {
@@ -367,7 +380,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     //ViewBag.Mensais = condicoespagto;
 
                     ViewBag.Mensais = listaTabela;
-                    
+
 
 
                 }
@@ -383,9 +396,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     ViewBag.Mensais = condicoespagto;
                 }
 
-               // gera um html para substituir no combobox
+                // gera um html para substituir no combobox
 
-               var conteudo = "";
+                var conteudo = "";
                 foreach (var item in listaTabela)
                 {
                     conteudo = conteudo + "<option value = '" + item.Value + "' > " + item.Text + " </option>";
@@ -412,7 +425,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
         }
 
-        
+
         [HttpPost]
         [Authorize]
         public IActionResult ValidarRestante(int Loteamento, string Quadra, string Lote, string Entrada, string TipoPagamento, string Parcelamento)
@@ -421,7 +434,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             {
                 try
                 {
-                    var lote = int.Parse( Lote);
+                    var lote = int.Parse(Lote);
 
 
                     //verifica se o lote foi vendido ou ainda está disponível
@@ -437,11 +450,11 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     // verifica todos os valores novamente, para evitar "injeções" no jQuery
 
-                    var dadosLote = db.Lotes.Where(c=>c.Quadra==Quadra && c.Lote == lote).FirstOrDefault();  
+                    var dadosLote = db.Lotes.Where(c => c.Quadra == Quadra && c.Lote == lote).FirstOrDefault();
 
                     var stringEntrada = Entrada.Replace(".", "").Replace(",", ".");
                     var entrada = decimal.Parse(stringEntrada) / 100;
-                    
+
                     var precoM2 = db.TabelaM2.Where(c => c.CategoriaId == dadosLote.CategoriaId).FirstOrDefault().ValorM2;
                     var precoVenda = Math.Round(precoM2 * dadosLote.Area, 2);
                     double vlrParcSemestral = 7500.00;   // deverár ser parametrizado
@@ -503,7 +516,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         VrParcelaMensal = parc24,
                         NrParcelasSemestrais = 4,
                         VrParcelaSemestral = vlrParcSemestral
-                    }); 
+                    });
                     listaTabela.Add(new PlanosParcelasViewModel
                     {
                         Plano = "3",
@@ -519,7 +532,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         VrParcelaMensal = parc48,
                         NrParcelasSemestrais = 8,
                         VrParcelaSemestral = vlrParcSemestral
-                    }); 
+                    });
                     listaTabela.Add(new PlanosParcelasViewModel
                     {
                         Plano = "5",
@@ -530,7 +543,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     });
 
                     var planoEscolhido = listaTabela.Where(c => c.Plano == Parcelamento).FirstOrDefault();
-                    if(planoEscolhido!=null)
+                    if (planoEscolhido != null)
                     {
 
                     }
@@ -547,7 +560,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     double precoVendaCorrigido;// = Math.Round(totalParcelas + saldoQuitacao + (double)entrada, 2);
                     double jurosPeriodo;// = precoVendaCorrigido - (double)precoVenda;
 
-                    if (planoEscolhido.Plano=="1")
+                    if (planoEscolhido.Plano == "1")
                     {
                         totalParcelas = (planoEscolhido.NrParcelasMensais * planoEscolhido.VrParcelaMensal) + (planoEscolhido.NrParcelasSemestrais * planoEscolhido.VrParcelaSemestral);
                         saldoQuitacao = (double)saldo - totalParcelas;
@@ -562,7 +575,8 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         jurosPeriodo = precoVendaCorrigido - (double)precoVenda;
                     }
 
-                    return Json(new { 
+                    return Json(new
+                    {
                         result = true,
                         juroscobrados = String.Format("{0:0,0.00}", jurosPeriodo),
                         precovendacorrigido = String.Format("{0:0,0.00}", precoVendaCorrigido),
@@ -783,7 +797,11 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     objcm.NrParcelasMensais = entrada == precoVenda ? 0 : planoEscolhido.NrParcelasMensais;
                     objcm.NrParcelasSemestrais = entrada == precoVenda ? 0 : planoEscolhido.NrParcelasSemestrais;
                     objcm.ValorParcelaMensal = entrada == precoVenda ? 0 : (decimal)planoEscolhido.VrParcelaMensal; ;
-                    objcm.ValorParcelaSemestral = entrada == precoVenda? 0 : (decimal)planoEscolhido.VrParcelaSemestral;
+                    objcm.ValorParcelaSemestral = entrada == precoVenda ? 0 : (decimal)planoEscolhido.VrParcelaSemestral;
+                    objcm.TotalParcelas = (decimal)totalParcelas;
+                    objcm.SaldoQuitacao = (decimal)saldoQuitacao;
+                    objcm.PrecoVendaCorrigido = (decimal)precoVendaCorrigido;
+                    objcm.JurosPeriodo = (decimal)jurosPeriodo;
                     db.Add(objcm);
                     db.SaveChanges();
 
@@ -829,7 +847,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                                             Value = f.Id.ToString()
                                         });
 
-                    var auxiliar= listaTabela.Where(c => c.Plano == Parcelamento).FirstOrDefault();
+                    var auxiliar = listaTabela.Where(c => c.Plano == Parcelamento).FirstOrDefault();
                     retorno.TipoPagamento = auxiliar.NrParcelasMensais.ToString() + " X R$ " + String.Format("{0:0,0.00}", auxiliar.VrParcelaMensal) + " + " + auxiliar.NrParcelasSemestrais.ToString() + " X R$ " + String.Format("{0:0,0.00}", auxiliar.VrParcelaSemestral);
 
                     return PartialView("Compradores", retorno);
@@ -944,7 +962,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     }
 
-                    return Json(new { endereco = (!string.IsNullOrEmpty(buscacep.logradouro) ? buscacep.logradouro : ""), cidade = (!string.IsNullOrEmpty(buscacep.localidade) ? buscacep.localidade + "," : ""), bairro = (!string.IsNullOrEmpty(buscacep.bairro) ? buscacep.bairro : ""), uf = (!string.IsNullOrEmpty(buscacep.uf) ? buscacep.uf : "") });
+                    return Json(new { endereco = (!string.IsNullOrEmpty(buscacep.logradouro) ? buscacep.logradouro : ""), cidade = (!string.IsNullOrEmpty(buscacep.localidade) ? buscacep.localidade + "" : ""), bairro = (!string.IsNullOrEmpty(buscacep.bairro) ? buscacep.bairro : ""), uf = (!string.IsNullOrEmpty(buscacep.uf) ? buscacep.uf : "") });
                 }
                 else
                 {
@@ -954,7 +972,6 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             }
             catch (Exception)
             {
-
                 return Json(new { Logradouro = "" });
             }
 
@@ -1083,69 +1100,132 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                              CompradorId = y.Id,
                              PropostaId = (int)x.PropostaId,
                              NomeComprador = y.Nome,
-                             CpfComprador = y.Cpf,
-                             CelularComprador = y.Celular
+                             CpfComprador = Convert.ToUInt64(y.Cpf).ToString(@"000\.000\.000\-00"),
+                             CelularComprador = Convert.ToUInt64(y.Celular).ToString(@"(00) 00000-0000")
                          }
                          ).ToList();
-
 
             return PartialView("ListaCompradores", lista);
         }
         //
         // 20/10/2022 - Impressão da proposta para diversas finalidades
         //
+
         public IActionResult ImprimirProposta(string id)
         {
             var PropostaId = int.Parse(id);
+
             using (System.IO.MemoryStream memoryStream = new System.IO.MemoryStream())
             {
                 var obj = db.Propostas.Where(c => c.Id == PropostaId).FirstOrDefault();
+                var objlote = db.Lotes.Where(c => c.Quadra == obj.Quadra && c.Lote == obj.Lote).FirstOrDefault();
+
                 var compradores = db.PropostasCompradores.Where(c => c.PropostaId == PropostaId).ToList();
                 var condicoes = db.PropostasCondicoesComerciais.Where(c => c.PropostaId == PropostaId).FirstOrDefault();
                 var pxPormm = 72 / 25.2F;
-                var pdf = new Document(PageSize.A4, 15 * pxPormm, 15 * pxPormm, 2 * pxPormm, 0 * pxPormm);
+                var pdf = new Document(PageSize.A4, 15 * pxPormm, 15 * pxPormm, 2 * pxPormm, 5 * pxPormm);
                 var writer = PdfWriter.GetInstance(pdf, memoryStream);
                 pdf.Open();
 
-                var fonteParagrafo = new iTextSharp.text.Font(fontebase, 12, iTextSharp.text.Font.NORMAL);
+                var fonteParagrafo = new iTextSharp.text.Font(fontebase, 10, iTextSharp.text.Font.NORMAL);
+                var fonteBold = new iTextSharp.text.Font(fontebase, 10, iTextSharp.text.Font.BOLD);
+                var fonteTitulo = new iTextSharp.text.Font(fontebase, 10, iTextSharp.text.Font.BOLD);
+                var fonteReduzida = new iTextSharp.text.Font(fontebase, 8, iTextSharp.text.Font.NORMAL);
 
-                var titulo1 = new Paragraph("LOTEAMENTO RESIDENCIAL PIANOPOLI\n\n", fonteParagrafo);
-                var titulo2 = new Paragraph("CONTRATO DE COMPRA E VENDA\n\n", fonteParagrafo);
-                var titulo3 = new Paragraph("COM ALIENAÇÃO FIDUCIÁRIA EM GARANTIA\n\n", fonteParagrafo);
-                var titulo4 = new Paragraph("E COM CONDIÇÕES SUSPENSIVAS\n\n", fonteParagrafo);
+
+                var titulo1 = new Paragraph("PROPOSTA DE COMPRA E VENDA - LOTEAMENTO RESIDENCIAL PIANOPOLI\n\n", fonteTitulo);
+                var titulo2 = new Paragraph("1a. Via Comprador\n\n", fonteReduzida);
+
+                //var titulo3 = new Paragraph("PROPOSTA PARA PAGAMENTO A PRAZO - NR. " + id.ToString() + "\n\n", fonteParagrafo);
+                //var titulo4 = new Paragraph("E COM CONDIÇÕES SUSPENSIVAS\n\n", fonteParagrafo);
+
+                PdfPCell cell = new PdfPCell();
+                Phrase phrase = new Phrase();
+                phrase.Add(new Chunk("PROPOSTA PARA PAGAMENTO ", fonteParagrafo));
+                phrase.Add(new Chunk("A PRAZO ", fonteBold));
+                phrase.Add(new Chunk("NR. " + id.ToString() + " \n\n", fonteParagrafo));
+                //cell = new PdfPCell(phrase);
+
+                var titulo3 = new Paragraph(phrase);
 
                 titulo1.Alignment = Element.ALIGN_CENTER;
-                titulo2.Alignment = Element.ALIGN_CENTER;
+                titulo2.Alignment = Element.ALIGN_RIGHT;
                 titulo3.Alignment = Element.ALIGN_CENTER;
-                titulo4.Alignment = Element.ALIGN_CENTER;
+
+                //titulo3.Alignment = Element.ALIGN_CENTER;
+                //titulo4.Alignment = Element.ALIGN_CENTER;
                 pdf.Add(titulo1);
+                pdf.Add(titulo2);
+                pdf.Add(titulo3);
 
 
                 PdfPTable mtable = new PdfPTable(1);
                 mtable.WidthPercentage = 100;
                 mtable.DefaultCell.Border = iTextSharp.text.Rectangle.NO_BORDER;
 
-                PdfPTable table = new PdfPTable(2);
-                PdfPCell cell = new PdfPCell(new Phrase(""));
+                PdfPTable table = new PdfPTable(3);
+                table.DefaultCell.Border = iTextSharp.text.Rectangle.NO_BORDER;
                 table.WidthPercentage = 100;
-                table.DefaultCell.Border = 0;
 
-                table.AddCell("Quadra:  " + obj.Quadra);
-                table.AddCell("Pagamento  A VISTA: R$ " + string.Format("{0:N2}", obj.ValorTotal));
 
-                table.AddCell("Lote:  " + obj.Lote);
-                table.AddCell("Data Vencimento:  "); // + condicoes.VencimentoInicial.Value.ToShortDateString());
+                cell = new PdfPCell(new Phrase("Quadra: " + obj.Quadra, fonteParagrafo));
+                cell.Colspan = 1;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+                cell = new PdfPCell(new Phrase("Pagamento  A PRAZO - Entrada: R$ " + string.Format("{0:0,0.00}", condicoes.ValorEntrada), fonteParagrafo));
+                cell.Colspan = 2;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
 
-                table.AddCell("Área:  XXX m2"); // + obj.Area + "m2");
-                table.AddCell(" ");
+                cell = new PdfPCell(new Phrase("Lote: " + obj.Lote.ToString(), fonteParagrafo));
+                cell.Colspan = 1;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+                cell = new PdfPCell(new Phrase("DATA VENCIMENTO PARCELA ENTRADA: " + obj.DataProposta.AddDays(5).ToShortDateString(), fonteParagrafo));
+                cell.Colspan = 2;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
 
-                table.AddCell(" ");
+                cell = new PdfPCell(new Phrase("Área: " + String.Format("{0:0,0.00}", objlote.Area) + " m2", fonteParagrafo));
+                cell.Colspan = 1;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+                cell = new PdfPCell(new Phrase("VALOR REMANESCENTE: R$ " + String.Format("{0:0,0.00}", condicoes.SaldoQuitacao), fonteParagrafo));
+                cell.Colspan = 2;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase(" ", fonteParagrafo));
+                cell.Colspan = 1;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+                cell = new PdfPCell(new Phrase("Quantidade Prestações Mensais: " + condicoes.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", condicoes.ValorParcelaMensal), fonteParagrafo));
+                cell.Colspan = 2;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase(" ", fonteParagrafo));
+                cell.Colspan = 1;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+                cell = new PdfPCell(new Phrase("Quantidade Prestações Semestrais: " + condicoes.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", condicoes.ValorParcelaSemestral), fonteParagrafo));
+                cell.Colspan = 2;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase(" ", fonteParagrafo));
+                cell.Colspan = 1;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+                cell = new PdfPCell(new Phrase("REAJUSTE ANUAL: IPCA + 1% a.a. (conforme contrato de venda)\n\n", fonteParagrafo));
+                cell.Colspan = 2;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
 
                 mtable.AddCell(table);
 
                 table = new PdfPTable(3);
 
-                //table.DefaultCell.Border = 0;
                 var idcomprador = 1;
 
                 var sql = (from f in db.PropostasCompradores
@@ -1157,78 +1237,101 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                 foreach (var item in sql)
                 {
-                    cell = new PdfPCell(new Phrase("Comprador " + idcomprador + ": " + item.Nome.ToUpper()));
+                    //cell = new PdfPCell(new Phrase("Comprador " + idcomprador + ": " + item.Nome.ToUpper(), fonteParagrafo));
+                    phrase = new Phrase();
+                    phrase.Add(new Chunk("Comprador " + idcomprador + ": ", fonteParagrafo));
+                    phrase.Add(new Chunk(item.Nome.ToUpper(), fonteBold));
+                    cell = new PdfPCell(phrase);
+
                     cell.Colspan = 3;
-                    //cell.Border = 0;
+                    cell.BorderWidthLeft = 0;
+                    cell.BorderWidthTop = 0;
+                    cell.BorderWidthRight = 0;
+                    cell.BorderWidthBottom = 1;
                     cell.HorizontalAlignment = PdfCell.ALIGN_LEFT;
                     table.AddCell(cell);
-                    table.AddCell("CPF: " + item.Cpf);
-                    table.AddCell("RG: " + item.Rg);
-                    //table.AddCell("Exp:" + item.ExpRg.ToUpper());
 
-                    table.AddCell("Data Nascimento: " + item.DtNasc.ToShortDateString());
+                    cell = new PdfPCell(new Phrase("CPF: " + Convert.ToUInt64(item.Cpf).ToString(@"000\.000\.000\-00"), fonteParagrafo));
+                    cell.Colspan = 1;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    cell = new PdfPCell(new Phrase("RG: " + item.Rg, fonteParagrafo));
+                    cell.Colspan = 1;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    cell = new PdfPCell(new Phrase("EXP: " + item.RgExpPor, fonteParagrafo));
+                    cell.Colspan = 1;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    cell = new PdfPCell(new Phrase("Data Nascimento: " + item.DtNasc.ToShortDateString(), fonteParagrafo));
+                    cell.Colspan = 1;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    cell = new PdfPCell(new Phrase("Filiação: ", fonteParagrafo));
                     cell.Colspan = 2;
-                    //cell.Border = 0;
-                    cell.HorizontalAlignment = PdfCell.ALIGN_LEFT;
+                    cell.BorderWidth = 0;
                     table.AddCell(cell);
-                    table.AddCell("Profissão: " + item.Profissao);
-                    cell = new PdfPCell(new Phrase("Nacionalidade: " + item.Nacionalidade.ToUpper()));
+
+                    cell = new PdfPCell(new Phrase("Profissão: " + item.Profissao.TrimEnd(), fonteParagrafo));
                     cell.Colspan = 2;
-                    //cell.Border = 0;
-                    cell.HorizontalAlignment = PdfCell.ALIGN_LEFT;
+                    cell.BorderWidth = 0;
                     table.AddCell(cell);
-                    cell = new PdfPCell(new Phrase("Email: " + item.Email.ToUpper()));
+
+                    cell = new PdfPCell(new Phrase("Nacionalidade: " + item.Nacionalidade.TrimEnd(), fonteParagrafo));
+                    cell.Colspan = 1;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    // -- linha
+                    cell = new PdfPCell(new Phrase("E-mail: " + item.Email.ToLower().TrimEnd(), fonteParagrafo));
                     cell.Colspan = 2;
-                    //cell.Border = 0;
-                    cell.HorizontalAlignment = PdfCell.ALIGN_LEFT;
-                    table.AddCell(cell);
-                    table.AddCell("Telefone: ");
-
-                    cell = new PdfPCell(new Phrase("Endereço Resid: " + item.Logradouro));
-                    cell.Colspan = 3;
-                    //cell.Border = 0;
-                    cell.HorizontalAlignment = PdfCell.ALIGN_LEFT;
+                    cell.BorderWidth = 0;
                     table.AddCell(cell);
 
+                    cell = new PdfPCell(new Phrase("Fone: " + Convert.ToUInt64(item.Celular).ToString(@"\(00\) 00000\-0000"), fonteParagrafo));
+                    cell.Colspan = 1;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+                    //---
 
-                    table.AddCell("Cidade:" + item.Municipio);
-                    table.AddCell("Bairro:" + item.Bairro);
-                    table.AddCell("Cep:" + item.Cep);
-
-
-
-                    //table.AddCell("Estado Civil:" + (item.EstadoCivil != null ? db.EstadoCivil.Where(c => c.Id == item.EstadoCivil).FirstOrDefault().Descricao : " "));
-                    //table.AddCell("Data Casamento:" + (item .CasamentoData != null ? item.DtCasamento.Value.ToShortDateString() : ""));
-                    //table.AddCell("Regime Casamento:" + (item.RegimeCasamento > 0 ? item.RegimeCasamento == 1 ? "Comunhão parcial de bens" : item.RegimeCasamento == 2 ? "Comunhão total de bens" : item.RegimeCasamento == 3 ? "Separação total de bens" : "" : ""));
-                    //cell = new PdfPCell(new Phrase("Nome Cônjuge: " + item.NomeConjuge));
-                    //cell.Colspan = 3;
-                    ////cell.Border = 0;
-                    //cell.HorizontalAlignment = PdfCell.ALIGN_LEFT;
-                    //table.AddCell(cell);
-
-
-                    //table.AddCell("CPF Cônjuge:" + item.CpfConjuge);
-                    //table.AddCell("RG Cônjuge:" + item.RgConjuge);
-                    //table.AddCell("Dt Nasc:" + (item.DtNascConjuge != null ? item.DtNascConjuge.Value.ToShortDateString() : ""));
-
-                    //table.AddCell("Profissão Cônjuge:" + item.ProfissaoConjuge);
-                    //cell = new PdfPCell(new Phrase("Nacionalidade: " + item.NacionalidadeConjuge));
-                    //cell.Colspan = 2;
-                    ////cell.Border = 0;
-                    //cell.HorizontalAlignment = PdfCell.ALIGN_LEFT;
-                    //table.AddCell(cell);
-
-                    cell = new PdfPCell(new Phrase(""));
+                    // -- linha
+                    cell = new PdfPCell(new Phrase("Endereço res.: " + item.Logradouro.TrimEnd() + " " + item.Numero.TrimEnd() + " " + (item.Complemento.TrimEnd() ?? ""), fonteParagrafo));
                     cell.Colspan = 3;
-                    cell.Border = 0;
-                    cell.HorizontalAlignment = PdfCell.ALIGN_LEFT;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+                    //---
+
+                    // -- linha
+                    cell = new PdfPCell(new Phrase("Cidade: " + item.Municipio.TrimEnd(), fonteParagrafo));
+                    cell.Colspan = 1;
+                    cell.BorderWidth = 0;
                     table.AddCell(cell);
 
-                    cell = new PdfPCell(new Phrase(""));
+                    cell = new PdfPCell(new Phrase("Bairro: " + item.Bairro.TrimEnd(), fonteParagrafo));
+                    cell.Colspan = 1;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    cell = new PdfPCell(new Phrase("Cep: " + Convert.ToUInt64(item.Cep).ToString(@"00000\-000"), fonteParagrafo));
+                    cell.Colspan = 1;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    cell = new PdfPCell(new Phrase("", fonteParagrafo));
                     cell.Colspan = 3;
-                    cell.Border = 0;
-                    //cell.FixedHeight = 20f;
-                    cell.HorizontalAlignment = PdfCell.ALIGN_LEFT;
+                    cell.BorderWidthBottom = 1;
+                    cell.BorderWidthTop = 0;
+                    cell.BorderWidthLeft = 0;
+                    cell.BorderWidthRight = 0;
+                    table.AddCell(cell);
+
+                    cell = new PdfPCell(new Phrase("\n", fonteParagrafo));
+                    cell.Colspan = 3;
+                    cell.BorderWidth = 0;
                     table.AddCell(cell);
 
                     idcomprador++;
@@ -1239,36 +1342,80 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 table = new PdfPTable(1);
                 table.WidthPercentage = 100;
                 table.DefaultCell.Border = 0;
-                table.AddCell("NOME DO CORRETOR / IMOBILIÁRIA: TESTE "); // + db.Corretores.Where(c => c.Id == obj. .Corretor).FirstOrDefault().Nome);
-                table.AddCell("NUMERO DO CRECI: 00000 "); //+ db.Corretores.Where(c => c.Id == obj.Corretor).FirstOrDefault().Creci + "\r\n \r\n");
-                //table.AddCell("INFORMAÇÕES ESPECIAIS: IMPORTANTE - A PRESENTE PROPOSTA DE COMPRA CONSTITUI RESERVA DO BEM NELA DESCRITO, SOMENTE SENDO VÁLIDA APÓS A QUITAÇÃO DO VALOR REFERENTE A ENTRADA.A ENTRADA CORRESPONDE AO SINAL E PRINCÍPIO DE PAGAMENTO(ARRAS).NA FALTA DO PAGAMENTO DA ENTRADA ESTA PROPOSTA FICA AUTOMATICAMENTE CANCELADA E RESCINDIDA, GARANTINDO - SE AO VENDEDOR O DIREITO DE DISPOR DO LOTE NEGOCIADO.QUITADO O VALOR DA ENTRADA, O VENDEDOR ELABORARÁ O COMPROMISSO DE COMPRA E VENDA, INTIMANDO O COMPRADOR PARA ASSINATURA DO CONTRATO.");
-                var fonte = new iTextSharp.text.Font(fontebase, 7);
-                cell = new PdfPCell(new Phrase("INFORMAÇÕES ESPECIAIS: IMPORTANTE - A PRESENTE PROPOSTA DE COMPRA CONSTITUI RESERVA DO BEM NELA DESCRITO, SOMENTE SENDO VÁLIDA APÓS A QUITAÇÃO DO VALOR REFERENTE A ENTRADA.A ENTRADA CORRESPONDE AO SINAL E PRINCÍPIO DE PAGAMENTO(ARRAS).NA FALTA DO PAGAMENTO DA ENTRADA ESTA PROPOSTA FICA AUTOMATICAMENTE CANCELADA E RESCINDIDA, GARANTINDO - SE AO VENDEDOR O DIREITO DE DISPOR DO LOTE NEGOCIADO.QUITADO O VALOR DA ENTRADA, O VENDEDOR ELABORARÁ O COMPROMISSO DE COMPRA E VENDA, INTIMANDO O COMPRADOR PARA ASSINATURA DO CONTRATO. \r\n ", fonte));
+
+                cell = new PdfPCell(new Phrase("NOME DO CORRETOR / IMOBILIÁRIA: TESTE ", fonteParagrafo));
+                cell.Colspan = 3;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase("NUMERO DO CRECI: " + "\n", fonteParagrafo));
+                cell.Colspan = 3;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase("\n", fonteParagrafo));
+                cell.Colspan = 3;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+
+                var fonteArial7 = new iTextSharp.text.Font(FontFactory.GetFont("ARIAL", 7, iTextSharp.text.Font.NORMAL));
+                cell = new PdfPCell(new Phrase("INFORMAÇÕES ESPECIAIS: IMPORTANTE - A PRESENTE PROPOSTA DE COMPRA CONSTITUI RESERVA DO BEM NELA DESCRITO, SOMENTE SENDO VÁLIDA APÓS A QUITAÇÃO DO VALOR REFERENTE A ENTRADA.A ENTRADA CORRESPONDE AO SINAL E PRINCÍPIO DE PAGAMENTO(ARRAS).NA FALTA DO PAGAMENTO DA ENTRADA ESTA PROPOSTA FICA AUTOMATICAMENTE CANCELADA E RESCINDIDA, GARANTINDO - SE AO VENDEDOR O DIREITO DE DISPOR DO LOTE NEGOCIADO.QUITADO O VALOR DA ENTRADA, O VENDEDOR ELABORARÁ O COMPROMISSO DE COMPRA E VENDA, INTIMANDO O COMPRADOR PARA ASSINATURA DO CONTRATO. \r\n ", fonteArial7));
                 cell.Colspan = 3;
                 cell.Border = 0;
                 cell.HorizontalAlignment = PdfCell.ALIGN_LEFT;
                 table.AddCell(cell);
 
 
-                cell = new PdfPCell(new Phrase("Araraquara-SP, " + hoje.Day + " de " + DateTime.Now.ToString("MMMM", new CultureInfo("pt-BR")) + " de " + hoje.Year + "\r\n \r\n"));
+                cell = new PdfPCell(new Phrase("Araraquara-SP, " + hoje.Day + " de " + DateTime.Now.ToString("MMMM", new CultureInfo("pt-BR")) + " de " + hoje.Year + "\r\n \r\n", fonteParagrafo));
                 cell.Colspan = 1;
                 cell.Border = 0;
                 cell.HorizontalAlignment = PdfCell.ALIGN_RIGHT;
                 table.AddCell(cell);
-                table.AddCell("Documentos Necessários: \r\n - CPF  \r\n  - RG \r\n  - Comprovante Residência(água ou luz) \r\n - Certidão estado civil(solteiro, casado ou divorciado) \r\n \r\n \r\n");
+
+                //cell = new PdfPCell(new Phrase("Documentos Necessários: \r\n - CPF  \r\n  - RG \r\n  - Comprovante Residência(água ou luz) \r\n - Certidão estado civil(solteiro, casado ou divorciado) \r\n \r\n \r\n", fonteParagrafo));
+                //cell.Colspan = 3;
+                //cell.BorderWidth = 0;
+                //table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase("Documentos Necessários:", fonteParagrafo));
+                cell.Colspan = 3;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase(" -CPF ", fonteParagrafo));
+                cell.Colspan = 3;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase(" -RG ", fonteParagrafo));
+                cell.Colspan = 3;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase(" -Comprovante Residência (água ou luz) ", fonteParagrafo));
+                cell.Colspan = 3;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase(" -Certidão estoado civil (solteiro, casado ou divorciado) \n\n\n", fonteParagrafo));
+                cell.Colspan = 3;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
 
 
                 var id2 = 1;
                 foreach (var item in sql)
                 {
-                    cell = new PdfPCell(new Phrase("___________________________________  \r\n Comprador" + id2 + " \r\n"));
+                    cell = new PdfPCell(new Phrase("___________________________________  \r\n " + item.Nome.TrimEnd() + " \r\n"));
                     cell.Colspan = 1;
                     cell.Border = 0;
                     cell.HorizontalAlignment = PdfCell.ALIGN_CENTER;
                     table.AddCell(cell);
                     id2++;
                 }
-                cell = new PdfPCell(new Phrase("___________________________________  \r\n Corretor"));
+                cell = new PdfPCell(new Phrase("___________________________________  \r\n" + " Corretor"));
                 cell.Colspan = 1;
                 cell.Border = 0;
                 cell.HorizontalAlignment = PdfCell.ALIGN_CENTER;
@@ -1281,12 +1428,16 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                 pdf.Close();
 
+
+
                 byte[] file = memoryStream.ToArray();
                 MemoryStream ms = new MemoryStream();
                 ms.Write(file, 0, file.Length);
+                ms.Flush();
                 ms.Position = 0;
 
-                return File(fileStream: ms, contentType: "application/pdf", fileDownloadName: "test_file_name" + ".pdf");
+                return new FileStreamResult(ms, "application/pdf");
+                //return File(fileStream: ms, contentType: "application/pdf", fileDownloadName: "test_file_name" + ".pdf");
 
             }
 

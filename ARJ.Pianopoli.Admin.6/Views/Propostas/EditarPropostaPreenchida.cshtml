@@ -59,26 +59,50 @@
                 </div>
                 <div class="form-group row" id="TipoParcelamento" >
                     <label class="col-lg-2 col-form-label">Parcelas </label>
-                    <div class="col-5">
+                    <div class="col-3">
                         <input type="text" class="form-control" id="parcelamento" value="@(Model.Parcelamento)" disabled>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Valor total das parcelas</label>
+                    <div class="col-3">
+                        <input type="text" placeholder="Vr total parcelas R$" class="form-control money direita" id="TotalParcelas" name="TotalParcelas" value="@(Model.TotalParcelas)" disabled>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Saldo para Quitação R$</label>
+                    <div class="col-3">
+                        <input type="text" placeholder="Saldo Quitação R$" class="form-control money direita" id="SaldoQuitacao" name="SaldoQuitacao" value="@(Model.SaldoQuitacao)" disabled>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Preço Venda Corrigido R$</label>
+                    <div class="col-3">
+                        <input type="text" placeholder="Preço Corrigido R$" class="form-control money direita" id="PrecoVendaCorrigido" name="PrecoVendaCorrigido" value="@(Model.PrecoVendaCorrigido)" disabled>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-2 col-form-label">Juros no período R$</label>
+                    <div class="col-3">
+                        <input type="text" placeholder="Juros R$" class="form-control money direita" id="JurosCobrados" name="JurosCobrados" value="@(Model.JurosCobrados)" disabled>
                     </div>
                 </div>
             </div>
             <div>
                 <p><b>Compradores</b></p>
                 @{
-                    if (Model.Compradores.Count > 0)
+                    if (Model.Compradores !=null && Model.Compradores.Count> 0)
                     {
                             <table class="table table-bordered table-striped" style="width:900px;">
                                 <tr>
                                     <th style="width:20px;text-align:center;"></th>
-                                    <th style="width:200px!important; font-size: .9rem;max-width:200px;">
+                                    <th style="width:200px!important; font-size: .9rem;max-width:200px;width:200px;">
                                         Nome Comprador
                                     </th>
                                     <th style="width: 100px; text-align: right; font-size: .9rem;">
                                         CPF
                                     </th>
-                                    <th style="width: 100px; text-align: right; font-size: .9rem;">
+                                <th style="width: 100px; text-align: right; font-size: .9rem;">
                                         Celular
                                     </th>
                                     <th style="width:20px;text-align:center;"></th>
@@ -90,16 +114,16 @@
                             {
                                     <tr>
                                         <td style="font-size:1.1rem;">@i</td>
-                                        <td>
+                                    <td style="width:200px;">
                                             @item.Nome
                                         </td>
-                                        <td>
+                                    <td style="width: 100px; text-align: right;">
                                             @item.Cpf
                                         </td>
-                                        <td>
+                                    <td style="width: 100px; text-align: right;">
                                             @item.Celular
                                         </td>
-                                        <td>
+                                    <td style="text-align: center;">
                                             <button onclick="VisualizarComprador(@item.Id)" class="btn btn-warning btn-action editar">
                                                 <i class="fa-solid fa-edit"></i>
                                             </button>

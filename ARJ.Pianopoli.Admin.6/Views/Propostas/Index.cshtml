@@ -961,10 +961,7 @@
 
     }
 
-    function Imprimir() {
-        window.location = urlbase + "/Proposta/Imprimir?Proposta=" + $("#Id").val();
-    }
-
+    
     function ValidarEcivil(id) {
         if (id == '2') {
             $('#SecaoCasamento').attr("hidden", false);
@@ -1056,25 +1053,8 @@
     }
 
     function Imprimir() {
-        var Id = $("#PropostaId").val();
-        $.ajax({
-            cache: false,
-            type: 'POST',
-            data: {
-                id: Id
-            },
-            url: '' + urlbase + '/Propostas/ImprimirProposta',
-            success: function (data) {
-                $("#temp-container").html(data);
-                RemoveAguarde();
-                if (data.Result == false) {
-                    SwalPopUpErro("Erro", data.Message, "error");
-                }
-            },
-            error: function (xhr, ajaxOptions, thrownError) {
-                RemoveAguarde();
-            }
-        });
+
+        window.open(urlbase + "/Propostas/ImprimirProposta?Id=" + $("#PropostaId").val(), '_blank');
     }
 
     function ImprimirContrato() {
@@ -1082,44 +1062,6 @@
         window.open(urlbase + "/Propostas/ImprimirContrato?Id=" + $("#PropostaId").val(), '_blank');
     }
 
-
-    //function GridCompradores(id) {
-
-    //    var propostaId = $("#PropostaId").val();
-
-    //    $('#compradores').DataTable({
-    //        "lengthChange": false,
-    //        "ajax": {
-    //            "url": urlbase + "/propostas/BuscarCompradores",
-    //            "data": {
-    //                "id": propostaId
-    //            }
-    //        }, "columnDefs": [
-    //            {
-    //                "targets": [0],
-    //                "visible": false,
-    //                "searchable": false
-    //            }],
-    //        "columns": [
-    //            { "data": "id" },
-    //            { "data": "nome" },
-    //            { defaultContent: '<div style="width:100%; text-align:right"> <button onclick="EditarComprador(this)" class="btn btn-warning btn-action editar"><i class="fa-solid fa-edit"></i></button> <button onclick="ConfirmaExcluirComprador(this)" class="btn btn-danger btn-action editar"><i class="fa-solid fa-eraser"></i></button></div>' }
-    //        ],
-    //        "language": {
-    //            "url": "//cdn.datatables.net/plug-ins/1.11.4/i18n/pt_br.json",
-    //        }
-    //    });
-
-    //    setTimeout(() => {
-    //        var table = $('#comprador').DataTable();
-    //        if (!table.data().any()) {
-    //            $(".btnimprimir").hide();
-
-    //        } else {
-    //            $(".btnimprimir").show();
-    //        }
-    //    }, 300);
-    //}
 
 
     $("#imagem").on('change', function () {
