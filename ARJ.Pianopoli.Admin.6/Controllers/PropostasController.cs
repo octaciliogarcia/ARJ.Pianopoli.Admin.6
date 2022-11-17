@@ -1,32 +1,26 @@
 ﻿using ARJ.Pianopoli.Admin._6.Core;
 using ARJ.Pianopoli.Admin._6.Data;
 using ARJ.Pianopoli.Admin._6.Models;
-using DocumentFormat.OpenXml.EMMA;
+using ARJ.Pianopoli.Admin._6.Utils;
 using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Wordprocessing;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using Newtonsoft.Json;
 using OpenXmlPowerTools;
-using Org.BouncyCastle.Utilities;
 using SelectPdf;
 using System.Globalization;
-using System.IO;
 using System.Net;
-using System.Runtime.ConstrainedExecution;
 using System.Security.Claims;
 using System.Text;
 using System.Xml.Linq;
 using Document = iTextSharp.text.Document;
 using PageSize = iTextSharp.text.PageSize;
 using Paragraph = iTextSharp.text.Paragraph;
+
 
 namespace ARJ.Pianopoli.Admin._6.Controllers
 {
@@ -117,6 +111,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     modelo.StatusNoSite = "Disponível";
                     // busca o valor total do lote quando este ainda está disponível e sem proposta enviada.
                     var precoVenda = Math.Round(modelo.PrecoM2 * lote.Area, 2); //db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault().PrecoVenda;
+
 
                     modelo.ValorTotal = (precoVenda);
 
@@ -214,6 +209,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                             statusnosite = "Reservado";
                         else
                             statusnosite = "Vendido";
+
+                        //var valorConverter = 2421457943.54m;
+
+                        //var extenso = ValorExtenso.ExtensoReal(valorConverter);
 
 
                         var retorno = new PropostaViewModel()
@@ -1172,12 +1171,23 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 cell.Colspan = 1;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
+                cell = new PdfPCell(new Phrase("VALOR DO LOTE: R$ " + string.Format("{0:0,0.00}", condicoes.ValorTotal), fonteParagrafo));
+                cell.Colspan = 2;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+
+
+                cell = new PdfPCell(new Phrase("Lote: " + obj.Lote.ToString(), fonteParagrafo));
+                cell.Colspan = 1;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
                 cell = new PdfPCell(new Phrase("Pagamento  A PRAZO - Entrada: R$ " + string.Format("{0:0,0.00}", condicoes.ValorEntrada), fonteParagrafo));
                 cell.Colspan = 2;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
 
-                cell = new PdfPCell(new Phrase("Lote: " + obj.Lote.ToString(), fonteParagrafo));
+                cell = new PdfPCell(new Phrase("Área: " + String.Format("{0:0,0.00}", objlote.Area) + " m2", fonteParagrafo));
                 cell.Colspan = 1;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
@@ -1186,7 +1196,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
 
-                cell = new PdfPCell(new Phrase("Área: " + String.Format("{0:0,0.00}", objlote.Area) + " m2", fonteParagrafo));
+                cell = new PdfPCell(new Phrase(" ", fonteParagrafo));
                 cell.Colspan = 1;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
@@ -1217,7 +1227,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 cell.Colspan = 1;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
-                cell = new PdfPCell(new Phrase("REAJUSTE ANUAL: IPCA + 1% a.a. (conforme contrato de venda)\n\n", fonteParagrafo));
+                cell = new PdfPCell(new Phrase("REAJUSTE ANUAL: IPCA + 3% a.a. (conforme contrato de venda)\n\n", fonteParagrafo));
                 cell.Colspan = 2;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
@@ -1271,7 +1281,8 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
 
-                    cell = new PdfPCell(new Phrase("Filiação: ", fonteParagrafo));
+
+                    cell = new PdfPCell(new Phrase("Filiação: " + (item.NomeMae==null?"":item.NomeMae.TrimEnd()) + (item.NomePai==null?"":  " e " + item.NomePai) , fonteParagrafo));
                     cell.Colspan = 2;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
@@ -1321,6 +1332,76 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
 
+                    // -- linha
+                    var estadocivil = "";
+                    switch (item.EstadoCivil)
+                    {
+                        case "2":
+                            estadocivil= "Casado(a)";
+                            break;
+                        case "3":
+                            estadocivil = "Separado(a)";
+                            break;
+                        case "4":
+                            estadocivil = "Divorciado(a)";
+                            break;
+                        case "5":
+                            estadocivil = "Viúvo(a)";
+                            break;
+                        default:
+                            estadocivil = "Solteiro(a)";
+                            break;
+                    }
+
+                    cell = new PdfPCell(new Phrase("Estado Civil: " + estadocivil, fonteParagrafo));
+                    cell.Colspan = 1;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+
+                    if (item.EstadoCivil== "2")
+                    {
+                        cell = new PdfPCell(new Phrase("Data Casamento: " + item.CasamentoData.Value.ToShortDateString(), fonteParagrafo));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+
+                        cell = new PdfPCell(new Phrase("Regime Cas.: " + item.CasamentoRegime??"", fonteParagrafo));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+
+
+                        // Casado
+                        // -- linha
+                        cell = new PdfPCell(new Phrase("\nNome Cônjuge: " + item.ConjugeNome.TrimEnd(), fonteParagrafo));
+                        cell.Colspan = 3;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+
+                        cell = new PdfPCell(new Phrase("CPF Cônjuge: " + Convert.ToUInt64(item.ConjugeCpf).ToString(@"\000\.000\.000\-00"), fonteParagrafo));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("RG Cônjuge: " + item.ConjugeRg, fonteParagrafo));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Dt Nasc Cônjuge: " + item.ConjugeDtNasc.Value.ToShortDateString(), fonteParagrafo));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+                        //---
+                        cell = new PdfPCell(new Phrase("Prof. Cônjuge: " + item.ConjugeProfissao, fonteParagrafo));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Nasc. Cônjuge: " + item.ConjugeNacionalidade.TrimEnd(), fonteParagrafo));
+                        cell.Colspan = 2;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+
+                    }
                     cell = new PdfPCell(new Phrase("", fonteParagrafo));
                     cell.Colspan = 3;
                     cell.BorderWidthBottom = 1;
@@ -1348,7 +1429,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
 
-                cell = new PdfPCell(new Phrase("NUMERO DO CRECI: " + "\n", fonteParagrafo));
+                cell = new PdfPCell(new Phrase("NÚMERO DO CRECI: " + "\n", fonteParagrafo));
                 cell.Colspan = 3;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
@@ -1367,7 +1448,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 table.AddCell(cell);
 
 
-                cell = new PdfPCell(new Phrase("Araraquara-SP, " + hoje.Day + " de " + DateTime.Now.ToString("MMMM", new CultureInfo("pt-BR")) + " de " + hoje.Year + "\r\n \r\n", fonteParagrafo));
+                cell = new PdfPCell(new Phrase("Araraquara, SP, " + hoje.Day + " de " + DateTime.Now.ToString("MMMM", new CultureInfo("pt-BR")) + " de " + hoje.Year + "\r\n \r\n", fonteParagrafo));
                 cell.Colspan = 1;
                 cell.Border = 0;
                 cell.HorizontalAlignment = PdfCell.ALIGN_RIGHT;
@@ -1398,14 +1479,14 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
 
-                cell = new PdfPCell(new Phrase(" -Certidão estoado civil (solteiro, casado ou divorciado) \n\n\n", fonteParagrafo));
+                cell = new PdfPCell(new Phrase(" -Certidão estado civil (solteiro, casado ou divorciado) \n\n\n", fonteParagrafo));
                 cell.Colspan = 3;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
 
 
 
-                var id2 = 1;
+                //var id2 = 1;
                 foreach (var item in sql)
                 {
                     cell = new PdfPCell(new Phrase("___________________________________  \r\n " + item.Nome.TrimEnd() + " \r\n"));
@@ -1413,7 +1494,15 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.Border = 0;
                     cell.HorizontalAlignment = PdfCell.ALIGN_CENTER;
                     table.AddCell(cell);
-                    id2++;
+                    //id2++;
+                    if (item.EstadoCivil == "2")
+                    {
+                        cell = new PdfPCell(new Phrase("___________________________________  \r\n " + item.ConjugeNome.TrimEnd() + " \r\n"));
+                        cell.Colspan = 1;
+                        cell.Border = 0;
+                        cell.HorizontalAlignment = PdfCell.ALIGN_CENTER;
+                        table.AddCell(cell);
+                    }
                 }
                 cell = new PdfPCell(new Phrase("___________________________________  \r\n" + " Corretor"));
                 cell.Colspan = 1;
@@ -1437,10 +1526,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 ms.Position = 0;
 
                 return new FileStreamResult(ms, "application/pdf");
-                //return File(fileStream: ms, contentType: "application/pdf", fileDownloadName: "test_file_name" + ".pdf");
+               // return File(fileStream: ms, contentType: "application/pdf", fileDownloadName: "test_file_name" + ".pdf");
 
             }
-
         }
 
 
@@ -1492,6 +1580,47 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
         //
         public ActionResult ImprimirContrato(int? id)
         {
+
+            // Variáveis do contrato
+
+            // [quadra] e [lote]
+            // [descritivo]   --> memorial descritivo do lote
+            // [valorTotal]   --> valor total em decimal formatado + valor por extenso
+            // [valorTotalCorrigido]  --> valor total corrigido em decimal + valor por extenso
+            // [totalMeses]  --> total em meses escolhido no plano de pagamento
+            // [valorCorretagem]   --> valor da corretagem em decimal + por extenso.
+            // [Corretor] - nome do corretor
+            // [Cresci] - número do registro do Cresci
+            // [CpfCorretor] - cpf do corretor
+            // [valorCorretagemDec] - valor da Corretagem apenas em decimal
+            // [DataPgCorretagem] - data para pagemento da corretagem
+
+            // [ValorEntrada] - Valor de entrada em decimal + extenso
+            // [numeroBoleto] - número do boleto emitido para pagamento da entrada
+            // [numeroProposta] - número ID da proposta emitida para a quadra/lote
+            // [valorParcelaMensal] - valor da parcela mensal escolhida em decimal + extenso
+            // [planoPagamento] - número de parcelas das prestações mensais
+            // [primeiroVencimento] - primeiro data de vencimento da parcela mensal
+            // [numeroPrestacoesSemestral] - numero de parcelas semestrais
+            // [valorParcelaSemestral] - valor decimal + extenso da parcela semestral
+            // [primeiroVencSemestral] - data do primeiro vencimento das parcelas semestrais
+            // [saldoRemanescente] - valor decimal + extenso do saldo remanescente
+            // [totalMeses] - total de meses das parcelas mensais 
+
+            // [bancoCli] - banco do cliente para arrependimento
+            // [agenciaCli] - agencia cliente  "      "
+            // [contaCli] - conta do cliente   "      "
+
+            // [nomeTestemunha1]
+            // [endTestemunha1]
+            // [rgTestemunha1]
+
+            // [nomeTestemunha2]
+            // [endTestemunha2]
+            // [rgTestemunha2]
+
+
+
             try
             {
                 var proposta = (from x in db.Propostas

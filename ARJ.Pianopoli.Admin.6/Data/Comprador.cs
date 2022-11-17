@@ -17,6 +17,8 @@ namespace ARJ.Pianopoli.Admin._6.Data
         public string Nacionalidade { get; set; }
         public DateTime DtNasc { get; set; }
         public string EstadoCivil { get; set; }
+        public string NomeMae { get; set; }
+        public string NomePai { get; set; }
         public DateTime? CasamentoData { get; set; }
         public string CasamentoRegime { get; set; }
         public string CasamentoLivro { get; set; }
@@ -26,6 +28,7 @@ namespace ARJ.Pianopoli.Admin._6.Data
         // Registro do pacto - Registro de imóveis
         public string CasamentoEscrRegistro { get; set; }
         public string ConjugeNome { get; set; }
+        public DateTime? ConjugeDtNasc { get; set; }
         public string ConjugeNacionalidade { get; set; }
         public string ConjugeProfissao { get; set; }
         public string ConjugeRg { get; set; }
