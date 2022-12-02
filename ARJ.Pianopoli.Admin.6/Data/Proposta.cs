@@ -20,6 +20,20 @@ namespace ARJ.Pianopoli.Admin._6.Data
         public ICollection<PropostaCondicaoComercial> CondicoesComerciais { get; set; }
         [Column(TypeName = "decimal(18,2)")]
         public decimal ValorTotal { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? ValorCorretagem { get; set; }
+        public string NumeroBoletoEntrada { get; set; }
+        public DateTime? PrimeiroVencMensal { get; set; }
+        public DateTime? PrimeiroVencSemestral { get; set; }
+        public string BancoCliente { get; set; }
+        public string AgenciaCliente { get; set; }
+        public string ContaCliente { get; set; }
+        public string TestemunhaNome1 { get; set; }
+        public string TestemunhaEnd1 { get; set; }
+        public string TestemunhaRg1 { get; set; }
+        public string TestemunhaNome2 { get; set; }
+        public string TestemunhaEnd2 { get; set; }
+        public string TestemunhaRg2 { get; set; }
         public DateTime? DataAprovacao { get; set; }
         public string AprovadoPor { get; set; }
         public string Contrato { get; set; }

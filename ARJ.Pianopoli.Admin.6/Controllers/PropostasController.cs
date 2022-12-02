@@ -77,17 +77,35 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
         {
             var lista = await db.Procedures.SP_LISTAR_LOTESAsync(7);
 
-
-            foreach (var item in lista)
+            var retorno = (from x in lista select new ListaLotesViewModel()
             {
-                var obj = db.Propostas.Where(c => c.LoteamentoId == item.LoteamentoId && c.Quadra == item.Quadra && c.Lote == item.Lote).FirstOrDefault();
-                if (obj != null)
-                    item.SituacaoNoSite = obj.Contrato == null ? "Reservado" : "Vendido";
-                else
-                    item.SituacaoNoSite = "Disponível";
-            }
+                Id = x.Id,
+                LoteamentoId = (int)x.LoteamentoId,
+                Quadra = x.Quadra,
+                Lote = (int)x.Lote,
+                Area = String.Format("{0:0,0.00}", x.Area),
+                SituacaoNoSite = ""
+            }).ToList();
 
-            return Json(new { data = lista });
+            foreach (var item in retorno)
+            {
+                try
+                {
+                    var obj = db.Propostas.Where(c => c.LoteamentoId == item.LoteamentoId && c.Quadra == item.Quadra && c.Lote == item.Lote).FirstOrDefault();
+                    if (obj != null)
+                        item.SituacaoNoSite = obj.Contrato == null ? "Reservado" : "Vendido";
+                    else
+                        item.SituacaoNoSite = "Disponível";
+
+                }
+                catch (Exception ex)
+                {
+
+                    throw;
+                }
+            }
+            
+            return Json(new { data = retorno });
         }
         [HttpPost]
         [Authorize]
@@ -112,6 +130,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     // busca o valor total do lote quando este ainda está disponível e sem proposta enviada.
                     var precoVenda = Math.Round(modelo.PrecoM2 * lote.Area, 2); //db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault().PrecoVenda;
 
+                    modelo.ValorCorretagem = Math.Round( precoVenda * 0.02m,2);
 
                     modelo.ValorTotal = (precoVenda);
 
@@ -541,9 +560,14 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         VrParcelaSemestral = vlrParcSemestral
                     });
 
+                    var planoescolhidosemestral = "";
+                    var planomensalescolhido = "";
+
                     var planoEscolhido = listaTabela.Where(c => c.Plano == Parcelamento).FirstOrDefault();
                     if (planoEscolhido != null)
                     {
+                        planomensalescolhido = planoEscolhido.NrParcelasMensais.ToString() + " X R$ " + String.Format("{0:0,0.00}", planoEscolhido.VrParcelaMensal);
+                        planoescolhidosemestral = planoEscolhido.NrParcelasSemestrais.ToString() + " X R$ " + String.Format("{0:0,0.00}", planoEscolhido.VrParcelaSemestral);
 
                     }
                     else
@@ -580,7 +604,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         juroscobrados = String.Format("{0:0,0.00}", jurosPeriodo),
                         precovendacorrigido = String.Format("{0:0,0.00}", precoVendaCorrigido),
                         saldoquitacao = String.Format("{0:0,0.00}", saldoQuitacao),
-                        totalparcelas = String.Format("{0:0,0.00}", totalParcelas)
+                        totalparcelas = String.Format("{0:0,0.00}", totalParcelas),
+                        planomensalescolhido,
+                        planoescolhidosemestral
                     });
                 }
                 catch (Exception)
@@ -607,13 +633,14 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
         [HttpPost]
         [Authorize]
-        public IActionResult Compradores(int Loteamento, string Quadra, int Lote, string Entrada, string TipoPagamento, string Parcelamento)
+        public IActionResult Compradores(int Loteamento, string Quadra, int Lote, string Entrada, string TipoPagamento, string Parcelamento, string PrimeiroVctMensal, string PrimeiroVctSemestral, string Banco, string Agencia, string Conta, string TestNome1, string TestNome2, string TestEnd1, string TestEnd2, string TestRg1, string TestRg2)
         {
 
             if (ModelState.IsValid)
             {
                 try
                 {
+                   
                     var lote = Lote;
 
                     //verifica se o lote foi vendido ou ainda está disponível
@@ -626,6 +653,46 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                             message = "Esse lote não está mais disponível!"
                         });
                     }
+
+                    // testa as datas de primeiro vencimento
+
+                    DateTime PrimeiroVencimentoMensal;
+                    var convertido = DateTime
+                        .TryParseExact(PrimeiroVctMensal,
+                                        "dd/MM/yyyy",
+                                        CultureInfo.InvariantCulture,
+                                        DateTimeStyles.None,
+                                        out PrimeiroVencimentoMensal);
+
+                    if (!convertido)
+                    {
+                        return Json(new
+                        {
+                            result = false,
+                            message = "Primeiro vencimento mensal inválido!"
+                        });
+                    }
+
+
+                    DateTime PrimeiroVencimentoSemestral;
+                    convertido = DateTime
+                        .TryParseExact(PrimeiroVctSemestral,
+                                        "dd/MM/yyyy",
+                                        CultureInfo.InvariantCulture,
+                                        DateTimeStyles.None,
+                                        out PrimeiroVencimentoSemestral);
+
+                    if (!convertido)
+                    {
+                        return Json(new
+                        {
+                            result = false,
+                            message = "Primeiro vencimento semestral inválido!"
+                        });
+                    }
+
+
+
 
                     // verifica todos os valores novamente, para evitar "injeções" no jQuery
 
@@ -783,6 +850,19 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     obj.LoteamentoId = Loteamento;
                     obj.Usuario = UserId.ToString();
                     obj.ValorTotal = precoVenda;
+                    obj.ValorCorretagem = Math.Round(precoVenda * 0.02m, 2);
+                    obj.PrimeiroVencMensal = PrimeiroVencimentoMensal;
+                    obj.PrimeiroVencSemestral = PrimeiroVencimentoSemestral;
+                    obj.NumeroBoletoEntrada = "";
+                    obj.BancoCliente = Banco;
+                    obj.AgenciaCliente = Agencia;
+                    obj.ContaCliente = Conta;
+                    obj.TestemunhaNome1 = TestNome1;
+                    obj.TestemunhaEnd1 = TestNome2;
+                    obj.TestemunhaRg1 = TestRg1;
+                    obj.TestemunhaNome2 = TestRg2;
+                    obj.TestemunhaEnd2 = TestEnd1;
+                    obj.TestemunhaRg2 = TestEnd2;
                     db.Add(obj);
                     db.SaveChanges();
 
@@ -849,6 +929,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var auxiliar = listaTabela.Where(c => c.Plano == Parcelamento).FirstOrDefault();
                     retorno.TipoPagamento = auxiliar.NrParcelasMensais.ToString() + " X R$ " + String.Format("{0:0,0.00}", auxiliar.VrParcelaMensal) + " + " + auxiliar.NrParcelasSemestrais.ToString() + " X R$ " + String.Format("{0:0,0.00}", auxiliar.VrParcelaSemestral);
 
+                    retorno.result = true;
                     return PartialView("Compradores", retorno);
 
                 }
@@ -1012,7 +1093,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     obj.Cep = getnumber(model.Cep);
                     obj.Logradouro = model.Logradouro;
                     obj.Numero = model.Numero;
-                    obj.Complemento = model.Complemento;
+                    obj.Complemento = model.Complemento??"";
                     obj.Bairro = model.Bairro;
                     obj.Municipio = model.Municipio;
                     obj.Estado = model.Estado;
@@ -1397,6 +1478,14 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
                         cell = new PdfPCell(new Phrase("Nasc. Cônjuge: " + item.ConjugeNacionalidade.TrimEnd(), fonteParagrafo));
+                        cell.Colspan = 2;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+
+                    }
+                    else
+                    {
+                        cell = new PdfPCell(new Phrase(" ", fonteParagrafo));
                         cell.Colspan = 2;
                         cell.BorderWidth = 0;
                         table.AddCell(cell);

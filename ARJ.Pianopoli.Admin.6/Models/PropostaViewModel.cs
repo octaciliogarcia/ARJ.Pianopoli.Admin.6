@@ -1,4 +1,6 @@
 ﻿using ARJ.Pianopoli.Admin._6.Data;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Management.Automation.Language;
 
 namespace ARJ.Pianopoli.Admin._6.Models
 {
@@ -25,10 +27,21 @@ namespace ARJ.Pianopoli.Admin._6.Models
         public List<PropostaAnexo> Anexos { get; set; }
         public List<PropostaCondicaoComercial> CondicoesComerciais { get; set; }
         public decimal ValorTotal { get; set; }
-
         public string TipoPagamento { get; set; }
         public string Parcelamento { get; set; }
-
+        public decimal? ValorCorretagem { get; set; }
+        public string NumeroBoletoEntrada { get; set; }
+        public DateTime? PrimeiroVencMensal { get; set; }
+        public DateTime? PrimeiroVencSemestral { get; set; }
+        public string BancoCliente { get; set; }
+        public string AgenciaCliente { get; set; }
+        public string ContaCliente { get; set; }
+        public string TestemunhaNome1 { get; set; }
+        public string TestemunhaEnd1 { get; set; }
+        public string TestemunhaRg1 { get; set; }
+        public string TestemunhaNome2 { get; set; }
+        public string TestemunhaEnd2 { get; set; }
+        public string TestemunhaRg2 { get; set; }
         public DateTime? DataAprovacao { get; set; }
         public string AprovadoPor { get; set; }
         public string Contrato { get; set; }

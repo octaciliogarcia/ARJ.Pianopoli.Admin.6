@@ -4,112 +4,320 @@
     <div class="row">
         <div class="col-lg-8">
             <div class="ibox ">
-                @*<div>Quadra: <div id="Quadra" style="font-size:16pt">@Model.Quadra</div>  - Lote: @Model.Lote*@<h5 style="text-align:right"><small>Situação:&nbsp;<partial style="background-color:green;color:white;font-weight: bold;"><spam>&nbsp;@Model.StatusNoSite&nbsp;</spam></partial></small></h5>
-            </div>
+                <div class="ibox-content">
+                    <input type="text" value="@Model.LoteamentoId" id="LoteamentoId" hidden>
+                    <div class="row">
+                        <div class="col-md-6 b-r">
+                            <div class="form-group row">
+                                <label class="col-md-4 col-form-label"><b>Quadra</b></label>
+                                <div class="col-2">
+                                    <b><input type="text" class="form-control" style="font-size:14pt;background-color:#fff;min-width:40px;" value="@Model.Quadra" id="Quadra" disabled></b>
+                                </div>
+                                <label class="col-md-2 col-form-label direita"><b>Lote</b></label>
+                                <div class="col-2">
+                                    <b><input type="text" class="form-control" style="font-size:14pt;background-color : #fff;min-width:40px;" value="@Model.Lote" id="Lote" disabled></b>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                &nbsp;
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 b-r">
+                            <div class="form-group row">
+                                <label class="col-md-4 col-form-label">Área (m2)</label>
+                                <div class="col-6">
+                                    <input type="text" class="form-control money direita" value="@Model.Area" id="Area" disabled>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group row">
+                                &nbsp;
+                            </div>
+                        </div>
 
-            <div class="ibox-content">
-                <input type="text" value="@Model.LoteamentoId" id="LoteamentoId" hidden>
-                <div class="form-group row">
-                    <label class="col-lg-2 col-form-label"><b>Quadra</b></label>
-                    <div class="col-1">
-                        <b><input type="text" class="form-control" style="font-size:14pt;background-color:#fff;min-width:40px;" value="@Model.Quadra" id="Quadra" disabled></b>
                     </div>
-                    <label class="col-lg-1 col-form-label"><b>Lote</b></label>
-                    <div class="col-1">
-                        <b><input type="text" class="form-control" style="font-size:14pt;background-color : #fff;min-width:40px;" value="@Model.Lote" id="Lote" disabled></b>
+
+                    <div class="row">
+                        <div class="col-md-6 b-r">
+                            <div class="form-group row">
+                                <label class="col-md-4 col-form-label">Preço (m2)</label>
+                                <div class="col-6">
+                                    <input type="text" class="form-control money direita" style="background-color:@Model.CorFundo" value="@Model.PrecoM2" id="PrecoM2" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group row">
+                                &nbsp;
+                            </div>
+                        </div>
                     </div>
+
+                    <div class="row">
+                        <div class="col-md-6 b-r">
+                            <div class="form-group row">
+                                <label class="col-md-4 col-form-label">Valor de Venda</label>
+                                <div class="col-6">
+                                    <input type="text" class="form-control money direita" value="@(Model.ValorTotal)" id="Total" disabled>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group row">
+                                <label class="col-md-4 col-form-label">Corretagem R$</label>
+                                <div class="col-6">
+                                    <input type="text" class="form-control money direita" value="@Model.ValorCorretagem" id="ValorCorretagem" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <form>
+                        <div class="row">
+                            <div class="col-md-12" style="text-align:center;">
+                                <p><b>Preencha a condição comercial da proposta</b></p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label">Valor da Entrada</label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="Entrada R$" class="form-control money direita" onchange="CalculaEntrada()" id="Entrada"><span class="form-text m-b-none" style="color:red;" hidden id="Entrada-msg">Valor não permitido.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row" id="plano-mensal" hidden>
+                                    <label class="col-md-4 col-form-label">Parc. Mensais</label>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control" value="" id="PlanoEscolhidoMensal" readonly>
+                                    </div>
+                                </div>
+                                <p id="branco-plano-mensal">&nbsp;</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label">Saldo a pagar </label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="Saldo R$" class="form-control money direita" id="SaldoPagar" name="SaldoPagar" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row" id="vencimento-mensal" hidden>
+                                    <label class="col-md-4 col-form-label">1o. Vcto</label>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control datepicker" value="" id="PrimeiroVencimentoMensal">
+                                    </div>
+                                </div>
+                                <p id="branco-venc-mensal">&nbsp;</p>
+                            </div>
+                        </div>
+
+                        <div class="row" id="TipoPagto" hidden>
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label">Forma Pagamento </label>
+                                    <div class="col-6" style="text-align:left;">
+                                        @Html.DropDownList("TipoPagamento", new List<SelectListItem>()
+                                        { new SelectListItem() { Value = "1", Text= "A vista" },
+                                        new SelectListItem() { Value = "2", Text= "A prazo" },
+                                        },"--Selecione--",new{@class="form-control", @onchange="ValidarCondicoes(this.value)"})
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row" id="plano-semestral" hidden>
+                                    <label class="col-md-4 col-form-label">Parc. Semestrais</label>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control" value="" id="PlanoEscolhidoSemestral" readonly>
+                                    </div>
+                                </div>
+                                <p id="branco-plano-semestral">&nbsp;</p>
+                            </div>
+                        </div>
+
+                        <div class="row" id="TipoParcelamento" hidden>
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label">Parcelas </label>
+                                    <div class="col-6">
+                                        @Html.DropDownList("Parcelamento", (IEnumerable<SelectListItem>)ViewBag.Mensais,"--Selecione--",new{@class="form-control", @onchange="CalcularRestante()" })
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row" id="vencimento-semestral" hidden>
+                                    <label class="col-md-4 col-form-label">1o. Vcto</label>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control datepicker" value="" id="PrimeiroVencimentoSemestral">
+                                    </div>
+                                </div>
+                                <p id="branco-venc-semestral">&nbsp;</p>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label">Vlr total parcelas</label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="Vr total parcelas R$" class="form-control money direita" id="TotalParcelas" name="TotalParcelas" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row" id="bancocliente" hidden>
+                                    <label class="col-md-4 col-form-label">Banco Cliente</label>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control" value="" id="banco-cliente" placeholder="Ex.: 033" maxlength="3">
+                                    </div>
+                                </div>
+                                <p id="branco-banco-cliente">&nbsp;</p>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label">Saldo para Quitação R$</label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="Saldo Quitação R$" class="form-control money direita" id="SaldoQuitacao" name="SaldoQuitacao" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row" id="agenciacliente" hidden>
+                                    <label class="col-md-4 col-form-label">Agência Cliente</label>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control" value="" id="agencia-cliente" placeholder="Ex.: 7007-0" maxlength="6">
+                                    </div>
+                                </div>
+                                <p id="branco-agencia-cliente">&nbsp;</p>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label ">Preço Venda Corrigido R$</label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="Preço Corrigido R$" class="form-control money direita" id="PrecoVendaCorrigido" name="PrecoVendaCorrigido" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row" id="contacliente" hidden>
+                                    <label class="col-md-4 col-form-label">Conta Cliente</label>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control" value="" id="conta-cliente" placeholder="Ex.: 01046888-0" maxlength="10">
+                                    </div>
+                                </div>
+                                <p id="branco-conta-cliente">&nbsp;</p>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label ">Juros no período R$</label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="Juros R$" class="form-control money direita" id="JurosCobrados" name="JurosCobrados" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <div c lass="col-md-6">
+                                <div class="form-group row">
+                                    &nbsp;
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12" style="text-align:center;">
+                                <p><b>Dados das Testemunhas</b></p>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label ">Nome 1a. testem.</label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="1a. Testemunha" class="form-control" id="TestemunhaNome1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row" >
+                                    <label class="col-md-4 col-form-label">Nome 2a. testem.</label>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control" placeholder="2a. Testemunha" value="" id="TestemunhaNome2">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label ">Endereço</label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="1a. Testemunha" class="form-control" id="TestemunhaEnd1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label ">Endereço</label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="2a. Testemunha" class="form-control" id="TestemunhaEnd2">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 b-r">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label ">RG</label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="RG 1a. Testemunha" class="form-control" id="TestemunhaRg1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row">
+                                    <label class="col-md-4 col-form-label ">RG</label>
+                                    <div class="col-6">
+                                        <input type="text" placeholder="RG 2a. Testemunha" class="form-control" id="TestemunhaRg2">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="btn btn-primary" id="btn-validar" onclick="ValidarProposta()">Continuar </div>
+                        <div class="btn btn-secondary" id="btn-voltar" onclick="Inicio()">Voltar </div>
+
+                        <div class="form-group row" id="continuar" hidden>
+                            <div class="col-3">
+                                <div class="btn btn-primary" id="btn-descartar" onclick="Inicio()"><i class="fa-solid fa-reply"></i>&nbsp; Descartar </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="btn btn-success botoeshide" id="btn-comprador" onclick="Compradores()"><i class="fa-solid fa-plus"></i>&nbsp; Adicionar Comprador </div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-                <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Área (m2)</label>
-                    <div class="col-3">
-                        <input type="text" class="form-control money direita" value="@Model.Area" id="Area" disabled>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Preço (m2)</label>
-                    <div class="col-3">
-                        <input type="text" class="form-control money direita" style="background-color:@Model.CorFundo" value="@Model.PrecoM2" id="PrecoM2" readonly>
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Valor de Venda</label>
-                    <div class="col-3">
-                        <input type="text" class="form-control money direita" value="@(Model.ValorTotal)" id="Total" disabled>
-                    </div>
-                </div>
-
-                <form>
-                    <p><b>Preencha a condição comercial da proposta</b></p>
-                    <div class="form-group row">
-                        <label class="col-lg-2 col-form-label">Valor da Entrada</label>
-                        <div class="col-3">
-                            <input type="text" placeholder="Entrada R$" class="form-control money direita" onchange="CalculaEntrada()" id="Entrada"><span class="form-text m-b-none" style="color:red;" hidden id="Entrada-msg">Valor não permitido.</span>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label class="col-lg-2 col-form-label">Saldo a pagar </label>
-                        <div class="col-3">
-                            <input type="text" placeholder="Saldo R$" class="form-control money direita" id="SaldoPagar" name="SaldoPagar" disabled>
-                        </div>
-                    </div>
-                    <div class="form-group row" id="TipoPagto" hidden>
-                        <label class="col-lg-2 col-form-label">Forma Pagamento </label>
-                        <div class="col-3" style="text-align:left;">
-                            @Html.DropDownList("TipoPagamento", new List<SelectListItem>()
-                            { new SelectListItem() { Value = "1", Text= "A vista" },
-                            new SelectListItem() { Value = "2", Text= "A prazo" },
-                            },"--Selecione--",new{@class="form-control", @onchange="ValidarCondicoes(this.value)"})
-                        </div>
-                    </div>
-                    <div class="form-group row" id="TipoParcelamento" hidden>
-                        <label class="col-lg-2 col-form-label">Parcelas </label>
-                        <div class="col-5">
-                            @Html.DropDownList("Parcelamento", (IEnumerable<SelectListItem>)ViewBag.Mensais,"--Selecione--",new{@class="form-control", @onchange="CalcularRestante()" })
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label class="col-lg-2 col-form-label">Valor total das parcelas</label>
-                        <div class="col-3">
-                            <input type="text" placeholder="Vr total parcelas R$" class="form-control money direita" id="TotalParcelas" name="TotalParcelas" disabled>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label class="col-lg-2 col-form-label">Saldo para Quitação R$</label>
-                        <div class="col-3">
-                            <input type="text" placeholder="Saldo Quitação R$" class="form-control money direita" id="SaldoQuitacao" name="SaldoQuitacao" disabled>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label class="col-lg-2 col-form-label">Preço Venda Corrigido R$</label>
-                        <div class="col-3">
-                            <input type="text" placeholder="Preço Corrigido R$" class="form-control money direita" id="PrecoVendaCorrigido" name="PrecoVendaCorrigido" disabled>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label class="col-lg-2 col-form-label">Juros no período R$</label>
-                        <div class="col-3">
-                            <input type="text" placeholder="Juros R$" class="form-control money direita" id="JurosCobrados" name="JurosCobrados" disabled>
-                        </div>
-                    </div>
-
-                    <div class="btn btn-primary" id="btn-validar" onclick="ValidarProposta()">Continuar </div>
-                    <div class="btn btn-secondary" id="btn-voltar" onclick="Inicio()">Voltar </div>
-
-                    <div class="form-group row" id="continuar" hidden>
-                        <div class="col-3">
-                            <div class="btn btn-primary" id="btn-descartar" onclick="Inicio()"><i class="fa-solid fa-reply"></i>&nbsp; Descartar </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="btn btn-success botoeshide" id="btn-comprador" onclick="Compradores()"><i class="fa-solid fa-plus"></i>&nbsp; Adicionar Comprador </div>
-                        </div>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
 </div>
-
 
 <script src="~/js/site.js" asp-append-version="true"></script>
 
