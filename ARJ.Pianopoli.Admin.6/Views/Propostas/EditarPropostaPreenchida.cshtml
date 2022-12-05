@@ -9,144 +9,430 @@
             <div class="ibox-content">
                 <input type="text" value="@Model.LoteamentoId" id="LoteamentoId" hidden>
                 <input type="text" value="@Model.PropostaId" id="PropostaId" hidden>
-                <div class="form-group row">
-                    <label class="col-lg-2 col-form-label"><b>Quadra</b></label>
-                    <div class="col-1">
-                        <b><input type="text" class="form-control" style="font-size:14pt;background-color: #fff;min-width:40px;" value="@Model.Quadra" id="Quadra" disabled></b>
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label"><b>Quadra</b></label>
+                            <div class="col-2">
+                                <b><input type="text" class="form-control" style="font-size:14pt;background-color:#fff;min-width:40px;" value="@Model.Quadra" id="Quadra" disabled></b>
+                            </div>
+                            <label class="col-md-2 col-form-label direita"><b>Lote</b></label>
+                            <div class="col-2">
+                                <b><input type="text" class="form-control" style="font-size:14pt;background-color : #fff;min-width:40px;" value="@Model.Lote" id="Lote" disabled></b>
+                            </div>
+                        </div>
                     </div>
-                    <label class="col-lg-1 col-form-label"><b>Lote</b></label>
-                    <div class="col-1">
-                        <b><input type="text" class="form-control" style="font-size:14pt;background-color: #fff;min-width:40px;" value="@Model.Lote" id="Lote" disabled></b>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Área (m2)</label>
-                    <div class="col-3">
-                        <input type="text" class="form-control money direita" value="@Model.Area" id="Area" disabled>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Preço (m2)</label>
-                    <div class="col-3">
-                        <input type="text" class="form-control money direita" style="backgroud-color:@Model.CorFundo"  value="@Model.PrecoM2" id="PrecoM2" readonly>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            &nbsp;
+                        </div>
                     </div>
                 </div>
-                <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Valor de Venda</label>
-                    <div class="col-3">
-                        <input type="text" class="form-control money direita" value="@(Model.ValorTotal)" id="Total" disabled>
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Área (m2)</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control money direita" value="@Model.Area" id="Area" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row">
+                            &nbsp;
+                        </div>
                     </div>
                 </div>
 
-                <p><b>Condições comerciais da proposta</b></p>
-                <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Valor da Entrada</label>
-                    <div class="col-3">
-                        <input type="text" placeholder="Entrada R$" class="form-control money direita" id="Entrada" value="@(Model.Entrada)" disabled>
-                    </div>
+                @*<div class="form-group row">
+                <label class="col-lg-2 col-form-label"><b>Quadra</b></label>
+                <div class="col-1">
+                <b><input type="text" class="form-control" style="font-size:14pt;background-color: #fff;min-width:40px;" value="@Model.Quadra" id="Quadra" disabled></b>
+                </div>
+                <label class="col-lg-1 col-form-label"><b>Lote</b></label>
+                <div class="col-1">
+                <b><input type="text" class="form-control" style="font-size:14pt;background-color: #fff;min-width:40px;" value="@Model.Lote" id="Lote" disabled></b>
+                </div>
                 </div>
                 <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Saldo a pagar </label>
-                    <div class="col-3">
-                        <input type="text" placeholder="Saldo R$" class="form-control money direita" id="SaldoPagar" name="SaldoPagar" value="@(Model.SaldoPagar)" disabled>
-                    </div>
+                <label class="col-lg-2 col-form-label">Área (m2)</label>
+                <div class="col-3">
+                <input type="text" class="form-control money direita" value="@Model.Area" id="Area" disabled>
                 </div>
-                <div class="form-group row" id="TipoPagto" >
-                    <label class="col-lg-2 col-form-label">Forma Pagamento </label>
-                    <div class="col-3" style="text-align:left;">
-                        <input type="text" class="form-control direita" id="FormaPagamento" value="@(Model.TipoPagamento)" disabled>
-                    </div>
+                </div>*@
+
+                @* <div class="form-group row">
+                <label class="col-lg-2 col-form-label">Preço (m2)</label>
+                <div class="col-3">
+                <input type="text" class="form-control money direita" style="backgroud-color:@Model.CorFundo" value="@Model.PrecoM2" id="PrecoM2" readonly>
                 </div>
-                <div class="form-group row" id="TipoParcelamento" >
-                    <label class="col-lg-2 col-form-label">Parcelas </label>
-                    <div class="col-5">
-                        <input type="text" class="form-control" id="parcelamento" value="@(Model.Parcelamento)" disabled>
-                    </div>
                 </div>
                 <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Valor total das parcelas</label>
-                    <div class="col-3">
-                        <input type="text" placeholder="Vr total parcelas R$" class="form-control money direita" id="TotalParcelas" name="TotalParcelas" value="@(Model.TotalParcelas)" disabled>
+                <label class="col-lg-2 col-form-label">Valor de Venda</label>
+                <div class="col-3">
+                <input type="text" class="form-control money direita" value="@(Model.ValorTotal)" id="Total" disabled>
+                </div>
+                </div>*@
+
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Preço (m2)</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control money direita" style="background-color:@Model.CorFundo" value="@Model.PrecoM2" id="PrecoM2" readonly>
+                            </div>
+                        </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="form-group row">
+                            &nbsp;
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Valor de Venda</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control money direita" value="@(String.Format("{0:0,0.00}", Model.ValorTotal))" id="Total" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Corretagem R$</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control money direita" value="@String.Format("{0:0,0.00}", Model.ValorCorretagem)" id="ValorCorretagem" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                @*                <p><b>Condições comerciais da proposta</b></p>
+                <div class="form-group row">
+                <label class="col-lg-2 col-form-label">Valor da Entrada</label>
+                <div class="col-3">
+                <input type="text" placeholder="Entrada R$" class="form-control money direita" id="Entrada" value="@(Model.Entrada)" disabled>
+                </div>
                 </div>
                 <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Saldo para Quitação R$</label>
-                    <div class="col-3">
-                        <input type="text" placeholder="Saldo Quitação R$" class="form-control money direita" id="SaldoQuitacao" name="SaldoQuitacao" value="@(Model.SaldoQuitacao)" disabled>
-                    </div>
+                <label class="col-lg-2 col-form-label">Saldo a pagar </label>
+                <div class="col-3">
+                <input type="text" placeholder="Saldo R$" class="form-control money direita" id="SaldoPagar" name="SaldoPagar" value="@(Model.SaldoPagar)" disabled>
+                </div>
+                </div>
+                <div class="form-group row" id="TipoPagto">
+                <label class="col-lg-2 col-form-label">Forma Pagamento </label>
+                <div class="col-3" style="text-align:left;">
+                <input type="text" class="form-control direita" id="FormaPagamento" value="@(Model.TipoPagamento)" disabled>
+                </div>
+                </div>
+                <div class="form-group row" id="TipoParcelamento">
+                <label class="col-lg-2 col-form-label">Parcelas </label>
+                <div class="col-5">
+                <input type="text" class="form-control" id="parcelamento" value="@(Model.Parcelamento)" disabled>
+                </div>
                 </div>
                 <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Preço Venda Corrigido R$</label>
-                    <div class="col-3">
-                        <input type="text" placeholder="Preço Corrigido R$" class="form-control money direita" id="PrecoVendaCorrigido" name="PrecoVendaCorrigido" value="@(Model.PrecoVendaCorrigido)" disabled>
-                    </div>
+                <label class="col-lg-2 col-form-label">Valor total das parcelas</label>
+                <div class="col-3">
+                <input type="text" placeholder="Vr total parcelas R$" class="form-control money direita" id="TotalParcelas" name="TotalParcelas" value="@(Model.TotalParcelas)" disabled>
+                </div>
                 </div>
                 <div class="form-group row">
-                    <label class="col-lg-2 col-form-label">Juros no período R$</label>
-                    <div class="col-3">
-                        <input type="text" placeholder="Juros R$" class="form-control money direita" id="JurosCobrados" name="JurosCobrados" value="@(Model.JurosCobrados)" disabled>
+                <label class="col-lg-2 col-form-label">Saldo para Quitação R$</label>
+                <div class="col-3">
+                <input type="text" placeholder="Saldo Quitação R$" class="form-control money direita" id="SaldoQuitacao" name="SaldoQuitacao" value="@(Model.SaldoQuitacao)" disabled>
+                </div>
+                </div>
+                <div class="form-group row">
+                <label class="col-lg-2 col-form-label">Preço Venda Corrigido R$</label>
+                <div class="col-3">
+                <input type="text" placeholder="Preço Corrigido R$" class="form-control money direita" id="PrecoVendaCorrigido" name="PrecoVendaCorrigido" value="@(Model.PrecoVendaCorrigido)" disabled>
+                </div>
+                </div>
+                <div class="form-group row">
+                <label class="col-lg-2 col-form-label">Juros no período R$</label>
+                <div class="col-3">
+                <input type="text" placeholder="Juros R$" class="form-control money direita" id="JurosCobrados" name="JurosCobrados" value="@(Model.JurosCobrados)" disabled>
+                </div>
+                </div>
+                </div>*@
+
+                <div class="row">
+                    <div class="col-md-12" style="text-align:center;">
+                        <p><b>Preencha a condição comercial da proposta</b></p>
                     </div>
                 </div>
-            </div>
-            <div>
-                <p><b>Compradores</b></p>
-                @{
-                    if (Model.Compradores !=null && Model.Compradores.Count> 0)
-                    {
-                            <table class="table table-bordered table-striped" style="width:900px;">
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Valor da Entrada</label>
+                            <div class="col-6">
+                                <input type="text" placeholder="Entrada R$" class="form-control money direita" id="Entrada" value="@Model.Entrada" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row" id="plano-mensal">
+                            <label class="col-md-4 col-form-label">Parc. Mensais</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control" value="" id="PlanoEscolhidoMensal" value="@Model.Parcelamento" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Saldo a pagar </label>
+                            <div class="col-6">
+                                <input type="text" placeholder="Saldo R$" class="form-control money direita" id="SaldoPagar" value="@String.Format("{0:0,0.00}", Model.SaldoPagar)" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row" id="vencimento-mensal">
+                            <label class="col-md-4 col-form-label">1o. Vcto</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control datepicker" id="PrimeiroVencimentoMensal" value="@Model.PrimeiroVencMensal" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" id="TipoPagto" >
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Forma Pagto</label>
+                            <div class="col-6" style="text-align:left;">
+                                <input type="text" class="form-control direita" id="FormaPagamento" value="@(Model.TipoPagamento)" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row" id="plano-semestral">
+                            <label class="col-md-4 col-form-label">Parc. Semestrais</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control" value="" id="PlanoEscolhidoSemestral" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" id="TipoParcelamento">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Parcelas </label>
+                            <div class="col-6">
+                                <input type="text" class="form-control" id="parcelamento" value="@(Model.Parcelamento)" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row" id="vencimento-semestral">
+                            <label class="col-md-4 col-form-label">1o. Vcto</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control datepicker" id="PrimeiroVencimentoSemestral" value="@Model.PrimeiroVencSemestral" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Vlr total parcelas</label>
+                            <div class="col-6">
+                                <input type="text" placeholder="Vr total parcelas R$" class="form-control money direita" id="TotalParcelas" value="@Model.TotalParcelas"  disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row" id="bancocliente">
+                            <label class="col-md-4 col-form-label">Banco Cliente</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control" id="banco-cliente" value="@Model.BancoCliente" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">Saldo Quitação</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control money direita" id="SaldoQuitacao" value="@Model.SaldoQuitacao" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row" id="agenciacliente">
+                            <label class="col-md-4 col-form-label">Agência Cliente</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control" value="@Model.AgenciaCliente" id="agencia-cliente" maxlength="6" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label ">Pr. Venda Corrigido</label>
+                            <div class="col-6">
+                                <input type="text" placeholder="Preço Corrigido R$" class="form-control money direita" id="PrecoVendaCorrigido" value="@Model.PrecoVendaCorrigido" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row" id="contacliente">
+                            <label class="col-md-4 col-form-label">Conta Cliente</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control" value="@Model.ContaCliente" id="conta-cliente" maxlength="10" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label ">Juros no período</label>
+                            <div class="col-6">
+                                <input type="text" placeholder="Juros R$" class="form-control money direita" id="JurosCobrados" value="@Model.JurosCobrados" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div c lass="col-md-6">
+                        <div class="form-group row">
+                            &nbsp;
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12" style="text-align:center;">
+                        <p><b>Dados das Testemunhas</b></p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label ">1a. testem.</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control" id="TestemunhaNome1" value="@Model.TestemunhaNome1" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label">2a. testem.</label>
+                            <div class="col-6">
+                                <input type="text" class="form-control" placeholder="2a. Testemunha" value="@Model.TestemunhaNome2" id="TestemunhaNome2" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label ">Endereço</label>
+                            <div class="col-6">
+                                <input type="text" placeholder="1a. Testemunha" class="form-control" id="TestemunhaEnd1" value="@Model.TestemunhaEnd1" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label ">Endereço</label>
+                            <div class="col-6">
+                                <input type="text" placeholder="2a. Testemunha" class="form-control" id="TestemunhaEnd2" value="@Model.TestemunhaEnd2" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 b-r">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label ">RG</label>
+                            <div class="col-6">
+                                <input type="text" placeholder="RG 1a. Testemunha" class="form-control" id="TestemunhaRg1" value="@Model.TestemunhaRg1" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group row">
+                            <label class="col-md-4 col-form-label ">RG</label>
+                            <div class="col-6">
+                                <input type="text" placeholder="RG 2a. Testemunha" class="form-control" id="TestemunhaRg2" value="@Model.TestemunhaRg2" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <p><b>Compradores</b></p>
+                    @{
+                        if (Model.Compradores != null && Model.Compradores.Count > 0)
+                        {
+                            <table class="table table-bordered table-striped" style="width:750px;">
                                 <tr>
                                     <th style="width:20px;text-align:center;"></th>
                                     <th style="width:200px!important; font-size: .9rem;max-width:200px;width:200px;">
                                         Nome Comprador
                                     </th>
-                                    <th style="width: 100px; text-align: right; font-size: .9rem;">
+                                    <th style="width: 70px; text-align: right; font-size: .9rem;">
                                         CPF
                                     </th>
-                                <th style="width: 100px; text-align: right; font-size: .9rem;">
+                                    <th style="width: 70px; text-align: right; font-size: .9rem;">
                                         Celular
                                     </th>
                                     <th style="width:20px;text-align:center;"></th>
                                 </tr>
                                 @{
-                                int i = 1;
+                                    int i = 1;
                                 }
                                 @foreach (var item in Model.Compradores)
-                            {
+                                {
                                     <tr>
                                         <td style="font-size:1.1rem;">@i</td>
-                                    <td style="width:200px;">
+                                        <td style="width:200px;">
                                             @item.Nome
                                         </td>
-                                    <td style="width: 100px; text-align: right;">
+                                        <td style="width: 70px; text-align: right;">
                                             @item.Cpf
                                         </td>
-                                    <td style="width: 100px; text-align: right;">
+                                        <td style="width: 70px; text-align: right;">
                                             @item.Celular
                                         </td>
-                                    <td style="text-align: center;">
+                                        <td style="text-align: center;">
                                             <button onclick="VisualizarComprador(@item.Id)" class="btn btn-warning btn-action editar">
                                                 <i class="fa-solid fa-edit"></i>
                                             </button>
                                         </td>
                                     </tr>
-                                {
-                                    i++;
+                                    {
+                                        i++;
+                                    }
+
                                 }
 
-                            }
-
                             </table>
+                        }
                     }
-                }
 
+                </div>
+                <div class="btn btn-secondary" id="btn-voltar" onclick="Inicio()">Voltar </div>
+                <div class="btn btn-primary" id="btn-imprimir" onclick="Imprimir()">Imprimir Proposta</div>
+                <div class="btn btn-primary" id="btn-imprimir" onclick="ImprimirContrato()">Imprimir Contrato</div>
             </div>
-            <div class="btn btn-secondary" id="btn-voltar" onclick="Inicio()">Voltar </div>
-            <div class="btn btn-primary" id="btn-imprimir" onclick="Imprimir()">Imprimir Proposta</div>
-            <div class="btn btn-primary" id="btn-imprimir" onclick="ImprimirContrato()">Imprimir Contrato</div>
         </div>
     </div>
 </div>
 
-
-<script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
 

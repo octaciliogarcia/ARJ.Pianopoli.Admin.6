@@ -249,14 +249,26 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                             DataAprovacao = proposta.DataAprovacao,
                             Entrada = String.Format("{0:0,0.00}", propostaCondicoes.ValorEntrada),
                             ValorTotal = propostaCondicoes.ValorTotal,
-                            SaldoPagar = String.Format("{0:0,0.00}", (propostaCondicoes.ValorTotal - propostaCondicoes.ValorEntrada)),
-                            TipoPagamento = propostaCondicoes.ValorTotal == propostaCondicoes.ValorEntrada ? "a vista" : "a prazo",
+                            ValorCorretagem = proposta.ValorCorretagem,
+                            SaldoPagar = String.Format("{0:0,0.00}", (proposta.ValorTotal - propostaCondicoes.ValorEntrada)),
+                            TipoPagamento = proposta.ValorTotal == propostaCondicoes.ValorEntrada ? "a vista" : "a prazo",
                             Parcelamento = propostaCondicoes.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaMensal) + " + " + propostaCondicoes.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaSemestral),
                             Compradores = compradores,
+                            PrimeiroVencMensal = (DateTime)proposta.PrimeiroVencMensal,
+                            PrimeiroVencSemestral = (DateTime)proposta.PrimeiroVencSemestral,
                             TotalParcelas = String.Format("{0:0,0.00}", propostaCondicoes.TotalParcelas),
                             SaldoQuitacao = String.Format("{0:0,0.00}", propostaCondicoes.SaldoQuitacao),
                             PrecoVendaCorrigido = String.Format("{0:0,0.00}", propostaCondicoes.PrecoVendaCorrigido),
-                            JurosCobrados = String.Format("{0:0,0.00}", propostaCondicoes.JurosPeriodo)
+                            JurosCobrados = String.Format("{0:0,0.00}", propostaCondicoes.JurosPeriodo),
+                            BancoCliente = proposta.BancoCliente,
+                            AgenciaCliente = proposta.AgenciaCliente,
+                            ContaCliente = proposta.ContaCliente,
+                            TestemunhaNome1 = proposta.TestemunhaNome1,
+                            TestemunhaNome2 = proposta.TestemunhaNome2,
+                            TestemunhaEnd1 = proposta.TestemunhaEnd1,
+                            TestemunhaEnd2 = proposta.TestemunhaEnd2,
+                            TestemunhaRg1 = proposta.TestemunhaRg1,
+                            TestemunhaRg2 = proposta.TestemunhaRg2
                         };
                         return PartialView("EditarPropostaPreenchida", retorno);
                     }
@@ -858,11 +870,11 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     obj.AgenciaCliente = Agencia;
                     obj.ContaCliente = Conta;
                     obj.TestemunhaNome1 = TestNome1;
-                    obj.TestemunhaEnd1 = TestNome2;
+                    obj.TestemunhaEnd1 = TestEnd1;
                     obj.TestemunhaRg1 = TestRg1;
-                    obj.TestemunhaNome2 = TestRg2;
-                    obj.TestemunhaEnd2 = TestEnd1;
-                    obj.TestemunhaRg2 = TestEnd2;
+                    obj.TestemunhaNome2 = TestNome2;
+                    obj.TestemunhaEnd2 = TestEnd2;
+                    obj.TestemunhaRg2 = TestRg2;
                     db.Add(obj);
                     db.SaveChanges();
 
@@ -1223,7 +1235,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 Phrase phrase = new Phrase();
                 phrase.Add(new Chunk("PROPOSTA PARA PAGAMENTO ", fonteParagrafo));
                 phrase.Add(new Chunk("A PRAZO ", fonteBold));
-                phrase.Add(new Chunk("NR. " + id.ToString() + " \n\n", fonteParagrafo));
+                phrase.Add(new Chunk("NR. " + id.ToString().PadLeft(6,'0') + " \n\n", fonteParagrafo));
                 //cell = new PdfPCell(phrase);
 
                 var titulo3 = new Paragraph(phrase);
@@ -1391,7 +1403,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     //---
 
                     // -- linha
-                    cell = new PdfPCell(new Phrase("Endereço res.: " + item.Logradouro.TrimEnd() + " " + item.Numero.TrimEnd() + " " + (item.Complemento.TrimEnd() ?? ""), fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("Endereço: " + item.Logradouro.TrimEnd() + " " + item.Numero.TrimEnd() + " " + (item.Complemento.TrimEnd() ?? ""), fonteParagrafo));
                     cell.Colspan = 3;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
@@ -1434,7 +1446,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                             break;
                     }
 
-                    cell = new PdfPCell(new Phrase("Estado Civil: " + estadocivil, fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("Estado Civil: " + (estadocivil==null?"": estadocivil), fonteParagrafo));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
@@ -1442,12 +1454,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     if (item.EstadoCivil== "2")
                     {
-                        cell = new PdfPCell(new Phrase("Data Casamento: " + item.CasamentoData.Value.ToShortDateString(), fonteParagrafo));
+                        cell = new PdfPCell(new Phrase("Data Casamento: " + (item.CasamentoData == null ? "" : item.CasamentoData.Value.ToShortDateString()), fonteParagrafo));
                         cell.Colspan = 1;
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
 
-                        cell = new PdfPCell(new Phrase("Regime Cas.: " + item.CasamentoRegime??"", fonteParagrafo));
+                        cell = new PdfPCell(new Phrase("Regime Cas.: " + (item.CasamentoRegime??""), fonteParagrafo));
                         cell.Colspan = 1;
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
@@ -1455,29 +1467,29 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                         // Casado
                         // -- linha
-                        cell = new PdfPCell(new Phrase("\nNome Cônjuge: " + item.ConjugeNome.TrimEnd(), fonteParagrafo));
+                        cell = new PdfPCell(new Phrase("\nNome Cônjuge: " + (item.ConjugeNome == null ? "": item.ConjugeNome.TrimEnd()), fonteParagrafo));
                         cell.Colspan = 3;
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
 
-                        cell = new PdfPCell(new Phrase("CPF Cônjuge: " + Convert.ToUInt64(item.ConjugeCpf).ToString(@"\000\.000\.000\-00"), fonteParagrafo));
+                        cell = new PdfPCell(new Phrase("CPF Cônjuge: " + (item.ConjugeCpf==null?"": Convert.ToUInt64(item.ConjugeCpf).ToString(@"\000\.000\.000\-00")), fonteParagrafo));
                         cell.Colspan = 1;
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
-                        cell = new PdfPCell(new Phrase("RG Cônjuge: " + item.ConjugeRg, fonteParagrafo));
+                        cell = new PdfPCell(new Phrase("RG Cônjuge: " + item.ConjugeRg??"", fonteParagrafo));
                         cell.Colspan = 1;
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
-                        cell = new PdfPCell(new Phrase("Dt Nasc Cônjuge: " + item.ConjugeDtNasc.Value.ToShortDateString(), fonteParagrafo));
+                        cell = new PdfPCell(new Phrase("Dt Nasc Cônjuge: " + (item.ConjugeDtNasc == null ? "" : (item.ConjugeDtNasc == null ? "" : item.ConjugeDtNasc.Value.ToShortDateString())), fonteParagrafo));
                         cell.Colspan = 1;
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
                         //---
-                        cell = new PdfPCell(new Phrase("Prof. Cônjuge: " + item.ConjugeProfissao, fonteParagrafo));
+                        cell = new PdfPCell(new Phrase("Prof. Cônjuge: " + (item.ConjugeProfissao == null ? " ": item.ConjugeProfissao), fonteParagrafo));
                         cell.Colspan = 1;
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
-                        cell = new PdfPCell(new Phrase("Nasc. Cônjuge: " + item.ConjugeNacionalidade.TrimEnd(), fonteParagrafo));
+                        cell = new PdfPCell(new Phrase("Nac. Cônjuge: " + (item.ConjugeNacionalidade == null ? "" : item.ConjugeNacionalidade.TrimEnd()), fonteParagrafo));
                         cell.Colspan = 2;
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
@@ -1578,7 +1590,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 //var id2 = 1;
                 foreach (var item in sql)
                 {
-                    cell = new PdfPCell(new Phrase("___________________________________  \r\n " + item.Nome.TrimEnd() + " \r\n"));
+                    cell = new PdfPCell(new Phrase("___________________________________  \r\n " + item.Nome.TrimEnd() + " \r\n\n"));
                     cell.Colspan = 1;
                     cell.Border = 0;
                     cell.HorizontalAlignment = PdfCell.ALIGN_CENTER;
@@ -1586,7 +1598,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     //id2++;
                     if (item.EstadoCivil == "2")
                     {
-                        cell = new PdfPCell(new Phrase("___________________________________  \r\n " + item.ConjugeNome.TrimEnd() + " \r\n"));
+                        cell = new PdfPCell(new Phrase("___________________________________  \r\n " + item.ConjugeNome.TrimEnd() + " \r\n\n"));
                         cell.Colspan = 1;
                         cell.Border = 0;
                         cell.HorizontalAlignment = PdfCell.ALIGN_CENTER;
