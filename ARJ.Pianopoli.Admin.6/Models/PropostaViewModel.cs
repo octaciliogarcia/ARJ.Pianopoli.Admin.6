@@ -29,6 +29,7 @@ namespace ARJ.Pianopoli.Admin._6.Models
         public decimal ValorTotal { get; set; }
         public string TipoPagamento { get; set; }
         public string Parcelamento { get; set; }
+        public int? CorretorId { get; set; }
         public decimal? ValorCorretagem { get; set; }
         public string NumeroBoletoEntrada { get; set; }
         public DateTime? PrimeiroVencMensal { get; set; }
@@ -42,6 +43,8 @@ namespace ARJ.Pianopoli.Admin._6.Models
         public string TestemunhaNome2 { get; set; }
         public string TestemunhaEnd2 { get; set; }
         public string TestemunhaRg2 { get; set; }
+        public string ParcelamentoMensal { get; set; }
+        public string ParcelamentoSemestral { get; set; }
         public DateTime? DataAprovacao { get; set; }
         public string AprovadoPor { get; set; }
         public string Contrato { get; set; }

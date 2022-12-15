@@ -2,6 +2,7 @@
 using ARJ.Pianopoli.Admin._6.Data;
 using ARJ.Pianopoli.Admin._6.Models;
 using ARJ.Pianopoli.Admin._6.Utils;
+using DocumentFormat.OpenXml.Office.CustomUI;
 using DocumentFormat.OpenXml.Packaging;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
@@ -130,7 +131,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     // busca o valor total do lote quando este ainda está disponível e sem proposta enviada.
                     var precoVenda = Math.Round(modelo.PrecoM2 * lote.Area, 2); //db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault().PrecoVenda;
 
-                    modelo.ValorCorretagem = Math.Round( precoVenda * 0.02m,2);
+                    modelo.ValorCorretagem = Math.Round( precoVenda * 0.04m,2);
 
                     modelo.ValorTotal = (precoVenda);
 
@@ -253,6 +254,8 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                             SaldoPagar = String.Format("{0:0,0.00}", (proposta.ValorTotal - propostaCondicoes.ValorEntrada)),
                             TipoPagamento = proposta.ValorTotal == propostaCondicoes.ValorEntrada ? "a vista" : "a prazo",
                             Parcelamento = propostaCondicoes.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaMensal) + " + " + propostaCondicoes.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaSemestral),
+                            ParcelamentoMensal = propostaCondicoes.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaMensal),
+                            ParcelamentoSemestral = propostaCondicoes.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaSemestral),
                             Compradores = compradores,
                             PrimeiroVencMensal = (DateTime)proposta.PrimeiroVencMensal,
                             PrimeiroVencSemestral = (DateTime)proposta.PrimeiroVencSemestral,
@@ -862,7 +865,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     obj.LoteamentoId = Loteamento;
                     obj.Usuario = UserId.ToString();
                     obj.ValorTotal = precoVenda;
-                    obj.ValorCorretagem = Math.Round(precoVenda * 0.02m, 2);
+                    obj.ValorCorretagem = Math.Round(precoVenda * 0.04m, 2);
                     obj.PrimeiroVencMensal = PrimeiroVencimentoMensal;
                     obj.PrimeiroVencSemestral = PrimeiroVencimentoSemestral;
                     obj.NumeroBoletoEntrada = "";
@@ -1260,7 +1263,11 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 table.WidthPercentage = 100;
 
 
-                cell = new PdfPCell(new Phrase("Quadra: " + obj.Quadra, fonteParagrafo));
+                var txtquadra = new Phrase();
+                txtquadra.Add(new Chunk("Quadra: ", fonteParagrafo));
+                txtquadra.Add(new Chunk(obj.Quadra, fonteBold));
+
+                cell = new PdfPCell(txtquadra);
                 cell.Colspan = 1;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
@@ -1270,8 +1277,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 table.AddCell(cell);
 
 
+                var txtlote = new Phrase();
+                txtlote.Add(new Chunk("Lote: ", fonteParagrafo));
+                txtlote.Add(new Chunk(obj.Lote.ToString(), fonteBold));
 
-                cell = new PdfPCell(new Phrase("Lote: " + obj.Lote.ToString(), fonteParagrafo));
+                cell = new PdfPCell(txtlote);
+                //cell = new PdfPCell(new Phrase("Lote: " + obj.Lote.ToString(), fonteParagrafo));
                 cell.Colspan = 1;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
@@ -1280,7 +1291,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
 
-                cell = new PdfPCell(new Phrase("Área: " + String.Format("{0:0,0.00}", objlote.Area) + " m2", fonteParagrafo));
+                var txtarea = new Phrase();
+                txtarea.Add(new Chunk("Área: ", fonteParagrafo));
+                txtarea.Add(new Chunk(String.Format("{0:0,0.00}", objlote.Area) + " m2", fonteBold));
+
+                cell = new PdfPCell(txtarea);
+                //cell = new PdfPCell(new Phrase("Área: " + String.Format("{0:0,0.00}", objlote.Area) + " m2", fonteParagrafo));
                 cell.Colspan = 1;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
@@ -1311,7 +1327,25 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 cell.Colspan = 1;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
+                cell = new PdfPCell(new Phrase("Primeiro vencimento mensal: " + obj.PrimeiroVencMensal.Value.ToShortDateString(), fonteParagrafo));
+                cell.Colspan = 2;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase(" ", fonteParagrafo));
+                cell.Colspan = 1;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
                 cell = new PdfPCell(new Phrase("Quantidade Prestações Semestrais: " + condicoes.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", condicoes.ValorParcelaSemestral), fonteParagrafo));
+                cell.Colspan = 2;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+
+                cell = new PdfPCell(new Phrase(" ", fonteParagrafo));
+                cell.Colspan = 1;
+                cell.BorderWidth = 0;
+                table.AddCell(cell);
+                cell = new PdfPCell(new Phrase("Primeiro vencimento semestral: " + obj.PrimeiroVencSemestral.Value.ToShortDateString(), fonteParagrafo));
                 cell.Colspan = 2;
                 cell.BorderWidth = 0;
                 table.AddCell(cell);
@@ -1734,8 +1768,17 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                                     Lote = a.Lote,
                                     ValorTotal = x.ValorTotal,
                                     Contrato = x.Contrato ?? "",
+                                    BancoCliente = x.BancoCliente,
+                                    AgenciaCliente = x.AgenciaCliente,
+                                    ContaCliente = x.ContaCliente,
                                     DataProposta = x.DataProposta,
-                                    Area = a.Area
+                                    PrimeiroVencMensal = x.PrimeiroVencMensal,
+                                    PrimeiroVencSemestral = x.PrimeiroVencSemestral,
+                                    Area = a.Area,
+                                    ValorCorretagem = x.ValorCorretagem,
+                                    CorretorNome = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Nome??"",
+                                    CorretorCpf = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Cpf??"",
+                                    CorretorCresci = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Cresci ?? ""
                                 }).FirstOrDefault();
 
                 var condicoes = db.PropostasCondicoesComerciais.Where(c => c.PropostaId == id).FirstOrDefault();
@@ -1745,9 +1788,70 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                                    where c.DataExclusao == null
                                    where x.DataExclusao == null
                                    select c).OrderBy(c => c.Nome).ToList();
+                var descritivo = db.LotesDescritivos.Where(c => c.Quadra == proposta.Quadra && c.Lote == proposta.Lote).FirstOrDefault();
 
+                var dadosCompradores = "";
                 foreach (var item in compradores)
                 {
+
+                    dadosCompradores = "Nome Completo: " + item.Nome.TrimEnd() + "\n";
+                    dadosCompradores += "Nacionalidade: " + item.Nacionalidade.TrimEnd() + "\n";
+                    dadosCompradores += "Profissão: " + item.Profissao.TrimEnd() + "\n";
+                    dadosCompradores += "RG: " + item.Rg.TrimEnd() + "\n";
+                    dadosCompradores += "CPF: " + Convert.ToUInt64(item.Cpf.TrimEnd()).ToString(@"\000\.000\.000\-00") + "\n";
+                    dadosCompradores += "Endereço: " + item.Logradouro.TrimEnd() + " " + item.Numero.TrimEnd() + " " + item.Complemento.TrimEnd() + " " + item.Bairro.TrimEnd() + " " + item.Municipio.TrimEnd() + " " + item.Estado + " " + item.Cep + "\n";
+                    dadosCompradores += "E-mail: " + item.Email.TrimEnd() + "\n";
+                    switch (item.EstadoCivil)
+                    {
+                        case "1":
+                            dadosCompradores += "Estado Civil: Solteiro\n";
+                            break;
+                        case "2":
+                            dadosCompradores += "Estado Civil: Casado(a)\n";
+                            break;
+                        case "3":
+                            dadosCompradores += "Estado Civil: Solteiro\n";
+                            break;
+                        case "4":
+                            dadosCompradores += "Estado Civil: Divorciado(a)";
+                            break;
+                        case "5":
+                            dadosCompradores += "Estado Civil: Viúvo(a)";
+                            break;
+                        default:
+                            dadosCompradores += "Estado Civil: Solteiro(a)";
+                            break;
+                    }
+                    
+                    // Dados do comprador
+                    if(item.EstadoCivil=="2")
+                    {
+                        // dados do casamento - se for casado
+                        dadosCompradores += "Regime Casamento: " + item.CasamentoRegime.TrimEnd() + "\n";
+                        dadosCompradores += "Data Casamento: " + item.CasamentoData.Value.ToShortDateString() + "\n";
+                        if(item.CasamentoEscrRegistro !=null)
+                        {
+                            dadosCompradores += "Escritura do Pacto Antenupicial - " + "Tabelião: " + item.CasamentoEscrTabeliao??"" + "Livro: " + item.CasamentoLivro.TrimEnd()??"" + " Fls. " + item.CasamentoFolhas.TrimEnd()??"" + "\n";
+                            dadosCompradores += "Registro de Imóveis: " + item.CasamentoEscrRegistro.TrimEnd() + "\n";
+
+                        }
+
+                        dadosCompradores += "\nDados do Cônjuge \n\n" ;
+                        // dados do cônjuge - se for casado
+                        dadosCompradores += "Nome: " + item.ConjugeNome.TrimEnd() + "\n";
+                        dadosCompradores += "Celular: " + item.ConjugeCelular + "\n"; ;
+                        dadosCompradores += "Nacionalidade: " + item.ConjugeNacionalidade.TrimEnd() + "\n";
+                        dadosCompradores += "Profissão: " + item.ConjugeProfissao.TrimEnd() + "\n";
+                        dadosCompradores += "RG: " + item.ConjugeRg.TrimEnd() + "\n";
+                        dadosCompradores += "CPF: " + Convert.ToUInt64(item.ConjugeCpf.TrimEnd()).ToString(@"\000\.000\.000\-00") + "\n";
+                      //  dadosCompradores += "Endereço: " + item.ConjugeLogradouro.TrimEnd()??"" + " " + item.ConjugeNumero.TrimEnd()??"" + " " + item.ConjugeBairro.TrimEnd()??"" + " " + " " + item.ConjugeMunicipio.TrimEnd() + " " + item.ConjugeEstado + " " + "\n";
+                      if(item.ConjugeEmail!=null)
+                        {
+                            dadosCompradores += "E-mail: " + item.ConjugeEmail.TrimEnd() + "\n";
+                        }
+
+                    }
+                    dadosCompradores += "\n\n\n";
 
                 }
 
@@ -1781,14 +1885,25 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                 string fullMonthName = DateTime.Now.ToString("MMMM", CultureInfo.CreateSpecificCulture("pt-BR"));
 
+                var valorTotalExtenso = Utils.ValorExtenso.ExtensoReal(proposta.ValorTotal);
+                var valorCorretagem = proposta.ValorCorretagem; // Math.Round(proposta.ValorTotal * 0.04m, 2);
+
                 var openhtml = System.IO.File.ReadAllBytes(path2);
                 var str = System.Text.Encoding.Default.GetString(openhtml);
                 str = str.Replace("[quebralinha]", "<div style='page-break-before: always'></div>");
                 str = str.Replace("[contrato]", proposta.Contrato ?? "S/N");
-                str = str.Replace("[preco]", proposta.ValorTotal.ToString());
-
+                str = str.Replace("[preco]", String.Format("{0:0,0.00}", proposta.ValorTotal));
+                str = str.Replace("[preco_extenso]", valorTotalExtenso);
+                str = str.Replace("[valorCorretagem]", String.Format("{0:0,0.00}", valorCorretagem));
+                str = str.Replace("[valorCorretagemDec]", String.Format("{0:0,0.00}", valorCorretagem));
+                str = str.Replace("[Corretor]", proposta.CorretorNome);
+                str = str.Replace("[Cresci]", proposta.CorretorCresci);
+                str = str.Replace("[CpfCorretor]", proposta.CorretorCpf);
+                str = str.Replace("[DataPgCorretagem]", proposta.DataProposta.ToShortDateString());
+                str = str.Replace("[dataContrato]", proposta.DataProposta.ToShortDateString());
                 str = str.Replace("[quadra]", proposta.Quadra);
-                str = str.Replace("[nomecomprador]", "");
+                str = str.Replace("[dadoscompradores]", dadosCompradores);
+                str = str.Replace("[descritivo]", descritivo.Descritivo.TrimEnd());
                 str = str.Replace("[lote]", proposta.Lote.ToString());
                 str = str.Replace("[área]", proposta.Area.ToString());
                 str = str.Replace("[data_do_contrato]", proposta.DataProposta.ToShortDateString());
@@ -1797,7 +1912,26 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 str = str.Replace("[ano_impressao]", DateTime.Now.Year.ToString());
                 str = str.Replace("[testemunha1]", "Paulo Henrique");
                 str = str.Replace("[testemunha2]", "Larissa Souza");
+                str = str.Replace("[endTestemunha1]", "Araraquara, SP");
+                str = str.Replace("[endTestemunha2]", "Araraquara, SP");
+                str = str.Replace("[rgTestemunha1]", "041222 SSP/SP");
+                str = str.Replace("[rgTestemunha2]", "749909 SSP-BA");
                 str = str.Replace("[dados_anexos]", "");
+                str = str.Replace("[ValorEntrada]", String.Format("{0:0,0.00}", condicoes.ValorEntrada));
+                str = str.Replace("[valorTotalCorrigido]", String.Format("{0:0,0.00}", condicoes.PrecoVendaCorrigido));
+                str = str.Replace("[totalMeses]", condicoes.NrParcelasMensais.ToString());
+                str = str.Replace("[numeroProposta]", proposta.Id.ToString().PadLeft(6,'0'));
+                str = str.Replace("[numeroBoleto]", " - ");
+                str = str.Replace("[valorParcelaMensal]", String.Format("{0:0,0.00}", condicoes.ValorParcelaMensal));
+                str = str.Replace("[planoPagamento]", condicoes.NrParcelasMensais.ToString());
+                str = str.Replace("[primeiroVencMensal]", proposta.PrimeiroVencMensal.Value.ToShortDateString());
+                str = str.Replace("[primeiroVencSemestral]", proposta.PrimeiroVencSemestral.Value.ToShortDateString());
+                str = str.Replace("[numeroPrestacoesSemestral]", condicoes.NrParcelasSemestrais.ToString());
+                str = str.Replace("[valorParcelaSemestral]", String.Format("{0:0,0.00}", condicoes.ValorParcelaSemestral));
+                str = str.Replace("[saldoRemanescente]", String.Format("{0:0,0.00}", condicoes.SaldoQuitacao));
+                str = str.Replace("[bancoCli]", proposta.BancoCliente);
+                str = str.Replace("[agenciaClie]", proposta.AgenciaCliente);
+                str = str.Replace("[contaCli]", proposta.ContaCliente);
 
                 StringReader sr = new StringReader(str.ToString());
 
@@ -1805,7 +1939,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 HtmlToPdf converter = new HtmlToPdf();
                 converter.Options.PdfPageSize = PdfPageSize.A4;
                 converter.Options.WebPageWidth = 800;
-                converter.Options.MarginLeft = 30;
+                converter.Options.MarginLeft = 40;
                 converter.Options.MarginRight = 30;
                 converter.Options.MarginTop = 20;
 
@@ -1855,9 +1989,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 System.IO.File.Delete(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".html");
 
 
-                var nome_arquivo = "Contrato-" + proposta.Quadra + proposta.Lote.ToString() + ".pdf";
-                return File(ms, "application/pdf", nome_arquivo);
-
+                var nome_arquivo = "Contrato - Q " + proposta.Quadra + " L " + proposta.Lote.ToString() + ".pdf";
+                //return File(ms, "application/pdf", nome_arquivo);
+                return new FileStreamResult(ms, "application/pdf");
             }
             catch (Exception)
             {

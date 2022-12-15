@@ -37,6 +37,7 @@ namespace ARJ.Pianopoli.Admin._6.Data
         public DateTime? DataAprovacao { get; set; }
         public string AprovadoPor { get; set; }
         public string Contrato { get; set; }
+        public int? CorretorId { get; set; }
         public string Usuario { get; set; }
         public DateTime DataHora { get; set; }
         public string UsuarioExclusao { get; set; }

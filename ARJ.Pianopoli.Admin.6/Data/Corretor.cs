@@ -7,6 +7,8 @@ namespace ARJ.Pianopoli.Admin._6.Data
         [Key]
         public int Id { get; set; }
         public string Nome { get; set; }
+        public string Cpf { get; set; }
+        public string Cresci { get; set; }
         public int ImobiliariaId { get; set; }
         public string AspNetUserId { get; set; }
         public DateTime DataHora { get; set; } = DateTime.Now;
