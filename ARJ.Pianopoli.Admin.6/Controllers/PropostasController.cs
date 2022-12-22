@@ -4,6 +4,7 @@ using ARJ.Pianopoli.Admin._6.Models;
 using ARJ.Pianopoli.Admin._6.Utils;
 using DocumentFormat.OpenXml.Office.CustomUI;
 using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Authorization;
@@ -1731,6 +1732,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             // [DataPgCorretagem] - data para pagemento da corretagem
 
             // [ValorEntrada] - Valor de entrada em decimal + extenso
+            // [saldoParcelar] - valor total - entrada
             // [numeroBoleto] - número do boleto emitido para pagamento da entrada
             // [numeroProposta] - número ID da proposta emitida para a quadra/lote
             // [valorParcelaMensal] - valor da parcela mensal escolhida em decimal + extenso
@@ -1886,11 +1888,23 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 string fullMonthName = DateTime.Now.ToString("MMMM", CultureInfo.CreateSpecificCulture("pt-BR"));
 
                 var valorTotalExtenso = Utils.ValorExtenso.ExtensoReal(proposta.ValorTotal);
+                var valorTotalCorrigidoExtenso = Utils.ValorExtenso.ExtensoReal(condicoes.PrecoVendaCorrigido);
                 var valorCorretagem = proposta.ValorCorretagem; // Math.Round(proposta.ValorTotal * 0.04m, 2);
+                var saldoRemascenteExtenso = Utils.ValorExtenso.ExtensoReal(condicoes.SaldoQuitacao);
+                var saldoPagarExtenso = Utils.ValorExtenso.ExtensoReal((proposta.ValorTotal - condicoes.ValorEntrada));
 
                 var openhtml = System.IO.File.ReadAllBytes(path2);
                 var str = System.Text.Encoding.Default.GetString(openhtml);
+
+                //var teste = "<p align=\"justify\"><br>Welcome to Geeks for Geeks. It is <br>a computer science portal for geeks.<br>It contains well written, well <br>thought articles. We are learning<br>how to justify content on<br>a web page.</p>";
+
+                var quebrapagina = "<div class=\"pagebreak\"> </div>";
+
+                var boletonumero = proposta.Quadra.TrimEnd() + proposta.Lote.ToString().PadLeft(5, '0'); 
+
+                str = str.Replace("<style>", "<style> @media print { .pagebreak {clear: both; page-break-after: always;}}  ");
                 str = str.Replace("[quebralinha]", "<div style='page-break-before: always'></div>");
+                str = str.Replace("[pagebreak]", quebrapagina);
                 str = str.Replace("[contrato]", proposta.Contrato ?? "S/N");
                 str = str.Replace("[preco]", String.Format("{0:0,0.00}", proposta.ValorTotal));
                 str = str.Replace("[preco_extenso]", valorTotalExtenso);
@@ -1899,7 +1913,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 str = str.Replace("[Corretor]", proposta.CorretorNome);
                 str = str.Replace("[Cresci]", proposta.CorretorCresci);
                 str = str.Replace("[CpfCorretor]", proposta.CorretorCpf);
-                str = str.Replace("[DataPgCorretagem]", proposta.DataProposta.ToShortDateString());
+                str = str.Replace("[DataPgCorretagem]", proposta.DataProposta.AddDays(13).ToShortDateString());
                 str = str.Replace("[dataContrato]", proposta.DataProposta.ToShortDateString());
                 str = str.Replace("[quadra]", proposta.Quadra);
                 str = str.Replace("[dadoscompradores]", dadosCompradores);
@@ -1918,10 +1932,13 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 str = str.Replace("[rgTestemunha2]", "749909 SSP-BA");
                 str = str.Replace("[dados_anexos]", "");
                 str = str.Replace("[ValorEntrada]", String.Format("{0:0,0.00}", condicoes.ValorEntrada));
+                str = str.Replace("[saldoParcelar]", String.Format("{0:0,0.00}", (proposta.ValorTotal - condicoes.ValorEntrada)));
+                str = str.Replace("[saldoParcelarExtenso]", String.Format("{0:0,0.00}", saldoPagarExtenso));
+
                 str = str.Replace("[valorTotalCorrigido]", String.Format("{0:0,0.00}", condicoes.PrecoVendaCorrigido));
+                str = str.Replace("[valorTotalCorrigidoExtenso]", valorTotalCorrigidoExtenso);
                 str = str.Replace("[totalMeses]", condicoes.NrParcelasMensais.ToString());
                 str = str.Replace("[numeroProposta]", proposta.Id.ToString().PadLeft(6,'0'));
-                str = str.Replace("[numeroBoleto]", " - ");
                 str = str.Replace("[valorParcelaMensal]", String.Format("{0:0,0.00}", condicoes.ValorParcelaMensal));
                 str = str.Replace("[planoPagamento]", condicoes.NrParcelasMensais.ToString());
                 str = str.Replace("[primeiroVencMensal]", proposta.PrimeiroVencMensal.Value.ToShortDateString());
@@ -1929,23 +1946,28 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 str = str.Replace("[numeroPrestacoesSemestral]", condicoes.NrParcelasSemestrais.ToString());
                 str = str.Replace("[valorParcelaSemestral]", String.Format("{0:0,0.00}", condicoes.ValorParcelaSemestral));
                 str = str.Replace("[saldoRemanescente]", String.Format("{0:0,0.00}", condicoes.SaldoQuitacao));
+                str = str.Replace("[saldoRemanescenteExtenso]", saldoRemascenteExtenso);
                 str = str.Replace("[bancoCli]", proposta.BancoCliente);
-                str = str.Replace("[agenciaClie]", proposta.AgenciaCliente);
+                str = str.Replace("[agenciaCli]", proposta.AgenciaCliente);
                 str = str.Replace("[contaCli]", proposta.ContaCliente);
+                str = str.Replace("[numeroBoleto]", boletonumero);
 
                 StringReader sr = new StringReader(str.ToString());
 
 
                 HtmlToPdf converter = new HtmlToPdf();
                 converter.Options.PdfPageSize = PdfPageSize.A4;
-                converter.Options.WebPageWidth = 800;
-                converter.Options.MarginLeft = 40;
+                converter.Options.WebPageWidth = 800;  
+                converter.Options.MarginLeft = 45;   //40
                 converter.Options.MarginRight = 30;
                 converter.Options.MarginTop = 20;
+                converter.Options.CssMediaType = HtmlToPdfCssMediaType.Print;
 
                 converter.Options.PdfPageOrientation = PdfPageOrientation.Portrait;
 
-
+                
+                converter.Options.DisplayHeader = true;
+                converter.Header.Height = 70;
                 converter.Options.DisplayFooter = true;
                 converter.Footer.DisplayOnFirstPage = true;
                 converter.Footer.DisplayOnOddPages = true;
@@ -1968,7 +1990,8 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                 // page numbers can be added using a PdfTextSection object
                 PdfTextSection text = new PdfTextSection(0, 10, "{page_number}  ", new System.Drawing.Font("Arial", 8));
-                text.HorizontalAlign = PdfTextHorizontalAlign.Right;
+                //text.HorizontalAlign = PdfTextHorizontalAlign.Right;
+                text.HorizontalAlign = PdfTextHorizontalAlign.Justify;
                 converter.Footer.Add(text);
 
                 SelectPdf.PdfDocument doc2 = converter.ConvertHtmlString(str);
@@ -1985,11 +2008,15 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                 ms.Flush(); //Always catches me out
                 ms.Position = 0; //Not sure if this is required
-                System.IO.File.Delete(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".pdf");
-                System.IO.File.Delete(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".html");
+                //System.IO.File.Delete(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".pdf");
+                //System.IO.File.Delete(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".html");
+               
+                System.IO.File.Delete(path2);
 
 
-                var nome_arquivo = "Contrato - Q " + proposta.Quadra + " L " + proposta.Lote.ToString() + ".pdf";
+
+                // este trecho comentado é para o caso de querer baixar o pdf
+                //var nome_arquivo = "Contrato - Q " + proposta.Quadra + " L " + proposta.Lote.ToString() + ".pdf";
                 //return File(ms, "application/pdf", nome_arquivo);
                 return new FileStreamResult(ms, "application/pdf");
             }
