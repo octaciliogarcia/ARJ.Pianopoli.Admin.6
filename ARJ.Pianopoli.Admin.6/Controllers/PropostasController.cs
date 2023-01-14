@@ -2,8 +2,10 @@
 using ARJ.Pianopoli.Admin._6.Data;
 using ARJ.Pianopoli.Admin._6.Models;
 using ARJ.Pianopoli.Admin._6.Utils;
+using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Office.CustomUI;
 using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Vml;
 using DocumentFormat.OpenXml.Wordprocessing;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
@@ -14,6 +16,8 @@ using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using OpenXmlPowerTools;
 using SelectPdf;
+using System;
+using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Net;
 using System.Security.Claims;
@@ -1809,6 +1813,13 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                                     PrimeiroVencSemestral = x.PrimeiroVencSemestral,
                                     Area = a.Area,
                                     ValorCorretagem = x.ValorCorretagem,
+                                    TestemunhaNome1 = x.TestemunhaNome1,
+                                    TestemunhaEnd1 = x.TestemunhaEnd1,
+                                    TestemunhaRg1 = x.TestemunhaRg1,
+                                    TestemunhaNome2 = x.TestemunhaNome2,
+                                    TestemunhaEnd2 = x.TestemunhaEnd2,
+                                    TestemunhaRg2 = x.TestemunhaRg2,
+                                    DtPagtoCorretagm = x.DataProposta.AddDays(8),
                                     CorretorNome = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Nome ?? "",
                                     CorretorCpf = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Cpf ?? "",
                                     CorretorCresci = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Cresci ?? ""
@@ -1821,6 +1832,8 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                                    where c.DataExclusao == null
                                    where x.DataExclusao == null
                                    select c).OrderBy(c => c.Nome).ToList();
+
+
                 var descritivo = db.LotesDescritivos.Where(c => c.Quadra == proposta.Quadra && c.Lote == proposta.Lote).FirstOrDefault();
 
                 var valorTotalExtenso = Utils.ValorExtenso.ExtensoReal(proposta.ValorTotal);
@@ -1846,15 +1859,13 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var fonteBold = new iTextSharp.text.Font(fontebase, 10, iTextSharp.text.Font.BOLD);
                     var fonteTitulo = new iTextSharp.text.Font(fontebase, 10, iTextSharp.text.Font.BOLD);
                     var fonteReduzida = new iTextSharp.text.Font(fontebase, 8, iTextSharp.text.Font.NORMAL);
-                    var fontesublinhada = new iTextSharp.text.Font(fontebase, 10, iTextSharp.text.Font.UNDERLINE);
-
-
+                    var fonteSublinhada = new iTextSharp.text.Font(fontebase, 10, iTextSharp.text.Font.UNDERLINE);
 
                     var titulo1 = new Paragraph("LOTEAMENTO RESIDENCIAL PIANOPOLI\n\n", fonteTitulo);
                     var titulo2 = new Paragraph("CONTRATO DE VENDA E COMPRA\n", fonteTitulo);
                     var titulo3 = new Paragraph("COM ALIENAÇÃO FIDUCIÁRIA EM GARANTIA\n", fonteTitulo);
                     var titulo4 = new Paragraph("E COM CONDIÇÕES SUSPENSIVAS\n\n\n", fonteTitulo);
-                    var titulo5 = new Paragraph("Pelo presente instrumento particular, com força de escritura pública.\n\n", fontesublinhada);
+                    var titulo5 = new Paragraph("Pelo presente instrumento particular, com força de escritura pública.\n\n", fonteSublinhada);
                     var titulo6 = new Paragraph("LOTE " + proposta.Lote.ToString() + " - QUADRA " + proposta.Quadra.TrimEnd() + " - " + String.Format("{0:0,0.00}", proposta.Area) + " m2\n\n\n", fonteBold);
                     var titulo7 = new Paragraph("QUADRO RESUMO\n\n\n", fonteTitulo);
                     var titulo8 = new Paragraph("CAPÍTULO I - DAS PARTES\n\n", fonteTitulo);
@@ -1906,8 +1917,13 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     table.AddCell(cell);
 
                     // Col 2
-                    cell = new PdfPCell(new Phrase("De um lado, como outorgante vendedora e credora fiduciária, ARJ EMPREENDIMENTOS IMOBILIÁRIOS LTDA., com sede em Ribeirão Preto – SP, na Rua Américo Brasiliense, 1856, Vila Seixas, CEP 14015-050, inscrita no CNPJ/MF sob n.º 18.739.252/0001-00, com seu contrato social registrado na Junta Comercial do Estado de São Paulo sob o NIRE  nº 35.227.734.539 em 23.08.2013 e última alteração contratual sob nº 451.536/19-8 em 04.09.2019, neste ato representada, na forma de seu contrato social, pelos seus representantes ao final assinados, daqui em diante chamada, simplesmente, por “ARJ”;\n\n", fonteParagrafo));
-                    //cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
+                    var frase_1_1 = new Phrase();
+                    frase_1_1.Add(new Chunk("De um lado, como outorgante vendedora e credora fiduciária, ", fonteParagrafo));
+                    frase_1_1.Add(new Chunk("ARJ EMPREENDIMENTOS IMOBILIÁRIOS LTDA.", fonteBold));
+                    frase_1_1.Add(new Chunk(", com sede em Ribeirão Preto – SP, na Rua Américo Brasiliense, 1856, Vila Seixas, CEP 14015-050, inscrita no CNPJ/MF sob n.º 18.739.252/0001-00, com seu contrato social registrado na Junta Comercial do Estado de São Paulo sob o NIRE  nº 35.227.734.539 em 23.08.2013 e última alteração contratual sob nº 451.536/19-8 em 04.09.2019, neste ato representada, na forma de seu contrato social, pelos seus representantes ao final assinados, daqui em diante chamada, simplesmente, por", fonteParagrafo));
+                    frase_1_1.Add(new Chunk(" “ARJ”;\n\n", fonteBold)) ;
+
+                    cell = new PdfPCell(frase_1_1);
                     cell.SetLeading(0.0f, 1.2f);
                     cell.Colspan = 7;
                     cell.BorderWidth = 0;
@@ -2028,7 +2044,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     table.AddCell(cell);
 
                     var frase_1_2_1 = new Phrase();
-                    frase_1_2_1.Add(new Chunk("Na hipótese de ser mais de um COMPRADOR, estes são solidários entre si em todas as obrigações ajustadas no presente contrato (“Contrato”), especialmente quanto ao pagamento do preço (“Preço”).\n\n", fonteParagrafo));
+                    frase_1_2_1.Add(new Chunk("Na hipótese de ser mais de um ", fonteParagrafo));
+                    frase_1_2_1.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_1_2_1.Add(new Chunk(", estes são solidários entre si em todas as obrigações ajustadas no presente contrato (“Contrato”), especialmente quanto ao pagamento do preço (“Preço”).\n\n\n", fonteParagrafo));
+
                     cell = new PdfPCell(frase_1_2_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2037,7 +2056,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     table.AddCell(cell);
 
                     var txtTitulo2 = new Phrase();
-                    txtTitulo2.Add(new Chunk("CAPÍTULO II - DO IMÓVEL\n\n\n", fonteBold));
+                    txtTitulo2.Add(new Chunk("CAPÍTULO II - DO IMÓVEL\n\n", fonteBold));
 
                     cell = new PdfPCell(txtTitulo2);
                     cell.Colspan = 8;
@@ -2056,7 +2075,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     table.AddCell(cell);
 
                     var frase_2_1 = new Phrase();
-                    frase_2_1.Add(new Chunk("Lote n.º " + proposta.Lote.ToString() + ", da Quadra n.º " + proposta.Quadra + ", integrante do Loteamento Residencial Pianopoli (“Loteamento”), situado no Município de Araraquara-SP, registrado sob n.º ---, em --- de --- de ---, na Matrícula n.º ---, do ---º Oficial de Registro de Imóveis de Araraquara (“---º RI”).\n\n\n", fonteParagrafo));
+                    frase_2_1.Add(new Chunk("Lote n.º " + proposta.Lote.ToString() + ", da Quadra n.º " + proposta.Quadra + ", integrante do", fonteParagrafo));
+                    frase_2_1.Add(new Chunk("Loteamento Residencial Pianopoli", fonteBold));
+                    frase_2_1.Add(new Chunk(" (“Loteamento”), situado no Município de Araraquara-SP, registrado sob n.º ---, em --- de --- de ---, na Matrícula n.º ---, do ---º Oficial de Registro de Imóveis de Araraquara (“---º RI”).\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_2_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2075,7 +2096,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     table.AddCell(cell);
 
                     var frase_2_2 = new Phrase();
-                    frase_2_2.Add(new Chunk("Referido lote (“Imóvel”), objetivado pela M. ---, do ---º RI, tem a seguinte descrição e confrontação: " + descritivo.Descritivo + "\n\n\n", fonteParagrafo));
+                    frase_2_2.Add(new Chunk("Referido lote (“Imóvel”), objetivado pela ", fonteParagrafo));
+                    frase_2_2.Add(new Chunk("M.", fonteBold));
+                    frase_2_2.Add(new Chunk(" ---, do ---º RI, tem a seguinte descrição e confrontação: " + descritivo.Descritivo + "\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_2_2);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2085,7 +2108,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     // Capítulo III
                     var txtCapitulo3 = new Phrase();
-                    txtCapitulo3.Add(new Chunk("CAPÍTULO III - DO PREÇO\n\n\n", fonteBold));
+                    txtCapitulo3.Add(new Chunk("CAPÍTULO III - DO PREÇO\n\n", fonteBold));
 
                     cell = new PdfPCell(txtCapitulo3);
                     cell.Colspan = 8;
@@ -2107,7 +2130,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var texto3_1 = "O Preço, certo e ajustado, para pagamento é de R$ " + String.Format("{0:0,0.00}", proposta.ValorTotal) + " (" + valorTotalExtenso + ") acrescidos anualmente por juros de 3% e corrigido pelo IPCA – ÍNDICE NACIONAL DE PREÇOS AO CONSUMIDOR, conforme ajustado abaixo. Logo, o preço com os referidos juros pactuados, calculados pela Tabela Price, totaliza o montante de R$ " + String.Format("{0:0,0.00}", condicoes.PrecoVendaCorrigido) + " (" + valorTotalCorrigidoExtenso + ") em: " + condicoes.NrParcelasMensais.ToString() + " meses.";
 
                     var frase_3_1 = new Phrase();
-                    frase_3_1.Add(new Chunk(texto3_1 + "\n\n\n", fonteParagrafo));
+                    frase_3_1.Add(new Chunk(texto3_1 + "\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_3_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2128,7 +2151,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var texto3_1_1 = "A COMISSÃO DE CORRETAGEM PELA INTERMEDIAÇÃO DA PRESENTE VENDA E COMPRA NÃO INTEGRA O PREÇO.";
 
                     var frase_3_1_1 = new Phrase();
-                    frase_3_1_1.Add(new Chunk(texto3_1_1 + "\n\n\n", fonteParagrafo));
+                    frase_3_1_1.Add(new Chunk(texto3_1_1 + "\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_3_1_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2146,10 +2169,13 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto3_1_2 = "O COMPRADOR é o único e exclusivo responsável pelo pagamento da despesa com os serviços de corretagem diretamente ao credor respectivo (a empresa imobiliária e/ou o corretor associado, a seguir identificados), não podendo, sob qualquer hipótese, ser a ARJ responsabilizada pelo pagamento da referida despesa.";
-
                     var frase_3_1_2 = new Phrase();
-                    frase_3_1_2.Add(new Chunk(texto3_1_2 + "\n\n\n", fonteParagrafo));
+                    frase_3_1_2.Add(new Chunk("O ", fonteParagrafo));
+                    frase_3_1_2.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_3_1_2.Add(new Chunk(" é o único e exclusivo responsável pelo pagamento da despesa com os serviços de corretagem diretamente ao credor respectivo (a empresa imobiliária e/ou o corretor associado, a seguir identificados), não podendo, sob qualquer hipótese, ser a ", fonteParagrafo));
+                    frase_3_1_2.Add(new Chunk("ARJ", fonteBold));
+                    frase_3_1_2.Add(new Chunk(" responsabilizada pelo pagamento da referida despesa.\n\n", fonteParagrafo));
+
                     cell = new PdfPCell(frase_3_1_2);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2170,7 +2196,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var texto3_1_3 = "O valor da despesa com os serviços de corretagem a ser pago diretamente pelo COMPRADOR à imobiliária e/ou aos corretores associados identificados no quadro abaixo totaliza R$ " + String.Format("{0:0,0.00}", valorCorretagem) +", com o que está plenamente de acordo:";
 
                     var frase_3_1_3 = new Phrase();
-                    frase_3_1_3.Add(new Chunk(texto3_1_3 + "\n\n\n", fonteParagrafo));
+                    frase_3_1_3.Add(new Chunk(texto3_1_3 + "\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_3_1_3);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2224,6 +2250,44 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     tab_3_1_3.AddCell(coluna5);
 
 
+                    //DtPagtoCorretagm = x.DataAprovacao.Value.AddDays(8),
+                    //                CorretorNome = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Nome ?? "",
+                    //                CorretorCpf = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Cpf ?? "",
+                    //                CorretorCresci = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Cresci ?? ""
+
+
+
+                    PdfPCell coluna1b = new PdfPCell(new Phrase(new Chunk(proposta.CorretorNome.TrimEnd(), fonteParagrafo)));
+                    coluna1b.Colspan = 1;
+                    coluna1b.HorizontalAlignment = Element.ALIGN_CENTER;
+                    coluna1b.SetLeading(0.0f, 1.3f);
+                    tab_3_1_3.AddCell(coluna1b);
+
+                    PdfPCell coluna2b = new PdfPCell(new Phrase(new Chunk(proposta.CorretorCresci, fonteParagrafo)));
+                    coluna2b.Colspan = 1;
+                    coluna2b.HorizontalAlignment = Element.ALIGN_CENTER;
+                    coluna2b.SetLeading(0.0f, 1.3f);
+                    tab_3_1_3.AddCell(coluna2b);
+
+                    PdfPCell coluna3b = new PdfPCell(new Phrase(new Chunk( Convert.ToUInt64(proposta.CorretorCpf).ToString(@"000\.000\.000\-00"), fonteParagrafo)));
+                    coluna3b.Colspan = 1;
+                    coluna3b.HorizontalAlignment = Element.ALIGN_CENTER;
+                    coluna3b.SetLeading(0.0f, 1.3f);
+                    tab_3_1_3.AddCell(coluna3b);
+                    
+                    PdfPCell coluna4b = new PdfPCell(new Phrase(new Chunk("R$ " +string.Format("{0:0,0.00}",proposta.ValorCorretagem), fonteParagrafo)));
+                    coluna4b.Colspan = 1;
+                    coluna4b.HorizontalAlignment = Element.ALIGN_CENTER;
+                    coluna4b.SetLeading(0.0f, 1.3f);
+                    tab_3_1_3.AddCell(coluna4b);
+
+                    PdfPCell coluna5b = new PdfPCell(new Phrase(new Chunk(proposta.DtPagtoCorretagm.ToShortDateString(), fonteParagrafo)));
+                    coluna5b.Colspan = 1;
+                    coluna5b.HorizontalAlignment = Element.ALIGN_CENTER;
+                    coluna5b.SetLeading(0.0f, 1.3f);
+                    tab_3_1_3.AddCell(coluna5b);
+
+
                     cell = new PdfPCell(tab_3_1_3);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2232,7 +2296,13 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     table.AddCell(cell);
 
 
-
+                    var espacamento1 = new Phrase();
+                    espacamento1.Add(new Chunk("\n\n", fonteParagrafo));
+                    cell = new PdfPCell(espacamento1);
+                    cell.Colspan = 8;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
 
                     // item 3.1.4
                     var txt_3_1_4 = new Phrase();
@@ -2244,10 +2314,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto3_1_4 = "O COMPRADOR tem conhecimento de que, pelas normas vigentes, o valor acima poderá ser incluído em seu imposto de renda como custo de aquisição";
-
                     var frase_3_1_4 = new Phrase();
-                    frase_3_1_4.Add(new Chunk(texto3_1_4 + "\n\n\n", fonteParagrafo));
+                    frase_3_1_4.Add(new Chunk("O ", fonteParagrafo));
+                    frase_3_1_4.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_3_1_4.Add(new Chunk(" tem conhecimento de que, pelas normas vigentes, o valor acima poderá ser incluído em seu imposto de renda como custo de aquisição\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_3_1_4);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2268,7 +2338,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var texto3_1_5 = "O valor da comissão sempre deverá ser pago de forma pré-datada com prazo nunca inferior a 8 (oito) dias da data do vencimento do boleto de pagamento da data da entrada do terreno.";
 
                     var frase_3_1_5 = new Phrase();
-                    frase_3_1_5.Add(new Chunk(texto3_1_5 + "\n\n\n", fonteParagrafo));
+                    frase_3_1_5.Add(new Chunk(texto3_1_5 + "\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_3_1_5);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2286,10 +2356,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto3_1_6 = "É imprescindível que o Corretor/ imobiliária sempre consulte a ARJ sobre a quitação do boleto de entrada, antes de depositar em sua conta o valor recebido pela comissão, evitando ter de restituir o valor recebido em casos de desistência do COMPRADOR.";
 
                     var frase_3_1_6 = new Phrase();
-                    frase_3_1_6.Add(new Chunk(texto3_1_6 + "\n\n\n", fonteParagrafo));
+                    frase_3_1_6.Add(new Chunk("É imprescindível que o Corretor / imobiliária sempre consulte a ", fonteParagrafo));
+                    frase_3_1_6.Add(new Chunk("ARJ", fonteBold));
+                    frase_3_1_6.Add(new Chunk(" sobre a quitação do boleto de entrada, antes de depositar em sua conta o valor recebido pela comissão, evitando ter de restituir o valor recebido em casos de desistência do ", fonteParagrafo));
+                    frase_3_1_6.Add(new Chunk("COMPRADOR.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_3_1_6);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2299,7 +2371,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     // CAPÍTULO IV
                     var txtCapitulo4 = new Phrase();
-                    txtCapitulo4.Add(new Chunk("CAPÍTULO IV - DA FORMA DE PAGAMENTO\n\n\n", fonteBold));
+                    txtCapitulo4.Add(new Chunk("CAPÍTULO IV - DA FORMA DE PAGAMENTO\n\n", fonteBold));
 
                     cell = new PdfPCell(txtCapitulo4);
                     cell.Colspan = 8;
@@ -2318,10 +2390,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto4_1 = "O Preço de aquisição do Imóvel será pago pelo COMPRADOR da seguinte forma:";
-
                     var frase_4_1 = new Phrase();
-                    frase_4_1.Add(new Chunk(texto4_1 + "\n\n\n", fonteParagrafo));
+                    frase_4_1.Add(new Chunk("O Preço de aquisição do Imóvel será pago pelo ", fonteParagrafo));
+                    frase_4_1.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_4_1.Add(new Chunk(" da seguinte forma:\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2339,10 +2411,13 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto4_1a = "a título de sinal ou de entrada, a parcela de R$ " + String.Format("{0:0,0.00}", condicoes.ValorEntrada) + " (a “Parcela de Sinal”), por meio de boleto bancário emitido neste ato, e da qual a ARJ dá a devida quitação, condicionada à efetiva compensação de boleto bancário nº " + boletonumero + " emitido pelo banco ITAÚ S/A ou usando pagamento eletrônico como PIX, TED ou TEF, Termo de Proposta nº " + proposta.Id.ToString().PadLeft(6, '0') +". ";
-
                     var frase_4_1a = new Phrase();
-                    frase_4_1a.Add(new Chunk(texto4_1a + "\n\n\n", fonteParagrafo));
+                    frase_4_1a.Add(new Chunk("a título de sinal ou de entrada", fonteBold));
+                    frase_4_1a.Add(new Chunk(", a parcela de R$ " + String.Format("{0:0,0.00}", condicoes.ValorEntrada) + " (a “Parcela de Sinal”), por meio de boleto bancário emitido neste ato, e da qual a ", fonteParagrafo));
+                    frase_4_1a.Add(new Chunk("neste ato", fonteBold));
+                    frase_4_1a.Add(new Chunk(", e da qual a ", fonteParagrafo));
+                    frase_4_1a.Add(new Chunk("ARJ", fonteBold));
+                    frase_4_1a.Add(new Chunk(" dá a devida quitação, condicionada à efetiva compensação de boleto bancário nº " + boletonumero + " emitido pelo banco ITAÚ S/A ou usando pagamento eletrônico como PIX, TED ou TEF, Termo de Proposta nº " + proposta.Id.ToString().PadLeft(6, '0') + ". \n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_1a);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2363,7 +2438,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var texto4_1b = "a parcela de R$ " + String.Format("{0:0,0.00}", (proposta.ValorTotal - condicoes.ValorEntrada)) + " (" + saldoPagarExtenso + ") (o “Saldo do Preço”), a ser acrescida anualmente por juros de 3% e corrigida pelo IPCA – Índice Nacional de Preços ao Consumidor, conforme item 3.2 das Normas Gerais, por meio de: ";
 
                     var frase_4_1b = new Phrase();
-                    frase_4_1b.Add(new Chunk(texto4_1b + "\n\n\n", fonteParagrafo));
+                    frase_4_1b.Add(new Chunk(texto4_1b + "\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_1b);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2382,10 +2457,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto4_1b1 = "b.1)  – " + condicoes.NrParcelasMensais.ToString() + " prestações mensais, iguais e sucessivas, corrigidas monetariamente na forma do item 3.2 das Normas Gerais, no valor unitário de R$ " + String.Format("{0:0,0.00}", condicoes.ValorParcelaMensal) + ", vencendo-se a primeira (1.ª) no dia " + proposta.PrimeiroVencMensal.Value.ToShortDateString() + ", e as demais nos mesmos dias dos meses subsequentes, até final liquidação;";
-
                     var frase_4_1b1 = new Phrase();
-                    frase_4_1b1.Add(new Chunk(texto4_1b1 + "\n\n\n", fonteParagrafo));
+                    frase_4_1b1.Add(new Chunk("b.1)  – " + condicoes.NrParcelasMensais.ToString() + " prestações ", fonteParagrafo));
+                    frase_4_1b1.Add(new Chunk("mensais", fonteBold));
+                    frase_4_1b1.Add(new Chunk(", iguais e sucessivas, corrigidas monetariamente na forma do item 3.2 das Normas Gerais, no valor unitário de R$ " + String.Format("{0:0,0.00}", condicoes.ValorParcelaMensal) + ", vencendo - se a primeira(1.ª) no dia " + proposta.PrimeiroVencMensal.Value.ToShortDateString() + ", e as demais nos mesmos dias dos meses subsequentes, até final liquidação;\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_1b1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2403,10 +2478,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto4_1b2 = "b.2)	– " + condicoes.NrParcelasSemestrais.ToString() + " prestações semestrais, iguais e sucessivas, corrigidas monetariamente na forma do item 3.2 das Normas Gerais, no valor unitário de R$ " + String.Format("{0:0,0.00}", condicoes.ValorParcelaSemestral) + ", vencendo-se a primeira em " + proposta.PrimeiroVencSemestral.Value.ToShortDateString() + " e as demais em igual dia dos semestres subsequentes, até final liquidação.";
-
                     var frase_4_1b2 = new Phrase();
-                    frase_4_1b2.Add(new Chunk(texto4_1b2 + "\n\n\n", fonteParagrafo));
+                    frase_4_1b2.Add(new Chunk("b.2)	– " + condicoes.NrParcelasSemestrais.ToString() + " prestações ",fonteParagrafo));
+                    frase_4_1b2.Add(new Chunk("semestrais", fonteBold));
+                    frase_4_1b2.Add(new Chunk(", iguais e sucessivas, corrigidas monetariamente na forma do item 3.2 das Normas Gerais, no valor unitário de R$ " + String.Format("{0:0,0.00}", condicoes.ValorParcelaSemestral) + ", vencendo-se a primeira em " + proposta.PrimeiroVencSemestral.Value.ToShortDateString() + " e as demais em igual dia dos semestres subsequentes, até final liquidação.\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_1b2);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2424,10 +2499,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto4_1b3 = "b.3) \t– R$ " + String.Format("{0:0,0.00}", condicoes.SaldoQuitacao) + " (" + saldoRemascenteExtenso + ") saldo remanescente ao final dos " + condicoes.NrParcelasMensais.ToString() + " meses, corrigido monetariamente na forma do item 3.2 das normas gerais.";
+                    var texto4_1b3 = "b.3) – R$ " + String.Format("{0:0,0.00}", condicoes.SaldoQuitacao) + " (" + saldoRemascenteExtenso + ") saldo remanescente ao final dos " + condicoes.NrParcelasMensais.ToString() + " meses, corrigido monetariamente na forma do item 3.2 das normas gerais.";
 
                     var frase_4_1b3 = new Phrase();
-                    frase_4_1b3.Add(new Chunk(texto4_1b3 + "\n\n\n", fonteParagrafo));
+                    frase_4_1b3.Add(new Chunk(texto4_1b3 + "\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_1b3);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2445,10 +2520,13 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto4_2 = "Correção Monetária: As prestações e o Saldo do Preço serão corrigidos anualmente de acordo com a variação percentual mensal acumulada do IPCA conforme previsto no item 3.2 das Normas Gerais.";
-
                     var frase_4_2 = new Phrase();
-                    frase_4_2.Add(new Chunk(texto4_2 + "\n\n\n", fonteParagrafo));
+                    frase_4_2.Add(new Chunk("Correção Monetária", fonteBold));
+                    frase_4_2.Add(new Chunk(": As prestações e o Saldo do Preço serão corrigidos ", fonteParagrafo));
+                    frase_4_2.Add(new Chunk("anualmente", fonteBold));
+                    frase_4_2.Add(new Chunk(" de acordo com a variação percentual mensal acumulada do ", fonteParagrafo));
+                    frase_4_2.Add(new Chunk("IPCA", fonteBold));
+                    frase_4_2.Add(new Chunk(" conforme previsto no item 3.2 das Normas Gerais.\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_2);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2466,10 +2544,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto4_3 = "Juros compensatórios:  as prestações e o Saldo do Preço serão acrescidos de juros efetivos e nominais  de 3% (três por cento) ao ano, calculados pela Tabela Price.";
-
                     var frase_4_3 = new Phrase();
-                    frase_4_3.Add(new Chunk(texto4_3 + "\n\n\n", fonteParagrafo));
+                    frase_4_3.Add(new Chunk("Juros compensatórios", fonteBold));
+                    frase_4_3.Add(new Chunk(":  as prestações e o Saldo do Preço serão acrescidos de juros efetivos e nominais  de 3% (três por cento) ao ano, calculados pela Tabela Price.\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_3);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2487,10 +2564,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto4_4 = "Caso o COMPRADOR não pague o boleto de entrada no prazo de até 05 (cinco) dias úteis da data do seu vencimento operar-se-á o Distrato Automático do presente contrato, voltando o referido lote do presente contrato ao estoque da ARJ que poderá imediatamente comercializá-lo a outro interessado.";
-
                     var frase_4_4 = new Phrase();
-                    frase_4_4.Add(new Chunk(texto4_4 + "\n\n\n", fonteParagrafo));
+                    frase_4_4.Add(new Chunk("Caso o ", fonteParagrafo));
+                    frase_4_4.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_4_4.Add(new Chunk(" não pague o boleto de entrada no prazo de até 05 (cinco) dias úteis da data do seu vencimento operar-se-á o Distrato Automático do presente contrato, voltando o referido lote do presente contrato ao estoque da ARJ que poderá imediatamente comercializá-lo a outro interessado.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_4);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2500,7 +2577,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     // CAPÍTULO V
                     var txtCapitulo5 = new Phrase();
-                    txtCapitulo5.Add(new Chunk("CAPÍTULO V - DA CONCLUSÃO DAS OBRAS DE INFRAESTRUTURA\n\n\n", fonteBold));
+                    txtCapitulo5.Add(new Chunk("CAPÍTULO V - DA CONCLUSÃO DAS OBRAS DE INFRAESTRUTURA\n\n", fonteBold));
 
                     cell = new PdfPCell(txtCapitulo5);
                     cell.Colspan = 8;
@@ -2519,10 +2596,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto5_1 = "Prazo para conclusão das obras de infraestrutura: --- de --- de ---, ou seja, até 48 (quarenta e oito) meses, contados a partir do registro do Loteamento.";
-
                     var frase_5_1 = new Phrase();
-                    frase_5_1.Add(new Chunk(texto5_1 + "\n", fonteParagrafo));
+                    frase_5_1.Add(new Chunk("Prazo para conclusão das obras de infraestrutura: --- de --- de ---, ou seja", fonteBold));
+                    frase_5_1.Add(new Chunk(", até 48 (quarenta e oito) meses, contados a partir do registro do Loteamento.\n", fonteParagrafo));
                     cell = new PdfPCell(frase_5_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2540,10 +2616,11 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto5_1_1 = "Prazo de Tolerância: O prazo do item 5.1 observará uma tolerância de 180 (cento e oitenta) dias corridos, ou seja, até --- de --- de --- (“Prazo de Tolerância”), consoante regramento previsto no Capítulo IX das Normas Gerais, abaixo.";
-
                     var frase_5_1_1 = new Phrase();
-                    frase_5_1_1.Add(new Chunk(texto5_1_1 + "\n\n\n", fonteParagrafo));
+                    frase_5_1_1.Add(new Chunk("Prazo de Tolerância", fonteBold));
+                    frase_5_1_1.Add(new Chunk(": O prazo do item 5.1 observará uma tolerância de 180 (cento e oitenta) dias corridos, ou seja, até --- de --- de --- (“Prazo de Tolerância”), consoante regramento previsto no ", fonteParagrafo));
+                    frase_5_1_1.Add(new Chunk("Capítulo IX", fonteBold));
+                    frase_5_1_1.Add(new Chunk(" das Normas Gerais, abaixo.\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_5_1_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2562,10 +2639,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto5_2 = "Prazo para protocolo do pedido de emissão do Termo de Verificação de Execução de Obras (“TVEO”): --- de --- de ---, observada a mesma tolerância de 180 (cento e oitenta) dias corridos, caso utilizado o Prazo de Tolerância.";
-
                     var frase_5_2 = new Phrase();
-                    frase_5_2.Add(new Chunk(texto5_2 + "\n\n\n", fonteParagrafo));
+                    frase_5_2.Add(new Chunk("Prazo para ", fonteParagrafo));
+                    frase_5_2.Add(new Chunk("protocolo", fonteBold));
+                    frase_5_2.Add(new Chunk(" do pedido de emissão do Termo de Verificação de Execução de Obras (“TVEO”): --- de --- de ---, observada a mesma tolerância de 180 (cento e oitenta) dias corridos, caso utilizado o Prazo de Tolerância.\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_5_2);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2583,10 +2660,14 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto5_3 = "As partes estabelecem que o Loteamento será tido como entregue na data de postagem de carta registrada a ser enviada pela ARJ ao COMPRADOR, comunicando (“Comunicação”) a conclusão das Obras de infraestrutura do Loteamento, caracterizada pelo protocolo, junto à Municipalidade, do pedido de emissão do TVEO, ou documento equivalente.";
-
                     var frase_5_3 = new Phrase();
-                    frase_5_3.Add(new Chunk(texto5_3 + "\n\n\n", fonteParagrafo));
+                    frase_5_3.Add(new Chunk("As partes estabelecem que o Loteamento será tido como entregue na data de postagem de carta registrada a ser enviada pela ", fonteParagrafo));
+                    frase_5_3.Add(new Chunk("ARJ", fonteBold));
+                    frase_5_3.Add(new Chunk(" ao ", fonteParagrafo));
+                    frase_5_3.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_5_3.Add(new Chunk(", comunicando (“Comunicação”) a conclusão das Obras de infraestrutura do Loteamento, caracterizada pelo ", fonteParagrafo));
+                    frase_5_3.Add(new Chunk("protocolo", fonteBold));
+                    frase_5_3.Add(new Chunk(", junto à Municipalidade, do pedido de emissão do TVEO, ou documento equivalente.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_5_3);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2616,10 +2697,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto6_1 = "Superadas as Condições Suspensivas, abaixo previstas, o COMPRADOR ficará automaticamente imitido na posse direta do Imóvel, ficando a ARJ com a posse indireta, na qualidade de credora fiduciária.\n\n";
-
                     var frase_6_1 = new Phrase();
-                    frase_6_1.Add(new Chunk(texto6_1 + "\n", fonteParagrafo));
+                    frase_6_1.Add(new Chunk("Superadas as Condições Suspensivas, abaixo previstas, o ", fonteParagrafo));
+                    frase_6_1.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_6_1.Add(new Chunk(" ficará automaticamente imitido na posse direta do Imóvel, ficando a ", fonteParagrafo));
+                    frase_6_1.Add(new Chunk("ARJ", fonteParagrafo));
+                    frase_6_1.Add(new Chunk(" com a posse indireta, na qualidade de credora fiduciária.\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_6_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2638,10 +2721,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto6_2 = "Entretanto, o COMPRADOR apenas poderá executar benfeitorias, acessões e melhoramentos no Imóvel, a partir do deferimento da Comunicação aludida no item 5.3 pelos órgãos competentes e desde que observadas as regras constantes neste contrato.\n\n";
-
                     var frase_6_2 = new Phrase();
-                    frase_6_2.Add(new Chunk(texto6_2 + "\n", fonteParagrafo));
+                    frase_6_2.Add(new Chunk("Entretanto, o ", fonteParagrafo));
+                    frase_6_2.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_6_2.Add(new Chunk(" apenas poderá executar benfeitorias, acessões e melhoramentos no Imóvel, a partir do deferimento da Comunicação aludida no item 5.3 pelos órgãos competentes e desde que observadas as regras constantes neste contrato.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_6_2);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2669,10 +2752,15 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto7_1 = "Direito de Arrependimento: Como o Contrato foi celebrado em estande de venda ou fora da sede da ARJ, o COMPRADOR tem assegurado o direito de arrependimento, durante o prazo improrrogável de 7 (sete) dias, contados desta data, conforme regrado no Capítulo XV das Normas Gerais, abaixo.\n\n";
-
                     var frase_7_1 = new Phrase();
-                    frase_7_1.Add(new Chunk(texto7_1 + "\n", fonteParagrafo));
+                    frase_7_1.Add(new Chunk("Direito de Arrependimento: ", fonteBold));
+                    frase_7_1.Add(new Chunk("Como o Contrato foi celebrado em estande de venda ou fora da sede da ", fonteSublinhada));
+                    frase_7_1.Add(new Chunk("ARJ", fonteBold));
+                    frase_7_1.Add(new Chunk(", o ", fonteSublinhada));
+                    frase_7_1.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_7_1.Add(new Chunk(" tem assegurado o direito de arrependimento, durante o prazo improrrogável de 7 (sete) dias, contados desta data, conforme regrado no ", fonteSublinhada));
+                    frase_7_1.Add(new Chunk("Capítulo XV", fonteBold));
+                    frase_7_1.Add(new Chunk(" das Normas Gerais, abaixo.\n\n", fonteSublinhada));
                     cell = new PdfPCell(frase_7_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2690,10 +2778,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto7_2 = "Para fins de restituição do Preço, na hipótese de exercício do direito de arrependimento, o COMPRADOR indica a seguinte conta corrente de sua titularidade:\n\n";
-
                     var frase_7_2 = new Phrase();
-                    frase_7_2.Add(new Chunk(texto7_2 + "\n", fonteParagrafo));
+                    frase_7_2.Add(new Chunk("Para fins de restituição do Preço, na hipótese de exercício do direito de arrependimento, o ", fonteParagrafo));
+                    frase_7_2.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_7_2.Add(new Chunk(" indica a seguinte conta corrente de sua titularidade:\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_7_2);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2729,11 +2817,30 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     coluna7_2.SetLeading(0.0f, 1.3f);
                     tab_7_2.AddCell(coluna7_2);
 
-                    PdfPCell coluna7_3 = new PdfPCell(new Phrase(new Chunk("Conta", fonteParagrafo)));
+                    PdfPCell coluna7_3 = new PdfPCell(new Phrase(new Chunk("Conta\n", fonteParagrafo)));
                     coluna7_3.Colspan = 1;
                     coluna7_3.HorizontalAlignment = Element.ALIGN_CENTER;
                     coluna7_3.SetLeading(0.0f, 1.3f);
                     tab_7_2.AddCell(coluna7_3);
+
+                    PdfPCell coluna7_1b = new PdfPCell(new Phrase(new Chunk(proposta.BancoCliente, fonteParagrafo)));
+                    coluna7_1b.Colspan = 1;
+                    coluna7_1b.HorizontalAlignment = Element.ALIGN_CENTER;
+                    coluna7_1b.SetLeading(0.0f, 1.3f);
+                    tab_7_2.AddCell(coluna7_1b);
+
+                    PdfPCell coluna7_2b = new PdfPCell(new Phrase(new Chunk( proposta.AgenciaCliente, fonteParagrafo)));
+                    coluna7_2b.Colspan = 1;
+                    coluna7_2b.HorizontalAlignment = Element.ALIGN_CENTER;
+                    coluna7_2b.SetLeading(0.0f, 1.3f);
+                    tab_7_2.AddCell(coluna7_2b);
+
+                    PdfPCell coluna7_3b = new PdfPCell(new Phrase(new Chunk(proposta.ContaCliente + "\n", fonteParagrafo)));
+                    coluna7_3b.Colspan = 1;
+                    coluna7_3b.HorizontalAlignment = Element.ALIGN_CENTER;
+                    coluna7_3b.SetLeading(0.0f, 1.3f);
+                    tab_7_2.AddCell(coluna7_3b);
+
 
                     cell = new PdfPCell(tab_7_2);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
@@ -2763,10 +2870,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto8_1 = "Ônus: O Imóvel se acha inteiramente livre e desembaraçado de toda e qualquer restrição, real ou pessoal, judicial ou extrajudicial.\n\n";
-
                     var frase_8_1 = new Phrase();
-                    frase_8_1.Add(new Chunk(texto8_1 + "\n", fonteParagrafo));
+                    frase_8_1.Add(new Chunk("Ônus", fonteBold));
+                    frase_8_1.Add(new Chunk(": O Imóvel se acha inteiramente livre e desembaraçado de toda e qualquer restrição, real ou pessoal, judicial ou extrajudicial.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_8_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2795,10 +2901,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto9_1 = "O COMPRADOR FOI INFORMADO E CONCORDA QUE O PAGAMENTO DA COMISSÃO DE CORRETAGEM NÃO INTEGRA O PREÇO DO IMÓVEL E QUE FARÁ O PAGAMENTO DIRETAMENTE AO CORRETOR ASSOCIADO E/OU À IMOBILIÁRIA.\n";
-
                     var frase_9_1 = new Phrase();
-                    frase_9_1.Add(new Chunk(texto9_1 + "\n", fonteParagrafo));
+                    frase_9_1.Add(new Chunk("O ", fonteSublinhada));
+                    frase_9_1.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_9_1.Add(new Chunk(" FOI INFORMADO E CONCORDA QUE O PAGAMENTO DA COMISSÃO DE CORRETAGEM NÃO INTEGRA O PREÇO DO IMÓVEL E QUE FARÁ O PAGAMENTO DIRETAMENTE AO CORRETOR ASSOCIADO E/OU À IMOBILIÁRIA.\n\n", fonteSublinhada));
                     cell = new PdfPCell(frase_9_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2816,10 +2922,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto9_1_1 = "O COMPRADOR ESTÁ CIENTE QUE O VALOR DA COMISSÃO DE CORRETAGEM,  MENCIONADO NO CAPÍTULO III, ACIMA, NÃO SERÁ DEVOLVIDO EM HIPÓTESE ALGUMA, UMA VEZ QUE ESSA VENDA E COMPRA SE CARACTERIZA COMO OPERAÇÃO DEFINITIVA DE VENDA E COMPRA, OBSERVADAS AS CONDIÇÕES SUSPENSIVAS ABAIXO PREVISTAS.\n\n\n";
-
                     var frase_9_1_1 = new Phrase();
-                    frase_9_1_1.Add(new Chunk(texto9_1_1 + "\n", fonteParagrafo));
+                    frase_9_1_1.Add(new Chunk("O ", fonteSublinhada));
+                    frase_9_1_1.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_9_1_1.Add(new Chunk(" ESTÁ CIENTE QUE O VALOR DA COMISSÃO DE CORRETAGEM,  MENCIONADO NO ", fonteSublinhada));
+                    frase_9_1_1.Add(new Chunk("CAPÍTULO III", fonteBold));
+                    frase_9_1_1.Add(new Chunk(", ACIMA, NÃO SERÁ DEVOLVIDO EM HIPÓTESE ALGUMA, UMA VEZ QUE ESSA VENDA E COMPRA SE CARACTERIZA COMO OPERAÇÃO DEFINITIVA DE VENDA E COMPRA, OBSERVADAS AS CONDIÇÕES SUSPENSIVAS ABAIXO PREVISTAS.\n\n\n", fonteSublinhada));
                     cell = new PdfPCell(frase_9_1_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2862,7 +2970,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var texto9_1_1b = "                      COMPRADOR                                        COMPRADOR\n";
 
                     var frase_9_1_1b = new Phrase();
-                    frase_9_1_1b.Add(new Chunk(texto9_1_1b + "\n\n", fonteParagrafo));
+                    frase_9_1_1b.Add(new Chunk(texto9_1_1b + "\n\n", fonteBold));
                     cell = new PdfPCell(frase_9_1_1b);
                     cell.HorizontalAlignment = Element.ALIGN_CENTER;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2880,10 +2988,11 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto9_2 = "Manifestação do COMPRADOR: Foi concedida ao COMPRADOR a oportunidade para previamente examinar este Contrato, pelo que declara estar bem esclarecido quanto às condições contratuais, não tendo ele qualquer alteração a solicitar e aceitando, na íntegra, as cláusulas deste Contrato, bem como declara ter conferido todo o Quadro Resumo.\n\n\n";
-
                     var frase_9_2 = new Phrase();
-                    frase_9_2.Add(new Chunk(texto9_2 + "\n", fonteParagrafo));
+                    frase_9_2.Add(new Chunk("Manifestação do COMPRADOR", fonteBold));
+                    frase_9_2.Add(new Chunk(": Foi concedida ao ", fonteParagrafo));
+                    frase_9_2.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_9_2.Add(new Chunk(" a oportunidade para previamente examinar este Contrato, pelo que declara estar bem esclarecido quanto às condições contratuais, não tendo ele qualquer alteração a solicitar e aceitando, na íntegra, as cláusulas deste Contrato, bem como declara ter conferido todo o Quadro Resumo.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_9_2);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2911,10 +3020,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto10_1 = "O COMPRADOR tem ciência e está de acordo com as restrições que a ARJ estabeleceu para o Loteamento, constantes no Regulamento Construtivo (ANEXO V), integrante do presente instrumento.\n";
-
                     var frase_10_1 = new Phrase();
-                    frase_10_1.Add(new Chunk(texto10_1 + "\n", fonteParagrafo));
+                    frase_10_1.Add(new Chunk("O ", fonteParagrafo));
+                    frase_10_1.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_10_1.Add(new Chunk(" tem ciência e está de acordo com as restrições que a ", fonteParagrafo));
+                    frase_10_1.Add(new Chunk("ARJ", fonteBold));
+                    frase_10_1.Add(new Chunk(" estabeleceu para o Loteamento, constantes no Regulamento Construtivo (ANEXO V), integrante do presente instrumento.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_10_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2943,10 +3054,18 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto11_1 = "O COMPRADOR tem conhecimento e concorda, como condição essencial do presente negócio, com sua filiação à Associação dos Moradores do Residencial Pianopoli (a “ASSOCIAÇÃO”), neste ato, independentemente de qualquer outra formalidade.\n";
+                    //var texto11_1 = "O COMPRADOR tem conhecimento e concorda, como condição essencial do presente negócio, com sua filiação à Associação dos Moradores do Residencial Pianopoli (a “ASSOCIAÇÃO”), neste ato, independentemente de qualquer outra formalidade.\n";
 
                     var frase_11_1 = new Phrase();
-                    frase_11_1.Add(new Chunk(texto11_1 + "\n", fonteParagrafo));
+                    frase_11_1.Add(new Chunk("O ", fonteParagrafo));
+                    frase_11_1.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_11_1.Add(new Chunk(" tem conhecimento e concorda, ", fonteParagrafo));
+                    frase_11_1.Add(new Chunk("como condição essencial do presente negócio", fonteBold));
+                    frase_11_1.Add(new Chunk(", com sua filiação à Associação dos Moradores do ", fonteParagrafo));
+                    frase_11_1.Add(new Chunk("Residencial Pianopoli", fonteBold));
+                    frase_11_1.Add(new Chunk(" (a “", fonteParagrafo));
+                    frase_11_1.Add(new Chunk("ASSOCIAÇÃO", fonteBold));
+                    frase_11_1.Add(new Chunk("”), neste ato, independentemente de qualquer outra formalidade.\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_11_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2964,10 +3083,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto11_2 = "A ASSOCIAÇÃO é uma entidade, sem fins lucrativos, que visa, dentre outras finalidades, à defesa e à preservação de direitos e interesses coletivos ou difusos, de qualquer natureza, dos moradores do Loteamento, promovendo, por si ou por terceiros que contratar e nomear, a preservação das características do Loteamento, zelando por sua adequada utilização e a prestação de serviços em prol de seus Associados, tanto os serviços necessários, como os de comodidade.\n";
-
                     var frase_11_2 = new Phrase();
-                    frase_11_2.Add(new Chunk(texto11_2 + "\n", fonteParagrafo));
+                    frase_11_2.Add(new Chunk("A ", fonteParagrafo));
+                    frase_11_2.Add(new Chunk("ASSOCIAÇÃO", fonteBold));
+                    frase_11_2.Add(new Chunk(" é uma entidade, sem fins lucrativos, que visa, dentre outras finalidades, à defesa e à preservação de direitos e interesses coletivos ou difusos, de qualquer natureza, dos moradores do Loteamento, promovendo, por si ou por terceiros que contratar e nomear, a preservação das características do Loteamento, zelando por sua adequada utilização e a prestação de serviços em prol de seus Associados, tanto os serviços necessários, como os de comodidade.\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_11_2);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -2985,10 +3104,14 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto11_3 = "Além das disposições constantes no Capítulo XIV das Normas Gerais, o COMPRADOR declara estar ciente das obrigações e direitos decorrentes da sua qualidade de Associado Contribuinte, nos termos do Estatuto Social da ASSOCIAÇÃO, cuja cópia integra o presente como ANEXO IV.\n";
-
                     var frase_11_3 = new Phrase();
-                    frase_11_3.Add(new Chunk(texto11_3 + "\n", fonteParagrafo));
+                    frase_11_3.Add(new Chunk("Além das disposições constantes no ", fonteParagrafo));
+                    frase_11_3.Add(new Chunk("Capítulo XIV", fonteBold));
+                    frase_11_3.Add(new Chunk(" das Normas Gerais, o ", fonteParagrafo));
+                    frase_11_3.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_11_3.Add(new Chunk(" declara estar ciente das obrigações e direitos decorrentes da sua qualidade de Associado Contribuinte, nos termos do Estatuto Social da ", fonteParagrafo));
+                    frase_11_3.Add(new Chunk("ASSOCIAÇÃO", fonteBold));
+                    frase_11_3.Add(new Chunk(", cuja cópia integra o presente como ANEXO IV.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_11_3);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -3017,10 +3140,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto12_1 = "Conforme o Capítulo XVI das Normas Gerais , como exceção à irrevogabilidade e irretratabilidade, a eficácia do presente Contrato acha-se subordinada às seguintes condições suspensivas (“Condições Suspensivas”):\n";
-
                     var frase_12_1 = new Phrase();
-                    frase_12_1.Add(new Chunk(texto12_1 + "\n", fonteParagrafo));
+                    frase_12_1.Add(new Chunk("Conforme o ", fonteParagrafo));
+                    frase_12_1.Add(new Chunk("Capítulo XVI", fonteBold));
+                    frase_12_1.Add(new Chunk(" das Normas Gerais , como exceção à irrevogabilidade e irretratabilidade, a eficácia do presente Contrato acha-se subordinada às seguintes condições suspensivas (“Condições Suspensivas”):\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_12_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -3039,10 +3162,11 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto12_1a = "a) -\tcompensação, em até 05 (cinco) dias úteis, contados da data de vencimento do(s) boleto(s) representativos da Parcela de Sinal na conta da ARJ;\n";
-
                     var frase_12_1a = new Phrase();
-                    frase_12_1a.Add(new Chunk(texto12_1a + "\n", fonteParagrafo));
+                    frase_12_1a.Add(new Chunk("a) -\tcompensação, ", fonteParagrafo));
+                    frase_12_1a.Add(new Chunk("em até 05 (cinco) dias úteis", fonteBold));
+                    frase_12_1a.Add(new Chunk(", contados da data de vencimento do(s) boleto(s) representativos da Parcela de Sinal na conta da ", fonteParagrafo));
+                    frase_12_1a.Add(new Chunk("ARJ;\n\n", fonteBold));
                     cell = new PdfPCell(frase_12_1a);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -3060,10 +3184,11 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto12_1b = "b) -\tnão exercício, em até 07 (sete) dias, contados desta data, do Direito de Arrependimento pelo COMPRADOR;\n";
-
                     var frase_12_1b = new Phrase();
-                    frase_12_1b.Add(new Chunk(texto12_1b + "\n", fonteParagrafo));
+                    frase_12_1b.Add(new Chunk("b) -\tnão exercício, ", fonteParagrafo));
+                    frase_12_1b.Add(new Chunk("em até 07 (sete) dias", fonteBold));
+                    frase_12_1b.Add(new Chunk(", contados desta data, do Direito de Arrependimento pelo ", fonteParagrafo));
+                    frase_12_1b.Add(new Chunk("COMPRADOR\n\n", fonteBold));
                     cell = new PdfPCell(frase_12_1b);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -3081,10 +3206,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto12_1b1 = "     b.1) essa condição suspensiva não é aplicável para contratos assinados na sede da ARJ;\n";
-
                     var frase_12_1b1 = new Phrase();
-                    frase_12_1b1.Add(new Chunk(texto12_1b1 + "\n", fonteParagrafo));
+                    frase_12_1b1.Add(new Chunk("     b.1) essa condição suspensiva não é aplicável para contratos assinados na sede da ", fonteParagrafo));
+                    frase_12_1b1.Add(new Chunk("ARJ;\n\n\n", fonteBold));
                     cell = new PdfPCell(frase_12_1b1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -3113,10 +3237,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto13_1 = "Consiste parte integrante do presente os anexos abaixo relacionados, cujo teor é de conhecimento do COMPRADOR, que declara estar de acordo:\n";
-
                     var frase_13_1 = new Phrase();
-                    frase_13_1.Add(new Chunk(texto13_1 + "\n", fonteParagrafo));
+                    frase_13_1.Add(new Chunk("Consiste parte integrante do presente os anexos abaixo relacionados, cujo teor é de conhecimento do ", fonteParagrafo));
+                    frase_13_1.Add(new Chunk("COMPRADOR", fonteBold));
+                    frase_13_1.Add(new Chunk(", que declara estar de acordo:\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_13_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -3200,10 +3324,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.SetLeading(0.0f, 1.3f);
                     table.AddCell(cell);
 
-                    var texto13_1d = "d) – \tCópia do Estatuto Social da ASSOCIAÇÃO (ANEXO IV);\n";
-
                     var frase_13_1d = new Phrase();
-                    frase_13_1d.Add(new Chunk(texto13_1d + "\n", fonteParagrafo));
+                    frase_13_1d.Add(new Chunk("d) – \tCópia do Estatuto Social da ", fonteParagrafo));
+                    frase_13_1d.Add(new Chunk("ASSOCIAÇÃO", fonteBold));
+                    frase_13_1d.Add(new Chunk(" (ANEXO IV);\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_13_1d);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -3237,8 +3361,169 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var textofinal = "E, por estarem, assim, justos e contratados, assinam o presente em três (03) vias, de um só teor, na presença das duas (02) testemunhas abaixo.\n";
 
                     var frasefinal = new Phrase();
-                    frasefinal.Add(new Chunk(textofinal + "\n", fonteParagrafo));
+                    frasefinal.Add(new Chunk(textofinal + "\n\n", fonteParagrafo));
                     cell = new PdfPCell(frasefinal);
+                    cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 8;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+
+                    // item final
+                    
+                    var textoCidade = "Araraquara, " +  proposta.DataProposta.Day.ToString() + " de " + MesPorExtenso.MesExtenso(proposta.DataProposta) + " de " + proposta.DataProposta.Year.ToString() + "\n\n\n";
+
+                    var fraseCidade = new Phrase();
+                    fraseCidade.Add(new Chunk(textoCidade+ "\n", fonteParagrafo));
+                    cell = new PdfPCell(fraseCidade);
+                    cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 8;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    // para as assinaturas do contrato, coloquei inicialmente uma em cada linha para facilitar quando for mais do que um comprador.
+
+
+                    var texto_assinaturaARJa = "_________________________________________";
+                    
+                    var frase_assianturaARJa = new Phrase();
+                    frase_assianturaARJa.Add(new Chunk(texto_assinaturaARJa + "\n", fonteParagrafo));
+                    cell = new PdfPCell(frase_assianturaARJa);
+                    cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 8;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    // assinaturas ARJ b)
+                    var texto_assinaturaARJb = "ARJ EMPREENDIMENTOS IMOBILIÁRIOS LTDA\n";
+
+                    var frase_assinaturaARJb = new Phrase();
+                    frase_assinaturaARJb.Add(new Chunk(texto_assinaturaARJb + "\n\n", fonteBold));
+                    cell = new PdfPCell(frase_assinaturaARJb);
+                    cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 8;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    var nomeComprador = "";
+                    var traco_assinatura = "_________________________________________";
+                    foreach (var item in compradores)
+                    {
+
+                        nomeComprador = item.Nome.TrimEnd();
+
+                        
+
+                        var frase_assiantura = new Phrase();
+                        frase_assiantura.Add(new Chunk("\n" + traco_assinatura + "\n", fonteParagrafo));
+                        cell = new PdfPCell(frase_assianturaARJa);
+                        cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                        cell.SetLeading(0.0f, 1.3f);
+                        cell.Colspan = 8;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+
+                        var frase_assinatura = new Phrase();
+                        frase_assinatura.Add(new Chunk(nomeComprador + "\n\n", fonteBold));
+                        cell = new PdfPCell(frase_assinatura);
+                        cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                        cell.SetLeading(0.0f, 1.3f);
+                        cell.Colspan = 8;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+
+                    }
+
+                    var frase_testemunhas = new Phrase();
+                    frase_testemunhas.Add(new Chunk("Testemunhas:"+ "\n\n\n", fonteParagrafo));
+                    cell = new PdfPCell(frase_testemunhas);
+                    cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 8;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    var traco_testemunha = "_____________________________________";
+
+                    var frase_testemunha1 = new Phrase();
+                    frase_testemunha1.Add(new Chunk(traco_testemunha , fonteParagrafo));
+                    cell = new PdfPCell(frase_testemunha1);
+                    cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 4;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    var frase_testemunha2 = new Phrase();
+                    frase_testemunha2.Add(new Chunk(traco_testemunha + "\n", fonteParagrafo));
+                    cell = new PdfPCell(frase_testemunha2);
+                    cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 4;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    var frase_testemunhaNome1 = new Phrase();
+                    frase_testemunhaNome1.Add(new Chunk(proposta.TestemunhaNome1, fonteParagrafo));
+                    cell = new PdfPCell(frase_testemunhaNome1);
+                    cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 4;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    var frase_testemunhaNome2 = new Phrase();
+                    frase_testemunhaNome2.Add(new Chunk(proposta.TestemunhaNome2 + "\n", fonteParagrafo));
+                    cell = new PdfPCell(frase_testemunhaNome2);
+                    cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 4;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    var frase_testemunhaEnd1 = new Phrase();
+                    frase_testemunhaEnd1.Add(new Chunk(proposta.TestemunhaEnd1, fonteParagrafo));
+                    cell = new PdfPCell(frase_testemunhaEnd1);
+                    cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 4;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    var frase_testemunhaEnd2 = new Phrase();
+                    frase_testemunhaEnd2.Add(new Chunk(proposta.TestemunhaEnd2 + "\n", fonteParagrafo));
+                    cell = new PdfPCell(frase_testemunhaEnd2);
+                    cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 4;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    var frase_testemunhaRg1 = new Phrase();
+                    frase_testemunhaRg1.Add(new Chunk(proposta.TestemunhaRg1, fonteParagrafo));
+                    cell = new PdfPCell(frase_testemunhaRg1);
+                    cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 4;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    var frase_testemunhaRg2 = new Phrase();
+                    frase_testemunhaRg2.Add(new Chunk(proposta.TestemunhaRg2 + "\n\n", fonteParagrafo));
+                    cell = new PdfPCell(frase_testemunhaRg2);
+                    cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                    cell.SetLeading(0.0f, 1.3f);
+                    cell.Colspan = 4;
+                    cell.BorderWidth = 0;
+                    table.AddCell(cell);
+
+                    var frase_termofinal = new Phrase();
+                    frase_termofinal.Add(new Chunk("(Esta folha de assinaturas integra o Quadro Resumo do CONTRATO DE VENDA E COMPRA COM ALIENAÇÃO FIDUCIÁRIA EM GARANTIA E COM CONDIÇÕE SUSPENSIVAS – Loteamento Residencial Pianopoli, firmado por instrumento particular com força de escritura pública)." + "\n", fonteReduzida));
+                    cell = new PdfPCell(frase_termofinal);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
                     cell.Colspan = 8;
@@ -3272,6 +3557,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
         }
         public class HeaderFooter : PdfPageEventHelper
         {
+            
             public override void OnOpenDocument(PdfWriter writer, Document document)
             {
                 base.OnOpenDocument(writer, document);  
@@ -3321,13 +3607,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 _cell.Border = 0;
                 tbFooter.AddCell(_cell);
 
-                _cell = new PdfPCell(new Paragraph("Pág." + writer.PageNumber,fonteReduzida));
+                _cell = new PdfPCell(new Paragraph("Pág." + writer.PageNumber.ToString(), fonteReduzida)) ;
                 _cell.HorizontalAlignment = Element.ALIGN_RIGHT;
                 _cell.Border = 0;
                 tbFooter.AddCell(_cell);
                 tbFooter.WriteSelectedRows(0, -1, document.LeftMargin, writer.PageSize.GetBottom(document.BottomMargin) + 10F, writer.DirectContent);
             }
-
 
         }
 
@@ -3342,7 +3627,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
         //        tbHeader.TotalWidth = document.PageSize.Width - document.LeftMargin - document.RightMargin;
         //        tbHeader.DefaultCell.Border = 0;
         //        tbHeader.AddCell(new Paragraph());
-                
+
         //        PdfPCell _cell = new PdfPCell(new Paragraph("ARJ Empreendimentos"));
         //        _cell.HorizontalAlignment = Element.ALIGN_LEFT;
         //        tbHeader.AddCell(_cell);
@@ -3409,7 +3694,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
         //        cell.Border = Rectangle.NO_BORDER;
         //        tabFot.AddCell(cell);
         //        tabFot.WriteSelectedRows(0, -1, 150, document.Bottom + 3.5F, writer.DirectContent);
-                
+
 
         //    }
 
@@ -3419,14 +3704,14 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
         //        base.OnCloseDocument(writer, document);
         //    }
         //}
-    
 
 
-    public class Eventos:PdfPageEventHelper
+
+        public class Eventos : PdfPageEventHelper
         {
             // propriedade da fonte que será usada no cabeçalho
 
-            public  Font fonte { get; set; }
+            public Font fonte { get; set; }
 
 
 
@@ -3452,7 +3737,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                 // Cria um novo paragrafo com o texto do cabeçalho
 
-                Paragraph ph = new Paragraph( new Chunk("\n", fonte));
+                Paragraph ph = new Paragraph(new Chunk("\n", fonte));
 
 
 
@@ -3515,7 +3800,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
 
                 // seta a fonte do objeto PdfContentByte
-                
+
                 cb.SetFontAndSize(font, 9);
 
                 // escreve a linha para imprimir o numero da página
@@ -3531,325 +3816,326 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             }
         }
 
-       
+
         //
         // 20-10-2022 - impressão do contrato 
         //
-        public ActionResult ImprimirContrato(int? id)
-        {
+        //public ActionResult ImprimirContrato(int? id)
+        //{
 
-            // Variáveis do contrato
+        //    // Variáveis do contrato
 
-            // [quadra] e [lote]
-            // [descritivo]   --> memorial descritivo do lote
-            // [valorTotal]   --> valor total em decimal formatado + valor por extenso
-            // [valorTotalCorrigido]  --> valor total corrigido em decimal + valor por extenso
-            // [totalMeses]  --> total em meses escolhido no plano de pagamento
-            // [valorCorretagem]   --> valor da corretagem em decimal + por extenso.
-            // [Corretor] - nome do corretor
-            // [Cresci] - número do registro do Cresci
-            // [CpfCorretor] - cpf do corretor
-            // [valorCorretagemDec] - valor da Corretagem apenas em decimal
-            // [DataPgCorretagem] - data para pagemento da corretagem
+        //    // [quadra] e [lote]
+        //    // [descritivo]   --> memorial descritivo do lote
+        //    // [valorTotal]   --> valor total em decimal formatado + valor por extenso
+        //    // [valorTotalCorrigido]  --> valor total corrigido em decimal + valor por extenso
+        //    // [totalMeses]  --> total em meses escolhido no plano de pagamento
+        //    // [valorCorretagem]   --> valor da corretagem em decimal + por extenso.
+        //    // [Corretor] - nome do corretor
+        //    // [Cresci] - número do registro do Cresci
+        //    // [CpfCorretor] - cpf do corretor
+        //    // [valorCorretagemDec] - valor da Corretagem apenas em decimal
+        //    // [DataPgCorretagem] - data para pagemento da corretagem
 
-            // [ValorEntrada] - Valor de entrada em decimal + extenso
-            // [saldoParcelar] - valor total - entrada
-            // [numeroBoleto] - número do boleto emitido para pagamento da entrada
-            // [numeroProposta] - número ID da proposta emitida para a quadra/lote
-            // [valorParcelaMensal] - valor da parcela mensal escolhida em decimal + extenso
-            // [planoPagamento] - número de parcelas das prestações mensais
-            // [primeiroVencimento] - primeiro data de vencimento da parcela mensal
-            // [numeroPrestacoesSemestral] - numero de parcelas semestrais
-            // [valorParcelaSemestral] - valor decimal + extenso da parcela semestral
-            // [primeiroVencSemestral] - data do primeiro vencimento das parcelas semestrais
-            // [saldoRemanescente] - valor decimal + extenso do saldo remanescente
-            // [totalMeses] - total de meses das parcelas mensais 
+        //    // [ValorEntrada] - Valor de entrada em decimal + extenso
+        //    // [saldoParcelar] - valor total - entrada
+        //    // [numeroBoleto] - número do boleto emitido para pagamento da entrada
+        //    // [numeroProposta] - número ID da proposta emitida para a quadra/lote
+        //    // [valorParcelaMensal] - valor da parcela mensal escolhida em decimal + extenso
+        //    // [planoPagamento] - número de parcelas das prestações mensais
+        //    // [primeiroVencimento] - primeiro data de vencimento da parcela mensal
+        //    // [numeroPrestacoesSemestral] - numero de parcelas semestrais
+        //    // [valorParcelaSemestral] - valor decimal + extenso da parcela semestral
+        //    // [primeiroVencSemestral] - data do primeiro vencimento das parcelas semestrais
+        //    // [saldoRemanescente] - valor decimal + extenso do saldo remanescente
+        //    // [totalMeses] - total de meses das parcelas mensais 
 
-            // [bancoCli] - banco do cliente para arrependimento
-            // [agenciaCli] - agencia cliente  "      "
-            // [contaCli] - conta do cliente   "      "
+        //    // [bancoCli] - banco do cliente para arrependimento
+        //    // [agenciaCli] - agencia cliente  "      "
+        //    // [contaCli] - conta do cliente   "      "
 
-            // [nomeTestemunha1]
-            // [endTestemunha1]
-            // [rgTestemunha1]
+        //    // [nomeTestemunha1]
+        //    // [endTestemunha1]
+        //    // [rgTestemunha1]
 
-            // [nomeTestemunha2]
-            // [endTestemunha2]
-            // [rgTestemunha2]
-
-
-
-            try
-            {
-                var proposta = (from x in db.Propostas
-                                join a in db.Lotes on new { Quadra = x.Quadra, Lote = x.Lote } equals new { Quadra = a.Quadra, Lote = a.Lote }
-                                where x.Id == id
-                                select new
-                                {
-                                    Id = id,
-                                    Quadra = a.Quadra,
-                                    Lote = a.Lote,
-                                    ValorTotal = x.ValorTotal,
-                                    Contrato = x.Contrato ?? "",
-                                    BancoCliente = x.BancoCliente,
-                                    AgenciaCliente = x.AgenciaCliente,
-                                    ContaCliente = x.ContaCliente,
-                                    DataProposta = x.DataProposta,
-                                    PrimeiroVencMensal = x.PrimeiroVencMensal,
-                                    PrimeiroVencSemestral = x.PrimeiroVencSemestral,
-                                    Area = a.Area,
-                                    ValorCorretagem = x.ValorCorretagem,
-                                    CorretorNome = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Nome ?? "",
-                                    CorretorCpf = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Cpf ?? "",
-                                    CorretorCresci = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Cresci ?? ""
-                                }).FirstOrDefault();
-
-                var condicoes = db.PropostasCondicoesComerciais.Where(c => c.PropostaId == id).FirstOrDefault();
-                var compradores = (from x in db.PropostasCompradores
-                                   join c in db.Comprador on x.CompradorId equals c.Id
-                                   where x.Id == id
-                                   where c.DataExclusao == null
-                                   where x.DataExclusao == null
-                                   select c).OrderBy(c => c.Nome).ToList();
-                var descritivo = db.LotesDescritivos.Where(c => c.Quadra == proposta.Quadra && c.Lote == proposta.Lote).FirstOrDefault();
-
-                var dadosCompradores = "";
-                foreach (var item in compradores)
-                {
-
-                    dadosCompradores = "Nome Completo: " + item.Nome.TrimEnd() + "\n";
-                    dadosCompradores += "Nacionalidade: " + item.Nacionalidade.TrimEnd() + "\n";
-                    dadosCompradores += "Profissão: " + item.Profissao.TrimEnd() + "\n";
-                    dadosCompradores += "RG: " + item.Rg.TrimEnd() + "\n";
-                    dadosCompradores += "CPF: " + Convert.ToUInt64(item.Cpf.TrimEnd()).ToString(@"\000\.000\.000\-00") + "\n";
-                    dadosCompradores += "Endereço: " + item.Logradouro.TrimEnd() + " " + item.Numero.TrimEnd() + " " + item.Complemento.TrimEnd() + " " + item.Bairro.TrimEnd() + " " + item.Municipio.TrimEnd() + " " + item.Estado + " " + item.Cep + "\n";
-                    dadosCompradores += "E-mail: " + item.Email.TrimEnd() + "\n";
-                    switch (item.EstadoCivil)
-                    {
-                        case "1":
-                            dadosCompradores += "Estado Civil: Solteiro\n";
-                            break;
-                        case "2":
-                            dadosCompradores += "Estado Civil: Casado(a)\n";
-                            break;
-                        case "3":
-                            dadosCompradores += "Estado Civil: Solteiro\n";
-                            break;
-                        case "4":
-                            dadosCompradores += "Estado Civil: Divorciado(a)";
-                            break;
-                        case "5":
-                            dadosCompradores += "Estado Civil: Viúvo(a)";
-                            break;
-                        default:
-                            dadosCompradores += "Estado Civil: Solteiro(a)";
-                            break;
-                    }
-
-                    // Dados do comprador
-                    if (item.EstadoCivil == "2")
-                    {
-                        // dados do casamento - se for casado
-                        dadosCompradores += "Regime Casamento: " + item.CasamentoRegime.TrimEnd() + "\n";
-                        dadosCompradores += "Data Casamento: " + item.CasamentoData.Value.ToShortDateString() + "\n";
-                        if (item.CasamentoEscrRegistro != null)
-                        {
-                            dadosCompradores += "Escritura do Pacto Antenupicial - " + "Tabelião: " + item.CasamentoEscrTabeliao ?? "" + "Livro: " + item.CasamentoLivro.TrimEnd() ?? "" + " Fls. " + item.CasamentoFolhas.TrimEnd() ?? "" + "\n";
-                            dadosCompradores += "Registro de Imóveis: " + item.CasamentoEscrRegistro.TrimEnd() + "\n";
-
-                        }
-
-                        dadosCompradores += "\nDados do Cônjuge \n\n";
-                        // dados do cônjuge - se for casado
-                        dadosCompradores += "Nome: " + item.ConjugeNome.TrimEnd() + "\n";
-                        dadosCompradores += "Celular: " + item.ConjugeCelular + "\n"; ;
-                        dadosCompradores += "Nacionalidade: " + item.ConjugeNacionalidade.TrimEnd() + "\n";
-                        dadosCompradores += "Profissão: " + item.ConjugeProfissao.TrimEnd() + "\n";
-                        dadosCompradores += "RG: " + item.ConjugeRg.TrimEnd() + "\n";
-                        dadosCompradores += "CPF: " + Convert.ToUInt64(item.ConjugeCpf.TrimEnd()).ToString(@"\000\.000\.000\-00") + "\n";
-                        //  dadosCompradores += "Endereço: " + item.ConjugeLogradouro.TrimEnd()??"" + " " + item.ConjugeNumero.TrimEnd()??"" + " " + item.ConjugeBairro.TrimEnd()??"" + " " + " " + item.ConjugeMunicipio.TrimEnd() + " " + item.ConjugeEstado + " " + "\n";
-                        if (item.ConjugeEmail != null)
-                        {
-                            dadosCompradores += "E-mail: " + item.ConjugeEmail.TrimEnd() + "\n";
-                        }
-
-                    }
-                    dadosCompradores += "\n\n\n";
-
-                }
-
-                var guid = Guid.NewGuid();
-                var path = Path.Combine(_hostingEnvironment.WebRootPath, "Documentos") + "\\Modelo1.docx";
-                var path2 = Path.Combine(_hostingEnvironment.WebRootPath, "Documentos") + "\\" + guid.ToString() + ".html";
-                var footer = Path.Combine(_hostingEnvironment.WebRootPath, "Documentos") + "\\footer.html";
-
-
-                byte[] byteArray = System.IO.File.ReadAllBytes(path);
-                using (MemoryStream memoryStream = new MemoryStream())
-                {
-                    memoryStream.Write(byteArray, 0, byteArray.Length);
-                    using (WordprocessingDocument doc =
-                        WordprocessingDocument.Open(memoryStream, true))
-                    {
-                        HtmlConverterSettings settings = new HtmlConverterSettings()
-                        {
-                            PageTitle = "",
-                            AdditionalCss = "span {font-size: 15px!important;line-height: 1.1;}"
-
-                        };
-                        XElement html = HtmlConverter.ConvertToHtml(doc, settings);
-
-                        System.IO.File.WriteAllText(path2, html.ToStringNewLineOnAttributes());
-                    }
-                    memoryStream.Flush(); //Always catches me out
-                    memoryStream.Position = 0; //Not sure if this is required
-                    memoryStream.Close();
-                }
-
-                string fullMonthName = DateTime.Now.ToString("MMMM", CultureInfo.CreateSpecificCulture("pt-BR"));
-
-                var valorTotalExtenso = Utils.ValorExtenso.ExtensoReal(proposta.ValorTotal);
-                var valorTotalCorrigidoExtenso = Utils.ValorExtenso.ExtensoReal(condicoes.PrecoVendaCorrigido);
-                var valorCorretagem = proposta.ValorCorretagem; // Math.Round(proposta.ValorTotal * 0.04m, 2);
-                var saldoRemascenteExtenso = Utils.ValorExtenso.ExtensoReal(condicoes.SaldoQuitacao);
-                var saldoPagarExtenso = Utils.ValorExtenso.ExtensoReal((proposta.ValorTotal - condicoes.ValorEntrada));
-
-                var openhtml = System.IO.File.ReadAllBytes(path2);
-                var str = System.Text.Encoding.Default.GetString(openhtml);
-
-                //var teste = "<p align=\"justify\"><br>Welcome to Geeks for Geeks. It is <br>a computer science portal for geeks.<br>It contains well written, well <br>thought articles. We are learning<br>how to justify content on<br>a web page.</p>";
-
-                var quebrapagina = "<div class=\"pagebreak\"> </div>";
-
-                var boletonumero = proposta.Quadra.TrimEnd() + proposta.Lote.ToString().PadLeft(5, '0');
-
-                str = str.Replace("<style>", "<style> @media print { .pagebreak {clear: both; page-break-after: always;}}  ");
-                str = str.Replace("[quebralinha]", "<div style='page-break-before: always'></div>");
-                str = str.Replace("[pagebreak]", quebrapagina);
-                str = str.Replace("[contrato]", proposta.Contrato ?? "S/N");
-                str = str.Replace("[preco]", String.Format("{0:0,0.00}", proposta.ValorTotal));
-                str = str.Replace("[preco_extenso]", valorTotalExtenso);
-                str = str.Replace("[valorCorretagem]", String.Format("{0:0,0.00}", valorCorretagem));
-                str = str.Replace("[valorCorretagemDec]", String.Format("{0:0,0.00}", valorCorretagem));
-                str = str.Replace("[Corretor]", proposta.CorretorNome);
-                str = str.Replace("[Cresci]", proposta.CorretorCresci);
-                str = str.Replace("[CpfCorretor]", proposta.CorretorCpf);
-                str = str.Replace("[DataPgCorretagem]", proposta.DataProposta.AddDays(13).ToShortDateString());
-                str = str.Replace("[dataContrato]", proposta.DataProposta.ToShortDateString());
-                str = str.Replace("[quadra]", proposta.Quadra);
-                str = str.Replace("[dadoscompradores]", dadosCompradores);
-                str = str.Replace("[descritivo]", descritivo.Descritivo.TrimEnd());
-                str = str.Replace("[lote]", proposta.Lote.ToString());
-                str = str.Replace("[área]", proposta.Area.ToString());
-                str = str.Replace("[data_do_contrato]", proposta.DataProposta.ToShortDateString());
-                str = str.Replace("[dia_impressao]", DateTime.Now.Day.ToString());
-                str = str.Replace("[mes_impressao]", fullMonthName.ToString());
-                str = str.Replace("[ano_impressao]", DateTime.Now.Year.ToString());
-                str = str.Replace("[testemunha1]", "Paulo Henrique");
-                str = str.Replace("[testemunha2]", "Larissa Souza");
-                str = str.Replace("[endTestemunha1]", "Araraquara, SP");
-                str = str.Replace("[endTestemunha2]", "Araraquara, SP");
-                str = str.Replace("[rgTestemunha1]", "041222 SSP/SP");
-                str = str.Replace("[rgTestemunha2]", "749909 SSP-BA");
-                str = str.Replace("[dados_anexos]", "");
-                str = str.Replace("[ValorEntrada]", String.Format("{0:0,0.00}", condicoes.ValorEntrada));
-                str = str.Replace("[saldoParcelar]", String.Format("{0:0,0.00}", (proposta.ValorTotal - condicoes.ValorEntrada)));
-                str = str.Replace("[saldoParcelarExtenso]", String.Format("{0:0,0.00}", saldoPagarExtenso));
-
-                str = str.Replace("[valorTotalCorrigido]", String.Format("{0:0,0.00}", condicoes.PrecoVendaCorrigido));
-                str = str.Replace("[valorTotalCorrigidoExtenso]", valorTotalCorrigidoExtenso);
-                str = str.Replace("[totalMeses]", condicoes.NrParcelasMensais.ToString());
-                str = str.Replace("[numeroProposta]", proposta.Id.ToString().PadLeft(6, '0'));
-                str = str.Replace("[valorParcelaMensal]", String.Format("{0:0,0.00}", condicoes.ValorParcelaMensal));
-                str = str.Replace("[planoPagamento]", condicoes.NrParcelasMensais.ToString());
-                str = str.Replace("[primeiroVencMensal]", proposta.PrimeiroVencMensal.Value.ToShortDateString());
-                str = str.Replace("[primeiroVencSemestral]", proposta.PrimeiroVencSemestral.Value.ToShortDateString());
-                str = str.Replace("[numeroPrestacoesSemestral]", condicoes.NrParcelasSemestrais.ToString());
-                str = str.Replace("[valorParcelaSemestral]", String.Format("{0:0,0.00}", condicoes.ValorParcelaSemestral));
-                str = str.Replace("[saldoRemanescente]", String.Format("{0:0,0.00}", condicoes.SaldoQuitacao));
-                str = str.Replace("[saldoRemanescenteExtenso]", saldoRemascenteExtenso);
-                str = str.Replace("[bancoCli]", proposta.BancoCliente);
-                str = str.Replace("[agenciaCli]", proposta.AgenciaCliente);
-                str = str.Replace("[contaCli]", proposta.ContaCliente);
-                str = str.Replace("[numeroBoleto]", boletonumero);
-
-                StringReader sr = new StringReader(str.ToString());
-
-
-                HtmlToPdf converter = new HtmlToPdf();
-                converter.Options.PdfPageSize = PdfPageSize.A4;
-                converter.Options.WebPageWidth = 800;
-                converter.Options.MarginLeft = 45;   //40
-                converter.Options.MarginRight = 30;
-                converter.Options.MarginTop = 20;
-                converter.Options.CssMediaType = HtmlToPdfCssMediaType.Print;
-
-                converter.Options.PdfPageOrientation = PdfPageOrientation.Portrait;
-
-
-                converter.Options.DisplayHeader = true;
-                converter.Header.Height = 70;
-                converter.Options.DisplayFooter = true;
-                converter.Footer.DisplayOnFirstPage = true;
-                converter.Footer.DisplayOnOddPages = true;
-                converter.Footer.DisplayOnEvenPages = true;
-                converter.Footer.Height = 70;
-
-                converter.Options.PdfPageOrientation = PdfPageOrientation.Portrait;
-
-                converter.Options.DisplayFooter = true;
-                converter.Footer.DisplayOnFirstPage = true;
-                converter.Footer.DisplayOnOddPages = true;
-                converter.Footer.DisplayOnEvenPages = true;
-                converter.Footer.Height = 70;
-
-                PdfHtmlSection footerHtml = new PdfHtmlSection(footer);
-                footerHtml.AutoFitHeight = HtmlToPdfPageFitMode.AutoFit;
-                converter.Footer.Add(footerHtml);
-
-                // add page numbering element to the footer
-
-                // page numbers can be added using a PdfTextSection object
-                //PdfTextSection text = new PdfTextSection(0, 10, "{page_number}  ", new System.Drawing.Font("Arial", 8));
-                ////text.HorizontalAlign = PdfTextHorizontalAlign.Right;
-                //text.HorizontalAlign = PdfTextHorizontalAlign.Justify;
-                //converter.Footer.Add(text);
-
-                SelectPdf.PdfDocument doc2 = converter.ConvertHtmlString(str);
-                doc2.Save(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".pdf");
-                doc2.Close();
-
-
-                MemoryStream ms = new MemoryStream();
-
-                byte[] bytes = System.IO.File.ReadAllBytes(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".pdf");
-
-                ms.Write(bytes, 0, bytes.Length);
-
-
-                ms.Flush(); //Always catches me out
-                ms.Position = 0; //Not sure if this is required
-                                 //System.IO.File.Delete(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".pdf");
-                                 //System.IO.File.Delete(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".html");
-
-                System.IO.File.Delete(path2);
+        //    // [nomeTestemunha2]
+        //    // [endTestemunha2]
+        //    // [rgTestemunha2]
 
 
 
-                // este trecho comentado é para o caso de querer baixar o pdf
-                //var nome_arquivo = "Contrato - Q " + proposta.Quadra + " L " + proposta.Lote.ToString() + ".pdf";
-                //return File(ms, "application/pdf", nome_arquivo);
-                return new FileStreamResult(ms, "application/pdf");
-            }
-            catch (Exception)
-            {
+        //    try
+        //    {
+        //        var proposta = (from x in db.Propostas
+        //                        join a in db.Lotes on new { Quadra = x.Quadra, Lote = x.Lote } equals new { Quadra = a.Quadra, Lote = a.Lote }
+        //                        where x.Id == id
+        //                        select new
+        //                        {
+        //                            Id = id,
+        //                            Quadra = a.Quadra,
+        //                            Lote = a.Lote,
+        //                            ValorTotal = x.ValorTotal,
+        //                            Contrato = x.Contrato ?? "",
+        //                            BancoCliente = x.BancoCliente,
+        //                            AgenciaCliente = x.AgenciaCliente,
+        //                            ContaCliente = x.ContaCliente,
+        //                            DataProposta = x.DataProposta,
+        //                            PrimeiroVencMensal = x.PrimeiroVencMensal,
+        //                            PrimeiroVencSemestral = x.PrimeiroVencSemestral,
+        //                            Area = a.Area,
+        //                            ValorCorretagem = x.ValorCorretagem,
+        //                            CorretorNome = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Nome ?? "",
+        //                            CorretorCpf = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Cpf ?? "",
+        //                            CorretorCresci = db.Corretores.Where(c => c.Id == x.CorretorId).FirstOrDefault().Cresci ?? ""
+        //                        }).FirstOrDefault();
 
-                throw;
-            }
+        //        var condicoes = db.PropostasCondicoesComerciais.Where(c => c.PropostaId == id).FirstOrDefault();
+        //        var compradores = (from x in db.PropostasCompradores
+        //                           join c in db.Comprador on x.CompradorId equals c.Id
+        //                           where x.Id == id
+        //                           where c.DataExclusao == null
+        //                           where x.DataExclusao == null
+        //                           select c).OrderBy(c => c.Nome).ToList();
+        //        var descritivo = db.LotesDescritivos.Where(c => c.Quadra == proposta.Quadra && c.Lote == proposta.Lote).FirstOrDefault();
 
-        }
+        //        var dadosCompradores = "";
+        //        foreach (var item in compradores)
+        //        {
+
+        //            dadosCompradores = "Nome Completo: " + item.Nome.TrimEnd() + "\n";
+        //            dadosCompradores += "Nacionalidade: " + item.Nacionalidade.TrimEnd() + "\n";
+        //            dadosCompradores += "Profissão: " + item.Profissao.TrimEnd() + "\n";
+        //            dadosCompradores += "RG: " + item.Rg.TrimEnd() + "\n";
+        //            dadosCompradores += "CPF: " + Convert.ToUInt64(item.Cpf.TrimEnd()).ToString(@"\000\.000\.000\-00") + "\n";
+        //            dadosCompradores += "Endereço: " + item.Logradouro.TrimEnd() + " " + item.Numero.TrimEnd() + " " + item.Complemento.TrimEnd() + " " + item.Bairro.TrimEnd() + " " + item.Municipio.TrimEnd() + " " + item.Estado + " " + item.Cep + "\n";
+        //            dadosCompradores += "E-mail: " + item.Email.TrimEnd() + "\n";
+        //            switch (item.EstadoCivil)
+        //            {
+        //                case "1":
+        //                    dadosCompradores += "Estado Civil: Solteiro\n";
+        //                    break;
+        //                case "2":
+        //                    dadosCompradores += "Estado Civil: Casado(a)\n";
+        //                    break;
+        //                case "3":
+        //                    dadosCompradores += "Estado Civil: Solteiro\n";
+        //                    break;
+        //                case "4":
+        //                    dadosCompradores += "Estado Civil: Divorciado(a)";
+        //                    break;
+        //                case "5":
+        //                    dadosCompradores += "Estado Civil: Viúvo(a)";
+        //                    break;
+        //                default:
+        //                    dadosCompradores += "Estado Civil: Solteiro(a)";
+        //                    break;
+        //            }
+
+        //            // Dados do comprador
+        //            if (item.EstadoCivil == "2")
+        //            {
+        //                // dados do casamento - se for casado
+        //                dadosCompradores += "Regime Casamento: " + item.CasamentoRegime.TrimEnd() + "\n";
+        //                dadosCompradores += "Data Casamento: " + item.CasamentoData.Value.ToShortDateString() + "\n";
+        //                if (item.CasamentoEscrRegistro != null)
+        //                {
+        //                    dadosCompradores += "Escritura do Pacto Antenupicial - " + "Tabelião: " + item.CasamentoEscrTabeliao ?? "" + "Livro: " + item.CasamentoLivro.TrimEnd() ?? "" + " Fls. " + item.CasamentoFolhas.TrimEnd() ?? "" + "\n";
+        //                    dadosCompradores += "Registro de Imóveis: " + item.CasamentoEscrRegistro.TrimEnd() + "\n";
+
+        //                }
+
+        //                dadosCompradores += "\nDados do Cônjuge \n\n";
+        //                // dados do cônjuge - se for casado
+        //                dadosCompradores += "Nome: " + item.ConjugeNome.TrimEnd() + "\n";
+        //                dadosCompradores += "Celular: " + item.ConjugeCelular + "\n"; ;
+        //                dadosCompradores += "Nacionalidade: " + item.ConjugeNacionalidade.TrimEnd() + "\n";
+        //                dadosCompradores += "Profissão: " + item.ConjugeProfissao.TrimEnd() + "\n";
+        //                dadosCompradores += "RG: " + item.ConjugeRg.TrimEnd() + "\n";
+        //                dadosCompradores += "CPF: " + Convert.ToUInt64(item.ConjugeCpf.TrimEnd()).ToString(@"\000\.000\.000\-00") + "\n";
+        //                //  dadosCompradores += "Endereço: " + item.ConjugeLogradouro.TrimEnd()??"" + " " + item.ConjugeNumero.TrimEnd()??"" + " " + item.ConjugeBairro.TrimEnd()??"" + " " + " " + item.ConjugeMunicipio.TrimEnd() + " " + item.ConjugeEstado + " " + "\n";
+        //                if (item.ConjugeEmail != null)
+        //                {
+        //                    dadosCompradores += "E-mail: " + item.ConjugeEmail.TrimEnd() + "\n";
+        //                }
+
+        //            }
+        //            dadosCompradores += "\n\n\n";
+
+        //        }
+
+        //        var guid = Guid.NewGuid();
+        //        var path = Path.Combine(_hostingEnvironment.WebRootPath, "Documentos") + "\\Modelo1.docx";
+        //        var path2 = Path.Combine(_hostingEnvironment.WebRootPath, "Documentos") + "\\" + guid.ToString() + ".html";
+        //        var footer = Path.Combine(_hostingEnvironment.WebRootPath, "Documentos") + "\\footer.html";
+
+
+        //        byte[] byteArray = System.IO.File.ReadAllBytes(path);
+        //        using (MemoryStream memoryStream = new MemoryStream())
+        //        {
+        //            memoryStream.Write(byteArray, 0, byteArray.Length);
+        //            using (WordprocessingDocument doc =
+        //                WordprocessingDocument.Open(memoryStream, true))
+        //            {
+        //                HtmlConverterSettings settings = new HtmlConverterSettings()
+        //                {
+        //                    PageTitle = "",
+        //                    AdditionalCss = "span {font-size: 15px!important;line-height: 1.1;}"
+
+        //                };
+        //                XElement html = HtmlConverter.ConvertToHtml(doc, settings);
+
+        //                System.IO.File.WriteAllText(path2, html.ToStringNewLineOnAttributes());
+        //            }
+        //            memoryStream.Flush(); //Always catches me out
+        //            memoryStream.Position = 0; //Not sure if this is required
+        //            memoryStream.Close();
+        //        }
+
+        //        string fullMonthName = DateTime.Now.ToString("MMMM", CultureInfo.CreateSpecificCulture("pt-BR"));
+
+        //        var valorTotalExtenso = Utils.ValorExtenso.ExtensoReal(proposta.ValorTotal);
+        //        var valorTotalCorrigidoExtenso = Utils.ValorExtenso.ExtensoReal(condicoes.PrecoVendaCorrigido);
+        //        var valorCorretagem = proposta.ValorCorretagem; // Math.Round(proposta.ValorTotal * 0.04m, 2);
+        //        var saldoRemascenteExtenso = Utils.ValorExtenso.ExtensoReal(condicoes.SaldoQuitacao);
+        //        var saldoPagarExtenso = Utils.ValorExtenso.ExtensoReal((proposta.ValorTotal - condicoes.ValorEntrada));
+
+        //        var openhtml = System.IO.File.ReadAllBytes(path2);
+        //        var str = System.Text.Encoding.Default.GetString(openhtml);
+
+        //        //var teste = "<p align=\"justify\"><br>Welcome to Geeks for Geeks. It is <br>a computer science portal for geeks.<br>It contains well written, well <br>thought articles. We are learning<br>how to justify content on<br>a web page.</p>";
+
+        //        var quebrapagina = "<div class=\"pagebreak\"> </div>";
+
+        //        var boletonumero = proposta.Quadra.TrimEnd() + proposta.Lote.ToString().PadLeft(5, '0');
+
+        //        str = str.Replace("<style>", "<style> @media print { .pagebreak {clear: both; page-break-after: always;}}  ");
+        //        str = str.Replace("[quebralinha]", "<div style='page-break-before: always'></div>");
+        //        str = str.Replace("[pagebreak]", quebrapagina);
+        //        str = str.Replace("[contrato]", proposta.Contrato ?? "S/N");
+        //        str = str.Replace("[preco]", String.Format("{0:0,0.00}", proposta.ValorTotal));
+        //        str = str.Replace("[preco_extenso]", valorTotalExtenso);
+        //        str = str.Replace("[valorCorretagem]", String.Format("{0:0,0.00}", valorCorretagem));
+        //        str = str.Replace("[valorCorretagemDec]", String.Format("{0:0,0.00}", valorCorretagem));
+        //        str = str.Replace("[Corretor]", proposta.CorretorNome);
+        //        str = str.Replace("[Cresci]", proposta.CorretorCresci);
+        //        str = str.Replace("[CpfCorretor]", proposta.CorretorCpf);
+        //        str = str.Replace("[DataPgCorretagem]", proposta.DataProposta.AddDays(13).ToShortDateString());
+        //        str = str.Replace("[dataContrato]", proposta.DataProposta.ToShortDateString());
+        //        str = str.Replace("[quadra]", proposta.Quadra);
+        //        str = str.Replace("[dadoscompradores]", dadosCompradores);
+        //        str = str.Replace("[descritivo]", descritivo.Descritivo.TrimEnd());
+        //        str = str.Replace("[lote]", proposta.Lote.ToString());
+        //        str = str.Replace("[área]", proposta.Area.ToString());
+        //        str = str.Replace("[data_do_contrato]", proposta.DataProposta.ToShortDateString());
+        //        str = str.Replace("[dia_impressao]", DateTime.Now.Day.ToString());
+        //        str = str.Replace("[mes_impressao]", fullMonthName.ToString());
+        //        str = str.Replace("[ano_impressao]", DateTime.Now.Year.ToString());
+        //        str = str.Replace("[testemunha1]", "Paulo Henrique");
+        //        str = str.Replace("[testemunha2]", "Larissa Souza");
+        //        str = str.Replace("[endTestemunha1]", "Araraquara, SP");
+        //        str = str.Replace("[endTestemunha2]", "Araraquara, SP");
+        //        str = str.Replace("[rgTestemunha1]", "041222 SSP/SP");
+        //        str = str.Replace("[rgTestemunha2]", "749909 SSP-BA");
+        //        str = str.Replace("[dados_anexos]", "");
+        //        str = str.Replace("[ValorEntrada]", String.Format("{0:0,0.00}", condicoes.ValorEntrada));
+        //        str = str.Replace("[saldoParcelar]", String.Format("{0:0,0.00}", (proposta.ValorTotal - condicoes.ValorEntrada)));
+        //        str = str.Replace("[saldoParcelarExtenso]", String.Format("{0:0,0.00}", saldoPagarExtenso));
+
+        //        str = str.Replace("[valorTotalCorrigido]", String.Format("{0:0,0.00}", condicoes.PrecoVendaCorrigido));
+        //        str = str.Replace("[valorTotalCorrigidoExtenso]", valorTotalCorrigidoExtenso);
+        //        str = str.Replace("[totalMeses]", condicoes.NrParcelasMensais.ToString());
+        //        str = str.Replace("[numeroProposta]", proposta.Id.ToString().PadLeft(6, '0'));
+        //        str = str.Replace("[valorParcelaMensal]", String.Format("{0:0,0.00}", condicoes.ValorParcelaMensal));
+        //        str = str.Replace("[planoPagamento]", condicoes.NrParcelasMensais.ToString());
+        //        str = str.Replace("[primeiroVencMensal]", proposta.PrimeiroVencMensal.Value.ToShortDateString());
+        //        str = str.Replace("[primeiroVencSemestral]", proposta.PrimeiroVencSemestral.Value.ToShortDateString());
+        //        str = str.Replace("[numeroPrestacoesSemestral]", condicoes.NrParcelasSemestrais.ToString());
+        //        str = str.Replace("[valorParcelaSemestral]", String.Format("{0:0,0.00}", condicoes.ValorParcelaSemestral));
+        //        str = str.Replace("[saldoRemanescente]", String.Format("{0:0,0.00}", condicoes.SaldoQuitacao));
+        //        str = str.Replace("[saldoRemanescenteExtenso]", saldoRemascenteExtenso);
+        //        str = str.Replace("[bancoCli]", proposta.BancoCliente);
+        //        str = str.Replace("[agenciaCli]", proposta.AgenciaCliente);
+        //        str = str.Replace("[contaCli]", proposta.ContaCliente);
+        //        str = str.Replace("[numeroBoleto]", boletonumero);
+
+        //        StringReader sr = new StringReader(str.ToString());
+
+
+        //        HtmlToPdf converter = new HtmlToPdf();
+        //        converter.Options.PdfPageSize = PdfPageSize.A4;
+        //        converter.Options.WebPageWidth = 800;
+        //        converter.Options.MarginLeft = 45;   //40
+        //        converter.Options.MarginRight = 30;
+        //        converter.Options.MarginTop = 20;
+        //        converter.Options.CssMediaType = HtmlToPdfCssMediaType.Print;
+
+        //        converter.Options.PdfPageOrientation = PdfPageOrientation.Portrait;
+
+
+        //        converter.Options.DisplayHeader = true;
+        //        converter.Header.Height = 70;
+        //        converter.Options.DisplayFooter = true;
+        //        converter.Footer.DisplayOnFirstPage = true;
+        //        converter.Footer.DisplayOnOddPages = true;
+        //        converter.Footer.DisplayOnEvenPages = true;
+        //        converter.Footer.Height = 70;
+
+        //        converter.Options.PdfPageOrientation = PdfPageOrientation.Portrait;
+
+        //        converter.Options.DisplayFooter = true;
+        //        converter.Footer.DisplayOnFirstPage = true;
+        //        converter.Footer.DisplayOnOddPages = true;
+        //        converter.Footer.DisplayOnEvenPages = true;
+        //        converter.Footer.Height = 70;
+
+        //        PdfHtmlSection footerHtml = new PdfHtmlSection(footer);
+        //        footerHtml.AutoFitHeight = HtmlToPdfPageFitMode.AutoFit;
+        //        converter.Footer.Add(footerHtml);
+
+        //        // add page numbering element to the footer
+
+        //        // page numbers can be added using a PdfTextSection object
+        //        //PdfTextSection text = new PdfTextSection(0, 10, "{page_number}  ", new System.Drawing.Font("Arial", 8));
+        //        ////text.HorizontalAlign = PdfTextHorizontalAlign.Right;
+        //        //text.HorizontalAlign = PdfTextHorizontalAlign.Justify;
+        //        //converter.Footer.Add(text);
+
+        //        SelectPdf.PdfDocument doc2 = converter.ConvertHtmlString(str);
+        //        doc2.Save(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".pdf");
+        //        doc2.Close();
+
+
+        //        MemoryStream ms = new MemoryStream();
+
+        //        byte[] bytes = System.IO.File.ReadAllBytes(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".pdf");
+
+        //        ms.Write(bytes, 0, bytes.Length);
+
+
+        //        ms.Flush(); //Always catches me out
+        //        ms.Position = 0; //Not sure if this is required
+        //                         //System.IO.File.Delete(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".pdf");
+        //                         //System.IO.File.Delete(Path.Combine(_hostingEnvironment.WebRootPath, "doc") + "//" + guid.ToString() + ".html");
+
+        //        System.IO.File.Delete(path2);
+
+
+
+        //        // este trecho comentado é para o caso de querer baixar o pdf
+        //        //var nome_arquivo = "Contrato - Q " + proposta.Quadra + " L " + proposta.Lote.ToString() + ".pdf";
+        //        //return File(ms, "application/pdf", nome_arquivo);
+        //        return new FileStreamResult(ms, "application/pdf");
+        //    }
+        //    catch (Exception)
+        //    {
+
+        //        throw;
+        //    }
+
+        //}
 
     }
+
     //
     //  Classe de retorno para a 
     //
