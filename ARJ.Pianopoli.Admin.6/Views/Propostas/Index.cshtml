@@ -11,6 +11,7 @@
                         <th>Area</th>
                         <th>Situação no site</th>
                         <th></th>
+                        <th></th>
                     </tr>
                 </thead>
             </table>
@@ -158,7 +159,24 @@
         </div>
     </div>
 </div>
-
+<div class="modal fade" id="condicoesComerciais" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:1200px;" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Condições Comerciais</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="conteudoCondicoes">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary"  >Gerar PDF</button>  
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.7.1/js/bootstrap-datepicker.min.js"></script>
@@ -173,14 +191,28 @@
             "ajax": urlbase + '/Propostas/ListarPropostas',
             "columnDefs": [
                 {
-                    "targets": [0],
+                    "targets": [0,1],
                     "visible": false,
                     "searchable": false
-                }, {
-                    "targets": [1],
-                    "visible": false,
-                    "searchable": false
-                }],
+                }, 
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": true
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                },
+                {
+                    "targets": [6,7],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                }
+            ],
             "columns": [
                 { "data": "id" },
                 { "data": "loteamentoId" },
@@ -193,6 +225,13 @@
 
                         return row.situacaoNoSite == "Disponível" ? '<div style="width:100%; text-align:right" > <button onclick="Proposta(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-plus"></i></button></div>' : '<div style="width:100%; text-align:right"> <button onclick="Proposta(this)" class="btn btn-warning btn-action editar"><i class="fa-solid fa-edit"></i></button></div>';
                     }
+                },
+                {
+                    
+                    "render": function (data, type, row, meta) {
+
+                        return row.situacaoNoSite == "Disponível" ? '<div style="width:100%; text-align:right" > <button onclick="Condicoes(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-handshake-o"></i></button></div>' : '<div style="width:100%; text-align:right"> <button onclick="Condicoes(this)" class="btn btn-warning btn-action editar"><i class="fa-solid fa-handshake"></i></button></div>';
+                    }
                 }
             ],
             "language": {
@@ -201,6 +240,48 @@
             }
         });
     });
+    function GerarPDF(){
+        var loteamento = $("#LoteamentoId").val();
+        var quadra = $("#Quadra").val();
+        var lote = $("#Lote").val();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Lote: lote,
+                Quadra: quadra,
+                Loteamento: loteamento,
+                Tipo:2
+            },
+            url: urlbase + '/propostas/CondicoesComerciais',
+            success: function (data) {
+            }
+
+        });
+
+    }
+   
+    function Condicoes(e) {
+
+        var dataRow = $('#proposta').DataTable().row($(e).closest('tr')).data();
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Lote: dataRow.lote,
+                Quadra: dataRow.quadra,
+                Loteamento: dataRow.loteamentoId,
+                Tipo:1
+            },
+            url: urlbase + '/propostas/CondicoesComerciais',
+            success: function (data) {
+                $('#condicoesComerciais').modal('show')
+                $("#conteudoCondicoes").html(data);
+            }
+
+        });
+    }
 
 
     function CalculaEntrada() {
@@ -652,7 +733,6 @@
                 SwalPopUpErro("Erro", data.Message, "Error");
             }
         });
-
     }
 
 

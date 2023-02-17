@@ -25,7 +25,7 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.ConfigureApplicationCookie(opts =>
 {
     opts.LoginPath = "/Identity/Account/Login";
-    opts.AccessDeniedPath = "/";
+    opts.AccessDeniedPath = "/Identity/Account/Login";
     opts.ExpireTimeSpan = TimeSpan.FromMinutes(90);
 });
 builder.Services.AddSession(options =>

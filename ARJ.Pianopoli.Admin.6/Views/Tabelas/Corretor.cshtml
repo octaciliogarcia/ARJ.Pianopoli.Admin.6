@@ -1,0 +1,75 @@
+﻿@model ARJ.Pianopoli.Admin._6.Models.CorretorVM
+
+@using (Html.BeginForm(null, null, FormMethod.Post, new { Id = "formCorretor" }))
+{
+    <div class="row">
+        @Html.HiddenFor(e=>e.Id)
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            @Html.LabelFor(c => c.Nome)
+            @Html.TextBoxFor(c => c.Nome, new { @class = "form-control", @maxlength = "80", @size = "80" })
+            @Html.ValidationMessageFor(model => model.Nome)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            @Html.LabelFor(c => c.Cpf)
+            @Html.TextBoxFor(c => c.Cpf, new { @class = "form-control cpf", @maxlength = "11", @size = "15" ,@onblur="ValidarCpfCorretor()" })
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            @Html.LabelFor(c => c.Creci)
+            @Html.TextBoxFor(c => c.Creci, new { @class = "form-control", @maxlength = "20", @size = "20" })
+            @Html.ValidationMessageFor(model => model.Creci)
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-8">
+            @Html.LabelFor(c => c.ImobiliariaNome)
+            @Html.DropDownList("ImobiliariaId", (IEnumerable<SelectListItem>)ViewBag.Imobiliarias,"--Selecione--",new{@class="form-control" })
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-8" style="margin: 20px 0px 20px 0px">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            <div class="btn btn-warning" id="exclusao" onclick="ExcluirCorretor()" hidden>&nbsp;&nbsp;Excluir&nbsp;&nbsp;</div>
+            <div class="btn btn-success" id="showtoast" onclick="SalvarCorretor()">Salvar Dados</div>
+        </div>
+    </div>
+
+    <div style="position: absolute; top: 0px; right: 10px;">
+
+        <div class="toast toast1 toast-bootstrap" role="alert" aria-live="assertive" aria-atomic="true" id="toast1">
+            <div class="toast-header">
+                <i class="fa fa-stop-circle-o"> </i>
+                <strong class="mr-auto m-l-sm">Aviso</strong>
+                @*<small>Atenção</small>*@
+                <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="toast-body" id="mensagem">
+                mensagem
+            </div>
+        </div>
+
+    </div>
+
+}
+
+<script src="~/js/site.js" asp-append-version="true"></script>
+
+<script type="text/javascript">
+    $(function () {
+
+        let toast1 = $('.toast1');
+        toast1.toast({
+            delay: 5000,
+            animation: true
+        });
+
+    })
+</script>

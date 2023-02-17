@@ -1,0 +1,232 @@
+﻿<div class="row">
+    <div class="col-md-4">
+        <div class="btn btn-success" onclick="NovoCorretor()" style="margin: 0px 0px 0px 80px">Cadastrar Corretor</div>
+    </div>
+</div>
+<div class="container">
+    <div class="grid-left">
+        <div id="grid">
+            <table id="corretores" class="display" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>ImobiliariaId</th>
+                        <th>Nome</th>
+                        <th>Imobiliária</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal inmodal" id="cadastroCorretor" style="margin-left:400px" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog-centered modal-lg" style="width:600px;" role="document">
+        <div class="modal-content animated bounceInRight">
+            <div class="modal-header">
+                <h5 class="modal-title">Dados Corretor</h5>
+            </div>
+            <div class="modal-body" id="conteudoCorretor">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="position: absolute; top: 20px; right: 20px;z-index:11">
+    <div class="toast toast1 toast-bootstrap" role="alert" aria-live="assertive" aria-atomic="true" id="mensagemt">
+        <div class="toast-header">
+            <i class="fa fa-stop-circle-o"> </i>
+            <strong class="mr-auto m-l-sm">Aviso</strong>
+            <small>Atenção</small>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Fechar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="toast-body" id="mensagem">
+            Mensagem!
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#corretores').DataTable({
+            "lengthChange": false,
+            "ajax": urlbase + '/Tabelas/ListarCorretores',
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": false,
+                    "searchable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": true
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": true
+                }],
+            "columns": [
+                { "data": "id" },
+                { "data": "imobiliariaId" },
+                { "data": "nome", "title": "Nome" },
+                { "data": "imobiliariaNome", "title": "Imobiliária" },
+                {
+                    "render": function (data, type, row, meta) {
+
+                        return row.situacaoNoSite == "Ativo" ? '<div style="width:100%; text-align:right" > <button onclick="EditarCorretor(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-pencil-square-o"></i></button></div>' : '<div style="width:100%; text-align:right"> <button class="btn btn-warning"><i class="fa-solid fa-lock"></i></button></div>';
+                    }
+                }
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.11.4/i18n/pt_br.json",
+
+            }
+        });
+    });
+
+    function NovoCorretor() {
+        Aguarde();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: 0
+            },
+            url: '' + urlbase + '/Tabelas/EditarCorretor',
+            success: function (data) {
+                RemoveAguarde();
+                $('#cadastroCorretor').modal('show')
+                $("#conteudoCorretor").html(data);
+                $("#Nome").focus();
+
+            },
+            error: function (data) {
+                RemoveAguarde();
+                SwalPopUpErro("Erro", data.Message, "Error");
+            }
+        });
+
+    }
+
+    function EditarCorretor(e) {
+
+        var dataRow = $('#corretores').DataTable().row($(e).closest('tr')).data();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: dataRow.id
+            },
+            url: urlbase + '/tabelas/EditarCorretor',
+            success: function (data) {
+                RemoveAguarde();
+                $('#cadastroCorretor').modal('show')
+                $("#conteudoCorretor").html(data);
+                $("#exclusao").attr('hidden',false);
+                $("#Nome").focus();
+            },
+            error: function (data) {
+                RemoveAguarde();
+                SwalPopUpErro("Erro", data.Message, "Error");
+            }
+        });
+    }
+
+    function SalvarCorretor() {
+
+        var conteudo = $("#Nome").val();
+        var creci = $("#Creci").val();
+
+        if (conteudo == "") {
+            document.getElementById('mensagem').innerHTML = 'O nome é obrigatório';
+            $("#toast1").toast('show');
+            $("#Nome").focus();
+            return;
+        }
+
+        if (creci == "") {
+            document.getElementById('mensagem').innerHTML = 'O CRECI é obrigatório';
+            $("#toast1").toast('show');
+            $("#Creci").focus();
+            return;
+        }
+
+
+        var form = $("#formCorretor").serialize();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: form,
+            url: urlbase + '/tabelas/SalvarCorretor',
+            success: function (data) {
+                if (data.result == true) {
+                    $('#cadastroCorretor').trigger("reset");
+                    $('#cadastroCorretor').modal('hide')
+                    $('#corretores').DataTable().ajax.reload();
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                } else {
+                    SwalPopUpErro("Sucesso", data.message, "success");
+                }
+            }
+        });
+    }
+
+    function ExcluirCorretor() {
+        var ID = document.getElementById('Id').value;
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: ID
+            },
+            url: urlbase + '/tabelas/ExcluirCorretor',
+            success: function (data) {
+                if (data.result == true) {
+                    $('#cadastroCorretor').trigger("reset");
+                    $('#cadastroCorretor').modal('hide')
+                    $('#corretores').DataTable().ajax.reload();
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                } else {
+                    SwalPopUpErro("Sucesso", data.message, "success");
+                }
+            }
+        });
+    }
+
+    function ValidarCpfCorretor() {
+        var cpf = $("#Cpf").val();
+
+        if (cpf != "") {
+            if (TestaCPF(cpf) == false) {
+                $(".cpf").val("");
+                document.getElementById('mensagem').innerHTML = 'O CPF digitado não é válido';
+                $("#toast1").toast('show');
+                $("#Cpf").focus();
+
+            }
+        }
+
+    }
+
+
+
+</script>   

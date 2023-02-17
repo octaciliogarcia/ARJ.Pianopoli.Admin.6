@@ -1,5 +1,6 @@
 ﻿using ARJ.Pianopoli.Admin._6.Data;
 using ARJ.Pianopoli.Admin._6.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ARJ.Pianopoli.Admin._6.Controllers
@@ -14,7 +15,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             _logger = logger;
             this.db = db;
         }
-
+        [Authorize]
         public IActionResult Index()
         {
             return View();

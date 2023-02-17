@@ -1,0 +1,48 @@
+﻿@model ARJ.Pianopoli.Admin._6.Models.CondicoesViewModel
+
+@Html.HiddenFor(e=>e.LoteamentoId)
+@Html.HiddenFor(e=>e.Quadra)
+@Html.HiddenFor(e=>e.Lote)
+
+<div class="col-md-12" style="text-align:center"><h3>QUADRA:&nbsp;@Model.Quadra&nbsp;&nbsp;&nbsp;&nbsp;LOTE:&nbsp;&nbsp;@Model.Lote&nbsp;&nbsp;&nbsp;&nbsp;ÁREA:&nbsp;&nbsp;@Model.Area&nbsp;m2</h3></div>
+<br/>
+   
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Plano</th>
+            <th scope="col" class="direita">Pr Venda</th>
+            <th scope="col" class="direita">Entrada</th>
+            <th scope="col" class="direita">Saldo</th>
+            <th scope="col">em até</th>
+            <th scope="col" class="direita">Vr Mensal</th>
+            <th scope="col" class="direita">Semestral</th>
+            <th scope="col" class="direita">Vr Semestral</th>
+            <th scope="col" class="direita">Vr Parc Pagas</th>
+            <th scope="col" class="direita">Sd Reman Quitar</th>
+            <th scope="col" class="direita">Pr Corrigido</th>
+            <th scope="col" class="direita">Juros cobrados</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Planos)
+        {
+            <tr>
+                <th scope="row" style="text-align:center">@item.Plano</th>
+                <th scope="row" class="money direita">@item.PrecoVenda</th>
+                <th scope="row" class="money direita">@item.Entrada</th>
+                <th scope="row" class="money direita">@item.Saldo</th>
+                <th scope="row" style="text-align:center">@item.NrParcMen &nbsp;X</th>
+                <th scope="row" class="money direita">@item.Mensais</th>
+                <th scope="row" style="text-align:center">@item.NrParcSem&nbsp;X</th>
+                <th scope="row" class="number direita">@string.Format("{0:##,##0.00}", item.Semestrais)</th>
+                <th scope="row" class="money direita">@item.TotalPagas</th>
+                <th scope="row" class="money direita">@item.SaldoRem</th>
+                <th scope="row" class="money direita">@item.PrecoComJuros</th>
+                <th scope="row" class="money direita">@item.JurosCobrados</th>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script src="~/js/site.js" asp-append-version="true"></script>

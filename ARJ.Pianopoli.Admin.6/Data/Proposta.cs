@@ -31,9 +31,11 @@ namespace ARJ.Pianopoli.Admin._6.Data
         public string TestemunhaNome1 { get; set; }
         public string TestemunhaEnd1 { get; set; }
         public string TestemunhaRg1 { get; set; }
+        public string TestemunhaCpf1 { get; set; }
         public string TestemunhaNome2 { get; set; }
         public string TestemunhaEnd2 { get; set; }
         public string TestemunhaRg2 { get; set; }
+        public string TestemunhaCpf2 { get; set; }
         public DateTime? DataAprovacao { get; set; }
         public string AprovadoPor { get; set; }
         public string Contrato { get; set; }

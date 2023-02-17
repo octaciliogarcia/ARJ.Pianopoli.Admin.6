@@ -1,0 +1,159 @@
+﻿<div class="container">
+    <div class="grid-left">
+        <div id="grid">
+            <table id="precos" class="display" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>CategoriaId</th>
+                        <th>Categoria</th>
+                        <th>Preço m2</th>
+                        <th>A Partir de</th>
+                        <th>Alterado por</th>
+                        <th>Em</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal inmodal" id="cadastroPrecos" style="margin-left:400px" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog-centered modal-lg" style="width:600px;" role="document">
+        <div class="modal-content animated bounceInRight">
+            <div class="modal-header">
+                <h5 class="modal-title">Alterar Preços M2</h5>
+            </div>
+            <div class="modal-body" id="conteudoPrecos">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#precos').DataTable({
+            "lengthChange": false,
+            "ajax": urlbase + '/Precos/ListarPrecos',
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": false,
+                    "searchable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": true
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": true
+                },
+                {
+                    "targets": [4],
+                    "visible": true,
+                    "searchable": true
+                },
+                {
+                    "targets": [5],
+                    "visible": true,
+                    "searchable": true
+                },
+                {
+                    "targets": [6],
+                    "visible": true,
+                    "searchable": false
+                }],
+            "columns": [
+                { "data": "id" },
+                { "data": "categoriaId" },
+                { "data": "categoria", "title": "Categoria" },
+                { "data": "preco", "title": "Preço m2" },
+                { "data": "inicio", "title": "A Partir de" },
+                { "data": "usuario", "title": "Alterado por" },
+                { "data": "dataHora", "title": "Data/Hora" },
+                {
+                    "render": function (data, type, row, meta) {
+
+                        return '<div style="width:100%; text-align:right" > <button onclick="EditarPrecos(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-pencil-square-o"></i></button></div>';
+                    }
+                }
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.11.4/i18n/pt_br.json",
+
+            }
+        });
+    });
+
+
+    function EditarPrecos(e) {
+
+        var dataRow = $('#precos').DataTable().row($(e).closest('tr')).data();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: dataRow.id
+            },
+            url: urlbase + '/precos/EditarPrecos',
+            success: function (data) {
+                RemoveAguarde();
+                $('#cadastroPrecos').modal('show')
+                $("#conteudoPrecos").html(data);
+                $("#Nome").focus();
+            },
+            error: function (data) {
+                RemoveAguarde();
+                SwalPopUpErro("Erro", data.Message, "Error");
+            }
+        });
+    }
+
+
+    function SalvarPreco() {
+
+        var iPreco = parseInt($("#Preco").val());
+        
+
+        if (iPreco <= 0) {
+            $("#toast1").toast('show');
+            document.getElementById('mensagem').innerHTML = 'O preço não pode ser zero!';
+            $("#Preco").focus();
+            return;
+        }
+
+        var form = $("#formPreco").serialize();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: form,
+            url: urlbase + '/precos/SalvarPrecos',
+            success: function (data) {
+                if (data.result == true) {
+                    $('#cadastroPrecos').trigger("reset");
+                    $('#cadastroPrecos').modal('hide')
+                    $('#precos').DataTable().ajax.reload();
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                } else {
+                    SwalPopUpErro("Sucesso", data.message, "success");
+                }
+            }
+        });
+    }
+
+</script>

@@ -1,0 +1,192 @@
+﻿<div class="row">
+    <div class="col-md-4">
+        <div class="btn btn-success" onclick="NovaImobiliaria()" style="margin: 0px 0px 0px 80px">Cadastrar Imobiliária</div>
+    </div>
+</div>
+<div class="container">
+    <div class="grid-left">
+        <div id="grid">
+            <table id="imobiliaria" class="display" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Descricao</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal inmodal" id="cadastroImobiliaria" style="margin-left:400px" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog-centered modal-lg" style="width:600px;" role="document">
+        <div class="modal-content animated bounceInRight">
+            <div class="modal-header">
+                <h5 class="modal-title">Dados Imobiliária</h5>
+            </div>
+            <div class="modal-body" id="conteudoImobiliaria">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="position: absolute; top: 20px; right: 20px;z-index:11">
+    <div class="toast toast1 toast-bootstrap" role="alert" aria-live="assertive" aria-atomic="true" id="mensagemt">
+        <div class="toast-header">
+            <i class="fa fa-stop-circle-o"> </i>
+            <strong class="mr-auto m-l-sm">Aviso</strong>
+            <small>Atenção</small>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Fechar">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="toast-body">
+            É necessário informar o nome da imobiliária!
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        //$("#formulario").hide();
+        $('#imobiliaria').DataTable({
+            "lengthChange": false,
+            "ajax": urlbase + '/Tabelas/ListarImobiliarias',
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }, {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": true
+                }],
+            "columns": [
+                { "data": "id" },
+                { "data": "descricao", "title": "Descrição" },
+                {
+                    "render": function (data, type, row, meta) {
+
+                        return row.situacaoNoSite == "Ativo" ? '<div style="width:100%; text-align:right" > <button onclick="EditarImobiliaria(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-pencil-square-o"></i></button></div>' : '<div style="width:100%; text-align:right"> <button class="btn btn-warning"><i class="fa-solid fa-lock"></i></button></div>';
+                    }
+                }
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.11.4/i18n/pt_br.json",
+
+            }
+        });
+    });
+
+
+    function NovaImobiliaria() {
+        Aguarde();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: 0
+            },
+            url: '' + urlbase + '/Tabelas/EditarImobiliaria',
+            success: function (data) {
+                RemoveAguarde();
+                $('#cadastroImobiliaria').modal('show')
+                $("#conteudoImobiliaria").html(data);
+                $("#Nome").focus();
+
+            },
+            error: function (data) {
+                RemoveAguarde();
+                SwalPopUpErro("Erro", data.Message, "Error");
+            }
+        });
+
+    }
+
+    function EditarImobiliaria(e) {
+
+        var dataRow = $('#imobiliaria').DataTable().row($(e).closest('tr')).data();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: dataRow.id
+            },
+            url: urlbase + '/tabelas/EditarImobiliaria',
+            success: function (data) {
+                RemoveAguarde();
+                $('#cadastroImobiliaria').modal('show')
+                $("#conteudoImobiliaria").html(data);
+                $("#exclusao").attr('hidden', false);
+                $("#Nome").focus();
+            },
+            error: function (data) {
+                RemoveAguarde();
+                SwalPopUpErro("Erro", data.Message, "Error");
+            }
+        });
+    }
+    
+
+    function SalvarImobiliaria() {
+
+        var conteudo = $("#Nome").val();
+        if (conteudo == "") {
+            $("#toast1").toast('show');
+            $("#Nome").focus();
+            return;
+        }
+
+        var form = $("#formImobiliaria").serialize();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: form,
+            url: urlbase + '/tabelas/SalvarImobiliaria',
+            success: function (data) {
+                if (data.result == true) {
+                    $('#cadastroImobiliaria').trigger("reset");
+                    $('#cadastroImobiliaria').modal('hide')
+                    $('#imobiliaria').DataTable().ajax.reload();
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                } else {
+                    SwalPopUpErro("Sucesso", data.message, "success");
+                }
+            }
+        });
+    }
+
+    function ExcluirImobiliaria() {
+        var id = document.getElementById('ID').value;
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: id
+            },
+            url: urlbase + '/tabelas/ExcluirImobiliaria',
+            success: function (data) {
+                if (data.result == true) {
+                    $('#cadastroImobiliaria').trigger("reset");
+                    $('#cadastroImobiliaria').modal('hide')
+                    $('#imobiliaria').DataTable().ajax.reload();
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                } else {
+                    SwalPopUpErro("Sucesso", data.message, "success");
+                }
+            }
+        });
+    }
+
+</script>
