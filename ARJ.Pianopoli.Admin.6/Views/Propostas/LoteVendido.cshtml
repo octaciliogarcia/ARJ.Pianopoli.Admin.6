@@ -1,0 +1,14 @@
+﻿@model ARJ.Pianopoli.Admin._6.Models.CondicoesViewModel
+
+@Html.HiddenFor(e=>e.LoteamentoId)
+@Html.HiddenFor(e=>e.Quadra)
+@Html.HiddenFor(e=>e.Lote)
+
+<div class="col-md-12" style="text-align:center"><h3>QUADRA:&nbsp;@Model.Quadra&nbsp;&nbsp;&nbsp;&nbsp;LOTE:&nbsp;&nbsp;@Model.Lote&nbsp;&nbsp;&nbsp;&nbsp;ÁREA:&nbsp;&nbsp;@Model.Area&nbsp;m2</h3></div>
+<br />
+
+<div style="text-align:center">
+    <h2 style="color:blue;">Atenção!</h2>
+
+    <h3>Este lote encontra-se indisponível para comercialização neste momento.</h3>
+</div>

@@ -2,11 +2,6 @@
 using ARJ.Pianopoli.Admin._6.Data;
 using ARJ.Pianopoli.Admin._6.Models;
 using ARJ.Pianopoli.Admin._6.Utils;
-using DocumentFormat.OpenXml.Drawing;
-using DocumentFormat.OpenXml.Office.CustomUI;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Vml;
-using DocumentFormat.OpenXml.Wordprocessing;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Authorization;
@@ -14,15 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using OpenXmlPowerTools;
-using SelectPdf;
-using System;
-using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
-using System.Xml.Linq;
 using Document = iTextSharp.text.Document;
 using Font = iTextSharp.text.Font;
 using PageSize = iTextSharp.text.PageSize;
@@ -80,21 +70,35 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 return RedirectToPage("/");
             }
         }
+        public IActionResult CondicoesComerciaisId(int Id)
+        {
+            var lote = db.Lotes.Where(c => c.Id == Id).FirstOrDefault();
+            if (lote == null)
+            {
+                return RedirectToAction("CondicoesComerciais", new { Loteamentoid = lote.LoteamentoId, Quadra = lote.Quadra, Lote = lote.Lote, Tipo = 2 });
 
-        public IActionResult CondicoesComerciais(int Loteamento, string Quadra, int Lote,int Tipo)
+            }
+            else
+            {
+                return RedirectToAction("CondicoesComerciais", new { Loteamento = lote.LoteamentoId, Quadra = lote.Quadra, Lote = lote.Lote, Tipo = 2 });
+            }
+        }
+        public IActionResult GerarPdfCondicoesComerciais(int? Id)
         {
             if (ModelState.IsValid)
             {
                 var usuario = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var modelo = new CondicoesViewModel();
-                var lote = db.Lotes.Where(c => c.LoteamentoId == Loteamento && c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault();
-                // monta dados do lote 
-                modelo.Lote = Lote;
-                modelo.Quadra = Quadra;
-                modelo.Area = lote.Area;
-                modelo.LoteamentoId = Loteamento;
-                modelo.PrecoM2 = db.TabelaM2.Where(c => c.CategoriaId == lote.CategoriaId).FirstOrDefault().ValorM2;
+                var nome = _user.Name;
 
+                var modelo = new CondicoesViewModel();
+                var lote = db.Lotes.Where(c => c.Id == Id).FirstOrDefault();
+                // monta dados do lote 
+                modelo.Registro = lote.Id;
+                modelo.Lote = lote.Lote;
+                modelo.Quadra = lote.Quadra;
+                modelo.Area = lote.Area;
+                modelo.LoteamentoId = lote.LoteamentoId;
+                modelo.PrecoM2 = db.TabelaM2.Where(c => c.CategoriaId == lote.CategoriaId).FirstOrDefault().ValorM2;
                 if (lote.SituacaoNoSite == "1")
                 {
                     // busca o valor total do lote quando este ainda está disponível e sem proposta enviada.
@@ -134,20 +138,20 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     {
                         Plano = 1,
                         PrecoVenda = precoVenda,
-                        Entrada = Math.Round( precoVenda * 0.15m,2),
+                        Entrada = Math.Round(precoVenda * 0.15m, 2),
                         Saldo = precoVenda - Math.Round(precoVenda * 0.15m, 2),
                         NrParcMen = 12,
                         Mensais = parc12,
                         NrParcSem = 2,
                         Semestrais = (decimal)vlrParcSemestral,
-                        TotalPagas = (parc12*12) + (2* (decimal)vlrParcSemestral),
+                        TotalPagas = (parc12 * 12) + (2 * (decimal)vlrParcSemestral),
                         SaldoRem = (precoVenda - Math.Round(precoVenda * 0.15m, 2)) - ((parc12 * 12) + (2 * (decimal)vlrParcSemestral)),
                         PrecoComJuros = ((parc12 * 12) + (2 * (decimal)vlrParcSemestral)) + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - ((parc12 * 12) + (2 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2),
                         JurosCobrados = (((parc12 * 12) + (2 * (decimal)vlrParcSemestral)) + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - ((parc12 * 12) + (2 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2)) - precoVenda
                     });
                     var SaldoRem24 = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 24), 2);
                     var ParcPagas24 = ((decimal)parc24 * 24) + (4 * (decimal)vlrParcSemestral);
-                    
+
                     listaTabela.Add(new CondicoesPlanosViewModel
                     {
                         Plano = 2,
@@ -159,9 +163,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         NrParcSem = 4,
                         Semestrais = (decimal)vlrParcSemestral,
                         TotalPagas = ((decimal)parc24 * 24) + (4 * (decimal)vlrParcSemestral),
-                        SaldoRem = Math.Round( ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4 ) * (decimal)Math.Pow(1 + juros,24),2),
+                        SaldoRem = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 24), 2),
                         PrecoComJuros = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas24 + (decimal)SaldoRem24, 2), // ParcPagas24 + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc24 * 24) + (4 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2),
-                        JurosCobrados = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas24 + (decimal)SaldoRem24,2) - precoVenda // (ParcPagas24 + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc24 * 24) + (4 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2)) - precoVenda
+                        JurosCobrados = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas24 + (decimal)SaldoRem24, 2) - precoVenda // (ParcPagas24 + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc24 * 24) + (4 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2)) - precoVenda
                     });
                     var SaldoRem36 = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 36), 2);
                     var ParcPagas36 = ((decimal)parc36 * 36) + (6 * (decimal)vlrParcSemestral);
@@ -222,7 +226,399 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     });
 
                     modelo.Planos = listaTabela;
-                    if (Tipo == 1)
+                    using (System.IO.MemoryStream memoryStream = new System.IO.MemoryStream())
+                    {
+                        var pxPormm = 72 / 25.2F;
+                        var pdf = new Document(PageSize.A4.Rotate(), 15 * pxPormm, 15 * pxPormm, 2 * pxPormm, 5 * pxPormm);
+
+                        var writer = PdfWriter.GetInstance(pdf, memoryStream);
+                        pdf.Open();
+
+                        var fonteParagrafo = new iTextSharp.text.Font(fontebase, 10, iTextSharp.text.Font.NORMAL);
+                        var fonteBold = new iTextSharp.text.Font(fontebase, 10, iTextSharp.text.Font.BOLD);
+                        var fonteTitulo = new iTextSharp.text.Font(fontebase, 10, iTextSharp.text.Font.BOLD);
+                        var fonteReduzida = new iTextSharp.text.Font(fontebase, 8, iTextSharp.text.Font.NORMAL);
+
+
+                        var titulo1 = new Paragraph("RESIDENCIAL PIANOPOLI\n\n", fonteTitulo);
+
+                        PdfPCell cell = new PdfPCell();
+                        Phrase phrase = new Phrase();
+                        phrase.Add(new Chunk("CONDIÇÕES COMERCIAIS\n\n", fonteParagrafo));
+
+                        var titulo3 = new Paragraph(phrase);
+
+                        titulo1.Alignment = Element.ALIGN_CENTER;
+                        titulo3.Alignment = Element.ALIGN_CENTER;
+
+                        var txtquadralote = new Phrase();
+                        txtquadralote.Add(new Chunk("QUADRA: " + lote.Quadra + "     LOTE: " + lote.Lote + "      ÁREA: " + String.Format("{0:0,0.00}", lote.Area) + " m2", fonteBold));
+                        var tituloQuadra = new Paragraph(txtquadralote);
+                        tituloQuadra.Alignment = Element.ALIGN_CENTER;
+
+                        pdf.Add(titulo1);
+                        pdf.Add(titulo3);
+                        pdf.Add(tituloQuadra);
+
+                        PdfPTable mtable = new PdfPTable(1);
+                        mtable.WidthPercentage = 100;
+                        mtable.DefaultCell.Border = iTextSharp.text.Rectangle.NO_BORDER;
+
+                        PdfPTable table = new PdfPTable(12);
+                        table.DefaultCell.Border = iTextSharp.text.Rectangle.NO_BORDER;
+                        table.WidthPercentage = 100;
+
+                        cell = new PdfPCell(new Phrase("\n", fonteParagrafo));
+                        cell.Colspan = 12;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+
+
+
+                        cell = new PdfPCell(new Phrase("Plano", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Pr Venda", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Entrada", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Saldo", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("em até", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Vr Mensal", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Semestral", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Vr Semestral", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Vr Parc Pagas", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Saldo Quitar", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Pr Corrigido", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+                        cell = new PdfPCell(new Phrase("Juros Cobr.", fonteReduzida));
+                        cell.Colspan = 1;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+
+                        cell = new PdfPCell(new Phrase("", fonteParagrafo));
+                        cell.Colspan = 12;
+                        cell.BorderWidthBottom = 1;
+                        cell.BorderWidthTop = 0;
+                        cell.BorderWidthLeft = 0;
+                        cell.BorderWidthRight = 0;
+                        table.AddCell(cell);
+
+                        cell = new PdfPCell(new Phrase("\n", fonteParagrafo));
+                        cell.Colspan = 12;
+                        cell.BorderWidth = 0;
+                        table.AddCell(cell);
+
+                        foreach (var item in modelo.Planos)
+                        {
+                            cell = new PdfPCell(new Phrase(item.Plano.ToString(), fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0,0.00}", item.PrecoVenda), fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0,0.00}", item.Entrada), fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0,0.00}", item.Saldo), fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0}", item.NrParcMen) + "  X", fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0,0.00}", item.Mensais), fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0}", item.NrParcSem) + " X", fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0,0.00}", item.Semestrais), fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0,0.00}", item.TotalPagas), fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0,0.00}", item.SaldoRem), fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0,0.00}", item.PrecoComJuros), fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                            table.AddCell(cell);
+                            cell = new PdfPCell(new Phrase(String.Format("{0:0,0.00}", item.JurosCobrados)+"\n", fonteReduzida));
+                            cell.Colspan = 1;
+                            cell.BorderWidth = 0;
+                            cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                            table.AddCell(cell);
+
+                        }
+
+                        cell = new PdfPCell(new Phrase("\n", fonteParagrafo));
+                        cell.Colspan = 12;
+                        cell.BorderWidthBottom = 1;
+                        cell.BorderWidthTop = 0;
+                        cell.BorderWidthLeft = 0;
+                        cell.BorderWidthRight = 0;
+                        table.AddCell(cell);
+
+                        cell = new PdfPCell(new Phrase("\nImpresso em: " + DateTime.Now.ToString(), fonteParagrafo));
+                        cell.Colspan = 6;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_LEFT;
+                        table.AddCell(cell);
+
+                        cell = new PdfPCell(new Phrase("\nCorretor: " + nome.TrimEnd() , fonteParagrafo));
+                        cell.Colspan = 6;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_RIGHT;
+                        table.AddCell(cell);
+
+
+                        cell = new PdfPCell(new Phrase("\n", fonteParagrafo));
+                        cell.Colspan = 12;
+                        cell.BorderWidthBottom = 1;
+                        cell.BorderWidthTop = 0;
+                        cell.BorderWidthLeft = 0;
+                        cell.BorderWidthRight = 0;
+                        table.AddCell(cell);
+
+
+                        cell = new PdfPCell(new Phrase("\n\n\n* * * IMPORTANTE - OS VALORES ACIMA PODEM SER ALTERADOS SEM AVISO PRÉVIO. * * *" + "\n", fonteParagrafo));
+                        cell.Colspan = 12;
+                        cell.BorderWidth = 0;
+                        cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                        table.AddCell(cell);
+
+
+
+                        mtable.AddCell(table);
+
+                        pdf.Add(mtable);
+
+                        pdf.Close();
+
+
+
+                        byte[] file = memoryStream.ToArray();
+                        MemoryStream ms = new MemoryStream();
+                        ms.Write(file, 0, file.Length);
+                        ms.Flush();
+                        ms.Position = 0;
+
+                        return new FileStreamResult(ms, "application/pdf");
+
+                    }
+                }
+            }
+            return View();
+        }
+
+
+        public IActionResult CondicoesComerciais(int Loteamento, string Quadra, int Lote, int Tipo)
+        {
+            if (ModelState.IsValid)
+            {
+                var usuario = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var modelo = new CondicoesViewModel();
+                var lote = db.Lotes.Where(c => c.LoteamentoId == Loteamento && c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault();
+                // monta dados do lote 
+                modelo.Lote = Lote;
+                modelo.Quadra = Quadra;
+                modelo.Registro = lote.Id;
+                modelo.Area = lote.Area;
+                modelo.LoteamentoId = Loteamento;
+                modelo.PrecoM2 = db.TabelaM2.Where(c => c.CategoriaId == lote.CategoriaId).FirstOrDefault().ValorM2;
+
+                if (lote.SituacaoNoSite == "1")
+                {
+                    // busca o valor total do lote quando este ainda está disponível e sem proposta enviada.
+                    var precoVenda = Math.Round(modelo.PrecoM2 * lote.Area, 2); //db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault().PrecoVenda;
+
+
+                    modelo.ValorTotal = (precoVenda);
+
+                    double vlrParcSemestral = 7500.00;   // deverár ser parametrizado
+                    double jurosAM = 0.0025;
+                    double constante = 1;
+                    var entradaPadrao = Math.Round(precoVenda * 0.15m, 2);
+                    var saldoPadrao = precoVenda - entradaPadrao;
+
+
+                    var VP6 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 6)), 2);
+                    var VP12 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 12)), 2);
+                    var VP18 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 18)), 2);
+                    var VP24 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 24)), 2);
+                    var VP30 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 30)), 2);
+                    var VP36 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 36)), 2);
+                    var VP42 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 42)), 2);
+                    var VP48 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 48)), 2);
+                    var VP54 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 54)), 2);
+                    var VP60 = Math.Round((vlrParcSemestral / Math.Pow((constante + jurosAM), 60)), 2);
+
+                    var parc12 = 7000.00m;
+                    var parc24 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24)) * (((jurosAM * (Math.Pow(1 + jurosAM, 24))) / Math.Pow(1 + jurosAM, 24)) - 1)) / -24, 2);
+                    var parc36 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36)) * (((jurosAM * (Math.Pow(1 + jurosAM, 36))) / Math.Pow(1 + jurosAM, 36)) - 1)) / -36, 2);
+                    var parc48 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48)) * (((jurosAM * (Math.Pow(1 + jurosAM, 48))) / Math.Pow(1 + jurosAM, 48)) - 1)) / -48, 2);
+                    var parc60 = Math.Round(((((double)(saldoPadrao * 0.60m)) - (VP6 + VP12 + VP18 + VP24 + VP30 + VP36 + VP42 + VP48 + VP54 + VP60)) * (((jurosAM * (Math.Pow(1 + jurosAM, 60))) / Math.Pow(1 + jurosAM, 60)) - 1)) / -60, 2);
+
+                    var juros = 0.0025;
+
+                    var listaTabela = new List<CondicoesPlanosViewModel>();
+                    listaTabela.Add(new CondicoesPlanosViewModel
+                    {
+                        Plano = 1,
+                        PrecoVenda = precoVenda,
+                        Entrada = Math.Round(precoVenda * 0.15m, 2),
+                        Saldo = precoVenda - Math.Round(precoVenda * 0.15m, 2),
+                        NrParcMen = 12,
+                        Mensais = parc12,
+                        NrParcSem = 2,
+                        Semestrais = (decimal)vlrParcSemestral,
+                        TotalPagas = (parc12 * 12) + (2 * (decimal)vlrParcSemestral),
+                        SaldoRem = (precoVenda - Math.Round(precoVenda * 0.15m, 2)) - ((parc12 * 12) + (2 * (decimal)vlrParcSemestral)),
+                        PrecoComJuros = ((parc12 * 12) + (2 * (decimal)vlrParcSemestral)) + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - ((parc12 * 12) + (2 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2),
+                        JurosCobrados = (((parc12 * 12) + (2 * (decimal)vlrParcSemestral)) + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - ((parc12 * 12) + (2 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2)) - precoVenda
+                    });
+                    var SaldoRem24 = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 24), 2);
+                    var ParcPagas24 = ((decimal)parc24 * 24) + (4 * (decimal)vlrParcSemestral);
+
+                    listaTabela.Add(new CondicoesPlanosViewModel
+                    {
+                        Plano = 2,
+                        PrecoVenda = precoVenda,
+                        Entrada = Math.Round(precoVenda * 0.15m, 2),
+                        Saldo = precoVenda - Math.Round(precoVenda * 0.15m, 2),
+                        NrParcMen = 24,
+                        Mensais = (decimal)parc24,
+                        NrParcSem = 4,
+                        Semestrais = (decimal)vlrParcSemestral,
+                        TotalPagas = ((decimal)parc24 * 24) + (4 * (decimal)vlrParcSemestral),
+                        SaldoRem = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 24), 2),
+                        PrecoComJuros = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas24 + (decimal)SaldoRem24, 2), // ParcPagas24 + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc24 * 24) + (4 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2),
+                        JurosCobrados = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas24 + (decimal)SaldoRem24, 2) - precoVenda // (ParcPagas24 + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc24 * 24) + (4 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2)) - precoVenda
+                    });
+                    var SaldoRem36 = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 36), 2);
+                    var ParcPagas36 = ((decimal)parc36 * 36) + (6 * (decimal)vlrParcSemestral);
+
+                    listaTabela.Add(new CondicoesPlanosViewModel
+                    {
+                        Plano = 3,
+                        PrecoVenda = precoVenda,
+                        Entrada = Math.Round(precoVenda * 0.15m, 2),
+                        Saldo = precoVenda - Math.Round(precoVenda * 0.15m, 2),
+                        NrParcMen = 36,
+                        Mensais = (decimal)parc36,
+                        NrParcSem = 6,
+                        Semestrais = (decimal)vlrParcSemestral,
+                        TotalPagas = ((decimal)parc36 * 36) + (6 * (decimal)vlrParcSemestral),
+                        SaldoRem = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 36), 2),   //(precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc36 * 36) + (6 * (decimal)vlrParcSemestral)),
+                        PrecoComJuros = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas36 + (decimal)SaldoRem36, 2),
+                        //(((decimal)parc36 * 36) + (6 * (decimal)vlrParcSemestral)) + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc36 * 36) + (6 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2),
+                        JurosCobrados = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas36 + (decimal)SaldoRem36, 2) - precoVenda //((((decimal)parc36 * 36) + (6 * (decimal)vlrParcSemestral)) + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc36 * 36) + (6 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2)) - precoVenda
+                    });
+                    var SaldoRem48 = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 48), 2);
+                    var ParcPagas48 = ((decimal)parc48 * 48) + (8 * (decimal)vlrParcSemestral);
+
+                    listaTabela.Add(new CondicoesPlanosViewModel
+                    {
+                        Plano = 4,
+                        PrecoVenda = precoVenda,
+                        Entrada = Math.Round(precoVenda * 0.15m, 2),
+                        Saldo = precoVenda - Math.Round(precoVenda * 0.15m, 2),
+                        NrParcMen = 48,
+                        Mensais = (decimal)parc48,
+                        NrParcSem = 8,
+                        Semestrais = (decimal)vlrParcSemestral,
+                        TotalPagas = ((decimal)parc48 * 48) + (8 * (decimal)vlrParcSemestral),
+                        SaldoRem = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 48), 2),  //(precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc48 * 48) + (8 * (decimal)vlrParcSemestral)),
+                        PrecoComJuros = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas48 + (decimal)SaldoRem48, 2), //(((decimal)parc48 * 48) + (8 * (decimal)vlrParcSemestral)) + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc48 * 48) + (8 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2),
+                        JurosCobrados = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas48 + (decimal)SaldoRem48, 2) - precoVenda //((((decimal)parc48 * 48) + (8 * (decimal)vlrParcSemestral)) + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc48 * 48) + (8 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2)) - precoVenda
+                    });
+                    var SaldoRem60 = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 60), 2);
+                    var ParcPagas60 = ((decimal)parc60 * 60) + (10 * (decimal)vlrParcSemestral);
+
+                    listaTabela.Add(new CondicoesPlanosViewModel
+                    {
+                        Plano = 5,
+                        PrecoVenda = precoVenda,
+                        Entrada = Math.Round(precoVenda * 0.15m, 2),
+                        Saldo = precoVenda - Math.Round(precoVenda * 0.15m, 2),
+                        NrParcMen = 60,
+                        Mensais = (decimal)parc60,
+                        NrParcSem = 10,
+                        Semestrais = (decimal)vlrParcSemestral,
+                        TotalPagas = ((decimal)parc60 * 60) + (10 * (decimal)vlrParcSemestral),
+                        SaldoRem = Math.Round(((precoVenda - Math.Round(precoVenda * 0.15m, 2)) * (decimal)0.4) * (decimal)Math.Pow(1 + juros, 60), 2),
+                        //(precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc60 * 60) + (10 * (decimal)vlrParcSemestral)),
+                        PrecoComJuros = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas60 + (decimal)SaldoRem60, 2),
+                        //(((decimal)parc60 * 60) + (10 * (decimal)vlrParcSemestral)) + ((precoVenda - Math.Round(precoVenda * 0.15m, 2)) - (((decimal)parc60 * 60) + (10 * (decimal)vlrParcSemestral))) + Math.Round(precoVenda * 0.15m, 2),
+                        JurosCobrados = Math.Round(Math.Round(precoVenda * 0.15m, 2) + (decimal)ParcPagas60 + (decimal)SaldoRem60, 2) - precoVenda
+                    });
+
+                    modelo.Planos = listaTabela;
+                    modelo.Tipo = Tipo;
+                    if (Tipo >= 0)
                     {
                         return PartialView("TabelaCondicoes", modelo);
                     }
@@ -230,14 +626,14 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     {
                         return PartialView("TabelaCondicoes", modelo);
                     }
-                    
+
                 }
-                return PartialView("");
+                return PartialView("LoteVendido", modelo);
 
             }
             else
             {
-                return PartialView("");
+                return PartialView("Erro500");
             }
         }
 

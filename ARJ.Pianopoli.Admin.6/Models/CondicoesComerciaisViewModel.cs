@@ -8,6 +8,13 @@
         public int LoteamentoId { get; set; }
         public decimal PrecoM2 { get; set; }
         public decimal ValorTotal { get; set; }
+        // a propriedade Tipo será utilizada para habilitar o recurso de mostrar o botão
+        // de chamada do formulário da proposta de dentro do form de condições Comerciais
+        // tipo = 0 -> indica que não pode ser mostrado este botão
+        // tipo = 1 -> mostrar o botão
+        public int Tipo { get; set; }
+        // número do id do registro
+        public int? Registro { get; set; }
         public List<CondicoesPlanosViewModel> Planos { get; set; }
     }
 

@@ -390,7 +390,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             //ws.Cells["G19"].Formula = "=E19*B19/O3*O1";
 
             // buscar os lotes por categoria (verde) e depois procura pela referência da metragem e depois monta e grava a fórmula
-            var lotes = db.Lotes.Where(c=>c.LoteamentoId==7 && c.CategoriaId==1 && int.Parse(c.SituacaoNoSite) > 0).ToList();
+            var lotes = ( from x in db.Lotes
+                          where x.LoteamentoId==7 && x.CategoriaId==1 && x.SituacaoNoSite.CompareTo("0") > 0
+                          select x).ToList();
             foreach (var lote in lotes)
             {
                 // procura onde se encontra a metragem na planilha
@@ -417,7 +419,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
             // buscar os lotes por categoria (amarelo) e depois procura pela referência da metragem e depois monta e grava a fórmula
             lotes = null;
-            lotes = db.Lotes.Where(c => c.LoteamentoId == 7 && c.CategoriaId == 2 && int.Parse( c.SituacaoNoSite ) > 0).ToList();
+            lotes = (from x in db.Lotes
+                     where x.LoteamentoId == 7 && x.CategoriaId == 2 && x.SituacaoNoSite.CompareTo("0") > 0
+                     select x).ToList();
             foreach (var lote in lotes)
             {
                 // procura onde se encontra a metragem na planilha
@@ -444,7 +448,10 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
             // buscar os lotes por categoria (branco) e depois procura pela referência da metragem e depois monta e grava a fórmula
             lotes = null;
-            lotes = db.Lotes.Where(c => c.LoteamentoId == 7 && c.CategoriaId == 3 && int.Parse(c.SituacaoNoSite) > 0 ).ToList();
+            lotes = (from x in db.Lotes
+                                where x.LoteamentoId == 7 && x.CategoriaId == 3 && x.SituacaoNoSite.CompareTo("0") > 0
+                     select x).ToList();
+
             foreach (var lote in lotes)
             {
                 // procura onde se encontra a metragem na planilha
@@ -470,7 +477,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
             // buscar os lotes por categoria (AZUL) e depois procura pela referência da metragem e depois monta e grava a fórmula
             lotes = null;
-            lotes = db.Lotes.Where(c => c.LoteamentoId == 7 && c.CategoriaId == 4 && int.Parse(c.SituacaoNoSite) > 0 ).ToList();
+            lotes = (from x in db.Lotes where x.LoteamentoId == 7 && x.CategoriaId == 4 && x.SituacaoNoSite.CompareTo("0") > 0 select x).ToList();
             foreach (var lote in lotes)
             {
                 // procura onde se encontra a metragem na planilha

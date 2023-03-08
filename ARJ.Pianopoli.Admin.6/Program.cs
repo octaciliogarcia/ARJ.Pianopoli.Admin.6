@@ -68,6 +68,10 @@ else
     app.UseHsts();
 }
 
+app.UseForwardedHeaders();
+app.UseExceptionHandler("/error/500");
+app.UseStatusCodePagesWithRedirects("/error/{0}");
+app.UseHsts();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
