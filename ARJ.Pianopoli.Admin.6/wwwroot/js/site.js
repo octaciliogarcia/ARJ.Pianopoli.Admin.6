@@ -281,3 +281,77 @@ function Novo() {
     $("#grid").hide();
 }
 
+
+function CalculaEntrada() {
+
+    var valor = $("#Total").val();
+    var number = valor.replace(".", "");
+    number = number.replace(/,/, ".");
+    var total = parseFloat(number).toFixed(2);
+    var entradapermitida = total * 0.15;
+
+    var entradadigitada = $("#Entrada").val();
+    number = entradadigitada.replace(".", "").replace(/,/, ".");
+    var valorentrada = parseFloat(number).toFixed(2);
+
+    if (valorentrada < entradapermitida) {
+        $("#Entrada-msg").attr("hidden", false);
+    }
+    else {
+        $("#Entrada-msg").attr("hidden", true);
+        $("#TipoPagto").attr("hidden", false);
+        $("#Entrada").attr("disabled", true);
+
+        if (valorentrada == total) {
+            // mostra apenas a condição a vista e desabilita o componente
+            $("#TipoPagamento").attr("disabled", true);
+            $("#TipoPagamento").val(1);
+        }
+        else {
+            $("#TipoPagamento").attr("disabled", true);
+            $("#TipoPagamento").val(2);
+        }
+
+        var quadra = $("#Quadra").val();
+        var lote = $("#Lote").val();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Quadra: quadra,
+                Lote: lote,
+                Entrada: $("#Entrada").val()
+            },
+            url: urlbase + '/Propostas/CalcularPrecos',
+            success: function (data) {
+                if (data.result == false) {
+                    SwalPopUpErro("Atenção", data.message, "success");
+                }
+                else {
+                    $("#SaldoPagar").val(data.retorno.saldoPagar);
+                    $("#Entrada").val(data.retorno.entrada);
+                    $("#btn-validar").attr("hidden", false);
+                    $("#TipoPagamento").attr("readonly", true);
+
+                    if (data.retorno.tipoPgtoPermitido == "1") {
+                        $("#TipoPagamento").val(1)
+                    }
+                    else {
+                        var conteudo = data.retorno.parcelas;
+                        $("#TipoPagamento").val(2);
+                        $("#Parcelamento").empty().append(conteudo);
+                        $("#Parcelamento").attr("readonly", false);
+                        document.getElementById('TipoPagamento').onchange(this.value);
+
+                    }
+
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+            }
+        });
+
+    }
+}
+

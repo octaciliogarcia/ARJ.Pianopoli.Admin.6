@@ -673,7 +673,15 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
             return Json(new { data = retorno });
         }
-        [HttpPost]
+        public IActionResult EditarPropostaId(int Id)
+        {
+            var lote = db.Lotes.Where(c=>c.Id==Id).FirstOrDefault();
+
+            return RedirectToAction("EditarProposta", new { Loteamento = lote.LoteamentoId, Quadra = lote.Quadra, Lote = lote.Lote});
+
+        }
+
+        //[HttpPost]
         [Authorize]
         public IActionResult EditarProposta(int Loteamento, string Quadra, int Lote)
         {
@@ -699,6 +707,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     modelo.ValorCorretagem = Math.Round(precoVenda * 0.04m, 2);
 
                     modelo.ValorTotal = (precoVenda);
+                    modelo.PropostaId = 0;
 
                     double vlrParcSemestral = 7500.00;   // deverár ser parametrizado
                     double jurosAM = 0.0025;
@@ -755,14 +764,6 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     ViewBag.Mensais = listaTabela;
 
-
-                    //ViewBag.Mensais = (from f in db.TabelaPrecoLotes
-                    //                   where f.Quadra == Quadra && f.Lote == Lote
-                    //                   select new SelectListItem
-                    //                   {
-                    //                       Text = " " + f.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasMensais) + " +   " + f.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", f.VrParcelasSemestrais) + "   ",
-                    //                       Value = f.Id.ToString()
-                    //                   });
                     return PartialView("EditarProposta", modelo);
 
                 }
@@ -1485,6 +1486,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     retorno.ValorTotal = precoVenda;
                     retorno.Parcelamento = Parcelamento;
                     retorno.TipoPagamento = TipoPagamento;
+                    retorno.PropostaId = obj.Id;
                     retorno.result = true;
                     switch (disponivel)
                     {
