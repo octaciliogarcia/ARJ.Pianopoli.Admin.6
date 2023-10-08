@@ -1,6 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@using System.Security.Claims
 
 <!DOCTYPE html>
 <html lang="en">
@@ -45,34 +48,43 @@
                                 <a href="/"> <img alt="image" src="~/images/logo.jpg" width="130" /></a>
                             </div>
                             <div class="logo-element">
-                                ARJ+
+                                MAZZA+
                             </div>
                         </li>
                         <li>
                             <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Propostas</span><span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level collapse">
-                                <li><a href="~/Propostas">Lista de Lotes</a></li>
-                                <li><a href="~/Mapa">Mapa dos lotes</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Tabelas</span><span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level collapse">
-                                <li><a href="~/Tabelas/Imobiliarias">Imobiliárias</a></li>
-                                <li><a href="~/Tabelas/Corretores">Corretores</a></li>
-                                <li><a asp-area="" asp-controller="Tabelas" asp-action="Precos">Preços m2 *</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Preços</span><span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level collapse">
-                                <li><a href="~/Precos">Tabela de preços</a></li>
-                                <li><a href="~/Precos/PlanilhaPrecos">Planilha de preços</a></li>
-                            </ul>
+                                <li><a href="~/Propostas">Lista dos Lotes</a></li>
+                                <li><a href="~/Mapa">Mapa dos Lotes</a></li>
+                                @if (User.IsInRole("Perfil-Admin"))
+                                {
+                                    <li><a href="~/Propostas/Autorizar">Aprovação das Propostas</a></li>
+                                }
 
+
+                            </ul>
                         </li>
+                        @if (User.IsInRole("Perfil-Admin"))
+                        {
+                            <li>
+                                <a href="#"><i class="fa fa-th-large"></i> <span class="nav-label">Cadastros</span><span class="fa arrow"></span></a>
+                                <ul class="nav nav-second-level collapse">
+                                    @if (User.IsInRole("Perfil-Admin"))
+                                    {
+                                        <li><a href="~/Usuarios">Usuários</a></li>
+                                        <li><a href="~/Precos">Preços m2</a></li>
+                                        <li><a href="~/Tabelas/Imobiliarias">Imobiliárias</a></li>
+                                        <li><a href="~/Precos/PlanilhaPrecos">Planilha de Preços</a></li>
+                                    }
+                                @*<li><a href="~/Tabelas/Corretores">Corretores</a></li>*@
+                                @*<li><a asp-area="" asp-controller="" asp-action="Precos">Preços m2 *</a></li>*@
+
+
+                                </ul>
+                            </li>
+
+                        }
                     </ul>
-
                 }
             </div>
         </nav>
@@ -102,7 +114,7 @@
                 <div class="pull-right">
                 </div>
                 <div>
-                    <strong>Copyright</strong> ARJ Empreendimentos &copy; 2022
+                    <strong>Copyright</strong> MAZZA Empreendimentos &copy; @DateTime.Now.Year
                 </div>
             </div>
         </div>
@@ -111,7 +123,7 @@
     <!-- Mainly scripts -->
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="~/js/popper.min.js"></script>
-    
+
     <script src="~/js/bootstrap.min.js"></script>
     <script src="~/js/plugins/metisMenu/jquery.metisMenu.js"></script>
     <script src="~/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>

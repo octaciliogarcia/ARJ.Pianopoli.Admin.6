@@ -8,22 +8,26 @@
     <RootNamespace>ARJ.Pianopoli.Admin._6</RootNamespace>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DocumentFormat.OpenXml" Version="2.18.0" />
-    <PackageReference Include="EPPlus" Version="6.1.2" />
-    <PackageReference Include="EPPlus.Core.Extensions" Version="2.4.0" />
-    <PackageReference Include="FluentValidation" Version="11.2.2" />
-    <PackageReference Include="iTextSharp.LGPLv2.Core" Version="1.9.2" />
-    <PackageReference Include="Microsoft.AspNet.Identity.Core" Version="2.2.3" />
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="6.0.7" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.7" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.7" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.7" />
-    <PackageReference Include="Open-Xml-PowerTools" Version="4.4.0" />
-    <PackageReference Include="Select.HtmlToPdf.NetCore" Version="22.1.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="DocumentFormat.OpenXml" Version="2.18.0" />
+		<PackageReference Include="EPPlus" Version="6.1.2" />
+		<PackageReference Include="EPPlus.Core.Extensions" Version="2.4.0" />
+		<PackageReference Include="FluentValidation" Version="11.2.2" />
+		<PackageReference Include="iTextSharp.LGPLv2.Core" Version="1.9.2" />
+		<PackageReference Include="Microsoft.AspNet.Identity.Core" Version="2.2.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="6.0.7" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.15" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.15" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="6.0.7" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.15" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.15">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.13" />
+		<PackageReference Include="Open-Xml-PowerTools" Version="4.4.0" />
+		<PackageReference Include="Select.HtmlToPdf.NetCore" Version="22.1.0" />
+	</ItemGroup>
 
   <ItemGroup>
     <Content Update="Views\Propostas\EditarPropostaPreenchida.cshtml">

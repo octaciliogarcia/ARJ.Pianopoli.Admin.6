@@ -7,38 +7,63 @@
     </div>
     <div class="row">
         <div class="col-md-8">
-            @Html.LabelFor(c => c.Nome)
+            @Html.LabelFor(c => c.Nome, new { @class = "form-label"})
             @Html.TextBoxFor(c => c.Nome, new { @class = "form-control", @maxlength = "80", @size = "80" })
             @Html.ValidationMessageFor(model => model.Nome)
         </div>
     </div>
     <div class="row">
         <div class="col-md-8">
-            @Html.LabelFor(c => c.Cpf)
+            @Html.LabelFor(c => c.Cpf, new { @class = "form-label"})
             @Html.TextBoxFor(c => c.Cpf, new { @class = "form-control cpf", @maxlength = "11", @size = "15" ,@onblur="ValidarCpfCorretor()" })
         </div>
     </div>
     <div class="row">
         <div class="col-md-8">
-            @Html.LabelFor(c => c.Creci)
+            @Html.LabelFor(c => c.Creci, new { @class = "form-label"})
             @Html.TextBoxFor(c => c.Creci, new { @class = "form-control", @maxlength = "20", @size = "20" })
             @Html.ValidationMessageFor(model => model.Creci)
         </div>
     </div>
     <div class="row">
+        <div class="col-md-8">
+            @Html.LabelFor(c => c.Email, new { @class = "form-label"})
+            @Html.TextBoxFor(c => c.Email, new { @class = "form-control", @maxlength = "80", @size = "80" })
+            @Html.ValidationMessageFor(model => model.Email)
+        </div>
+    </div>
+    <div class="row">
         <div class="col-sm-8">
-            @Html.LabelFor(c => c.ImobiliariaNome)
+            @Html.LabelFor(c => c.ImobiliariaNome, new { @class = "form-label"})
             @Html.DropDownList("ImobiliariaId", (IEnumerable<SelectListItem>)ViewBag.Imobiliarias,"--Selecione--",new{@class="form-control" })
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-6">
+            @Html.LabelFor(c => c.Senha, new { @class = "form-label"})
+            @Html.PasswordFor(c => c.Senha, new { @class = "form-control", @maxlength = "20", @size = "20" })
+            @Html.ValidationMessageFor(model => model.Senha)
+        </div>
+        <div class="col-md-6">
+            @Html.LabelFor(c => c.ConfirmarSenha, new { @class = "form-label"})
+            @Html.PasswordFor(c => c.ConfirmarSenha, new { @class = "form-control", @maxlength = "20", @size = "20" })
+            @Html.ValidationMessageFor(model => model.ConfirmarSenha)
+        </div>
+
+
+    </div>
+
+
 
     <div class="row">
         <div class="col-sm-8" style="margin: 20px 0px 20px 0px">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-            <div class="btn btn-warning" id="exclusao" onclick="ExcluirCorretor()" hidden>&nbsp;&nbsp;Excluir&nbsp;&nbsp;</div>
-            <div class="btn btn-success" id="showtoast" onclick="SalvarCorretor()">Salvar Dados</div>
+            @*<div class="btn btn-warning" id="exclusao" onclick="ExcluirCorretor()" hidden>&nbsp;&nbsp;Excluir&nbsp;&nbsp;</div>*@
+            <div class="btn btn-success" id="showtoast" onclick="ValidarDadosCorretor()">Salvar Dados</div>
         </div>
     </div>
+
+
 
     <div style="position: absolute; top: 0px; right: 10px;">
 
@@ -71,5 +96,12 @@
             animation: true
         });
 
-    })
+        $("#ImobiliariaId").val($("#imobiliariaId").val());
+        if ("#ImobiliariaId".val() != "0") {
+            $("#ImobiliariaId").prop("disabled", true);
+        }
+        else {
+            $("#ImobiliariaId").prop("disabled", false);
+        } 
+    }
 </script>

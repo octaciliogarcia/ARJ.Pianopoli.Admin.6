@@ -1,8 +1,11 @@
 using ARJ.Pianopoli.Admin._6.Core;
 using ARJ.Pianopoli.Admin._6.Data;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,8 +20,24 @@ builder.Services.AddDbContext<DBContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddScoped<IAspNetUser, AspNetUser>();
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false).AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddControllersWithViews();
+//builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false).AddEntityFrameworkStores<ApplicationDbContext>()
+//    .AddDefaultTokenProviders();
+
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
+    .AddRoles<IdentityRole>() // Adiciona as funções (roles) ao Identity
+    .AddEntityFrameworkStores<ApplicationDbContext>() // Configura o armazenamento (store)
+    .AddDefaultTokenProviders(); // Adiciona os provedores de token padrão
+
+
+
+builder.Services.AddControllersWithViews(options =>
+{
+    var policy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+    options.Filters.Add(new AuthorizeFilter(policy));
+}).AddRazorRuntimeCompilation();
+
 
 // 27/10/2022 - para controlar o tempo de sessão
 builder.Services.AddDistributedMemoryCache();
@@ -47,10 +66,13 @@ builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromSeconds(60);
+    options.IdleTimeout = TimeSpan.FromSeconds(1200);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
 
 builder.Services.AddRazorPages();
 
@@ -63,14 +85,14 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Error");
+    //app.UseExceptionHandler("/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseForwardedHeaders();
-app.UseExceptionHandler("/error/500");
-app.UseStatusCodePagesWithRedirects("/error/{0}");
+//app.UseExceptionHandler("/error/500");
+//app.UseStatusCodePagesWithRedirects("/error/{0}");
 app.UseHsts();
 app.UseHttpsRedirection();
 app.UseStaticFiles();

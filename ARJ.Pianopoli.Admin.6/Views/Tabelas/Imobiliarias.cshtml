@@ -1,22 +1,26 @@
-﻿<div class="row">
-    <div class="col-md-4">
-        <div class="btn btn-success" onclick="NovaImobiliaria()" style="margin: 0px 0px 0px 80px">Cadastrar Imobiliária</div>
-    </div>
-</div>
-<div class="container">
-    <div class="grid-left">
-        <div id="grid">
-            <table id="imobiliaria" class="display" style="width:100%;">
-                <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Descricao</th>
-                        <th></th>
-                    </tr>
-                </thead>
-            </table>
+﻿<div id="Imobiliarias">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="btn btn-success" onclick="NovaImobiliaria()" style="margin: 0px 0px 0px 80px">Cadastrar Imobiliária</div>
         </div>
     </div>
+    <div class="container">
+        <div class="grid-left">
+            <div id="grid">
+                <table id="imobiliaria" class="display" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Descricao</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <div class="modal inmodal" id="cadastroImobiliaria" style="margin-left:400px" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="static">
@@ -34,6 +38,22 @@
     </div>
 </div>
 
+<div class="modal inmodal" id="cadastroCorretor" style="margin-left:400px" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog-centered modal-lg" style="width:600px;" role="document">
+        <div class="modal-content animated bounceInRight">
+            <div class="modal-header">
+                <h5 class="modal-title">Dados Corretor</h5>
+            </div>
+            <div class="modal-body" id="conteudoCorretor">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <div style="position: absolute; top: 20px; right: 20px;z-index:11">
     <div class="toast toast1 toast-bootstrap" role="alert" aria-live="assertive" aria-atomic="true" id="mensagemt">
         <div class="toast-header">
@@ -48,6 +68,9 @@
             É necessário informar o nome da imobiliária!
         </div>
     </div>
+</div>
+
+<div id="formcorretores" class="mx-auto">
 </div>
 
 
@@ -76,6 +99,12 @@
 
                         return row.situacaoNoSite == "Ativo" ? '<div style="width:100%; text-align:right" > <button onclick="EditarImobiliaria(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-pencil-square-o"></i></button></div>' : '<div style="width:100%; text-align:right"> <button class="btn btn-warning"><i class="fa-solid fa-lock"></i></button></div>';
                     }
+                },
+                {
+                    "render": function (data, type, row, meta) {
+
+                        return row.situacaoNoSite == "Ativo" ? '<div style="width:100%; text-align:right" > <button onclick="ListarUsuario(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-user"></i></button></div>' : '<div style="width:100%; text-align:right"> <button class="btn btn-warning"><i class="fa-solid fa-lock"></i></button></div>';
+                    }
                 }
             ],
             "language": {
@@ -85,6 +114,13 @@
         });
     });
 
+    function VoltarImob() {
+
+        $('#Imobiliarias').show();
+        $("#formcorretores").html("");
+        $("#formcorretores").hide();
+
+    }
 
     function NovaImobiliaria() {
         Aguarde();
@@ -135,7 +171,6 @@
             }
         });
     }
-    
 
     function SalvarImobiliaria() {
 
@@ -188,5 +223,209 @@
             }
         });
     }
+
+    function ListarUsuario(e) {
+
+        var dataRow = $('#imobiliaria').DataTable().row($(e).closest('tr')).data();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: dataRow.id
+            },
+            url: urlbase + '/tabelas/UsuariosImobiliaria',
+            success: function (data) {
+                RemoveAguarde();
+                $('#Imobiliarias').hide();
+                $("#formcorretores").html(data);
+                $("#formcorretores").show();
+            },
+            error: function (data) {
+                RemoveAguarde();
+                SwalPopUpErro("Erro", data.Message, "Error");
+            }
+        });
+    }
+
+    function EditarCorretor(Id) {
+
+        var id = Id;
+        var imobiliariaId = document.getElementById('imobiliariaId').value;
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: id,
+                _ImobiliariaId: imobiliariaId
+            },
+            url: urlbase + '/tabelas/EditarCorretor',
+            success: function (data) {
+                RemoveAguarde();
+                $('#cadastroCorretor').modal('show')
+                $("#conteudoCorretor").html(data);
+                $("#Nome").focus();
+            },
+            error: function (data) {
+                RemoveAguarde();
+                SwalPopUpErro("Erro", data.Message, "Error");
+            }
+        });
+    }
+
+    function AtualizarListaCorretores(id){
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: id
+            },
+            url: urlbase + '/tabelas/UsuariosImobiliaria',
+            success: function (data) {
+                RemoveAguarde();
+                $('#Imobiliarias').hide();
+                $("#formcorretores").html(data);
+                $("#formcorretores").show();
+            },
+            error: function (data) {
+                RemoveAguarde();
+                SwalPopUpErro("Erro", data.Message, "Error");
+            }
+        });
+    }
+
+    function SalvarCorretor() {
+
+        var conteudo = $("#Nome").val();
+        var creci = $("#Creci").val();
+
+        if (conteudo == "") {
+            document.getElementById('mensagem').innerHTML = 'O nome é obrigatório';
+            $("#toast1").toast('show');
+            $("#Nome").focus();
+            return;
+        }
+
+        if (creci == "") {
+            document.getElementById('mensagem').innerHTML = 'O CRECI é obrigatório';
+            $("#toast1").toast('show');
+            $("#Creci").focus();
+            return;
+        }
+
+
+        var form = $("#formCorretor").serialize();
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: form,
+            url: urlbase + '/tabelas/SalvarCorretor',
+            success: function (data) {
+                $('#cadastroCorretor').trigger("reset");
+                $('#cadastroCorretor').modal('hide')
+                $('#corretores').DataTable().ajax.reload();
+                if (data.result == true) {
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                    var id = document.getElementById('imobiliariaId').value;
+                    AtualizarListaCorretores(id);
+                } else {
+                    SwalPopUpErro("Erro", data.message, "error");
+                }
+            }
+        });
+    }
+
+    function ExcluirCorretor(Id) {
+        //var ID = document.getElementById('Id').value;
+        var ID = Id;
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: ID
+            },
+            url: urlbase + '/tabelas/ExcluirCorretor',
+            success: function (data) {
+                if (data.result == true) {
+                    $('#cadastroCorretor').trigger("reset");
+                    $('#cadastroCorretor').modal('hide')
+                    $('#corretores').DataTable().ajax.reload();
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                    var id = document.getElementById('imobiliariaId').value;
+                    AtualizarListaCorretores(id);
+
+                } else {
+                    SwalPopUpErro("Sucesso", data.message, "success");
+                }
+            }
+        });
+    }
+
+    function ValidarCpfCorretor() {
+        var cpf = $("#Cpf").val();
+        var imobiliariaId = document.getElementById('ImobiliariaId').value;
+
+        if (cpf != "") {
+            if (TestaCPF(cpf) == false) {
+                $(".cpf").val("");
+                document.getElementById('mensagem').innerHTML = 'O CPF digitado não é válido';
+                $("#toast1").toast('show');
+                $("#Cpf").focus();
+
+            }
+        }
+    }
+
+    function ValidarDadosCorretor() {
+
+        
+        var conteudo = $("#Nome").val();
+        var creci = $("#Creci").val();
+        var imobiliaria = $("#ImobiliariaId").val();
+        var cpf = $("#Cpf").val();
+        var email = $("#Email").val();
+
+        if (conteudo == "") {
+            document.getElementById('mensagem').innerHTML = 'O nome é obrigatório';
+            $("#toast1").toast('show');
+            $("#Nome").focus();
+            return;
+        }
+        
+
+        if (cpf == "") {
+            document.getElementById('mensagem').innerHTML = 'O CPF é obrigatório';
+            $("#toast1").toast('show');
+            $("#Cpf").focus();
+            return;
+        }
+
+        if (creci == "") {
+            document.getElementById('mensagem').innerHTML = 'O CRECI é obrigatório';
+            $("#toast1").toast('show');
+            $("#Creci").focus();
+            return;
+        }
+        if (imobiliaria == "") {
+            document.getElementById('mensagem').innerHTML = 'Selecione a imobiliária';
+            $("#toast1").toast('show');
+            $("#ImobiliariaId").focus();
+            return;
+        }
+
+        if (email == "") {
+            document.getElementById('mensagem').innerHTML = 'O E-mail é obrigatório';
+            $("#toast1").toast('show');
+            $("#Email").focus();
+            return;
+        }
+
+
+        SalvarCorretor();
+
+    }
+
 
 </script>

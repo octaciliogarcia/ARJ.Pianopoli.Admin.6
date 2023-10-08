@@ -1,4 +1,5 @@
 ﻿#nullable disable
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace ARJ.Pianopoli.Admin._6.Data

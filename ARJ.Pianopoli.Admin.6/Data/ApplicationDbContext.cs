@@ -1,10 +1,15 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿#nullable disable
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace ARJ.Pianopoli.Admin._6.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public partial class ApplicationDbContext : IdentityDbContext
     {
+        public ApplicationDbContext()
+        {
+        }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {

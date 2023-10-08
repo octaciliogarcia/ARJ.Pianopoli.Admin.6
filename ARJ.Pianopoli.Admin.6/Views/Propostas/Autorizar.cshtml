@@ -1,0 +1,565 @@
+﻿<div class="container">
+    <div id="GridAutorizar">
+        <div style="text-align:center;padding: 0px 0px 20px 0px;">
+            <h3>Propostas a autorizar</h3>
+        </div>
+        <div class="grid-left">
+            <div id="grid">
+                <table id="proposta" class="display" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Loteamento</th>
+                            <th>Quadra</th>
+                            <th>Lote</th>
+                            <th>Area</th>
+                            <th>Situação no site</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="formproposta" hidden>
+</div>
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.7.1/js/bootstrap-datepicker.min.js"></script>
+
+<script type="text/javascript">
+
+
+    $(document).ready(function () {
+        $("#formulario").hide();
+        $('#proposta').DataTable({
+            "lengthChange": false,
+            "ajax": urlbase + '/Propostas/ListarPropostasAutorizar',
+            "columnDefs": [
+                {
+                    "targets": [0, 1],
+                    "visible": false,
+                    "searchable": false
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": true
+                },
+                {
+                    "targets": [3],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                },
+                {
+                    "targets": [6],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": false
+                }
+            ],
+            "columns": [
+                { "data": "id" },
+                { "data": "loteamentoId" },
+                { "data": "quadra" },
+                { "data": "lote" },
+                { "data": "area" },
+                { "data": "situacaoNoSite" },
+                {
+                    "render": function (data, type, row, meta) {
+
+                        return '<div style="width:100%; text-align:right" > <button onclick="Autorizar(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-search"></i></button></div>';
+                    }
+                },
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.11.4/i18n/pt_br.json",
+
+            }
+        });
+    });
+
+    function Condicoes(e) {
+
+        var dataRow = $('#proposta').DataTable().row($(e).closest('tr')).data();
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Lote: dataRow.lote,
+                Quadra: dataRow.quadra,
+                Loteamento: dataRow.loteamentoId,
+                Tipo: 1
+            },
+            url: urlbase + '/propostas/CondicoesComerciais',
+            success: function (data) {
+                $('#condicoesComerciais').modal('show')
+                $("#conteudoCondicoes").html(data);
+            }
+
+        });
+    }
+
+
+
+    function Compradores() {
+        var quadra = $("#Quadra").val();
+        var lote = $("#Lote").val();
+        var entrada = $("#Entrada").val();
+        var tipopagto = $("#TipoPagamento").val();
+        var parcelamento = $("#Parcelamento").val();
+        var loteamento = $("#LoteamentoId").val();
+        var id = $("#PropostaId").val();
+        var primvctomen = $("#PrimeiroVencimentoMensal").val();
+        var primvctosem = $("#PrimeiroVencimentoSemestral").val();
+        var banco = $("#banco-cliente").val();
+        var agencia = $("#agencia-cliente").val();
+        var conta = $("#conta-cliente").val();
+        var nome1 = $("#TestemunhaNome1").val();
+        var nome2 = $("#TestemunhaNome2").val();
+        var nome2 = $("#TestemunhaNome2").val();
+        var ende1 = $("#TestemunhaEnd1").val();
+        var ende2 = $("#TestemunhaEnd2").val();
+        var rg1 = $("#TestemunhaRg1").val();
+        var rg2 = $("#TestemunhaRg2").val();
+
+        $.ajax(
+            {
+                cache: false,
+                type: 'POST',
+                data: {
+                    Loteamento: loteamento,
+                    Quadra: quadra,
+                    Lote: lote,
+                    Entrada: entrada,
+                    TipoPagamento: tipopagto,
+                    Parcelamento: parcelamento,
+                    PrimeiroVctMensal: primvctomen,
+                    PrimeiroVctSemestral: primvctosem,
+                    Banco: banco,
+                    Agencia: agencia,
+                    Conta: conta,
+                    TestNome1: nome1,
+                    TestNome2: nome2,
+                    TestEnd1: ende1,
+                    TestEnd2: ende2,
+                    TestRg1: rg1,
+                    TestRg2: rg2
+                },
+                url: urlbase + '/propostas/Compradores',
+                success: function (data) {
+                    $("#grid").hide();
+                    $("#formproposta").hide();
+                    $("#formpropostapreenchida").removeAttr('hidden')
+                    $("#formpropostapreenchida").html(data);
+                    $("#formpropostapreenchida").show();
+                    $("#parcial").html('&nbsp;&nbsp;Reservado&nbsp;&nbsp;');
+                    $("#fundo-partial").attr("style", "background-color:orange;color:black;font-weight: bold;");
+                    BuscarCompradores();
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    SwalPopUpErro("Erro", XMLHttpRequest.statusText, "Error");
+                }
+            }
+        );
+
+    }
+
+    function BuscarCep() {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                cep: $("#Cep").val()
+            },
+            url: urlbase + '/Propostas/BuscarCep',
+            success: function (data) {
+                $("#Logradouro").val(data.endereco);
+                $("#Bairro").val(data.bairro);
+                $("#Municipio").val(data.cidade);
+                $("#Estado").val(data.uf);
+                $("#Numero").focus();
+
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+            }
+        });
+    }
+
+    function BuscarCep2() {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                cep: $("#ConjugeCep").val()
+            },
+            url: urlbase + '/Propostas/BuscarCep',
+            success: function (data) {
+                $("#ConjugeLogradouro").val(data.endereco);
+                $("#ConjugeBairro").val(data.bairro);
+                $("#ConjugeMunicipio").val(data.cidade);
+                $("#ConjugeEstado").val(data.uf);
+                $("#ConjugeNumero").focus();
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+            }
+        });
+    }
+
+
+    function BuscarCompradores() {
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                propostaid: $("#idProposta").val()
+
+            },
+            url: '' + urlbase + '/Propostas/ListarCompradores',
+            success: function (data) {
+                $("#temp-container").html(data);
+                RemoveAguarde();
+                if (data.Result == false) {
+                    SwalPopUpErro("Erro", data.Message, "error");
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                RemoveAguarde();
+            }
+        });
+    }
+
+    /// -------------------------------------------------
+
+
+    $('.datepicker').datepicker({
+        format: 'dd/mm/yyyy',
+        startDate: '-3d'
+    });
+
+
+    function Autorizar(e) {
+
+        var dataRow = $('#proposta').DataTable().row($(e).closest('tr')).data();
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Lote: dataRow.lote,
+                Quadra: dataRow.quadra,
+                Loteamento: dataRow.loteamentoId
+            },
+            url: urlbase + '/propostas/AutorizarProposta',
+            success: function (data) {
+                $("#GridAutorizar").hide();
+                $("#formproposta").removeAttr('hidden')
+                $("#formproposta").html(data);
+                $("#formproposta").show();
+            }
+
+        });
+    }
+
+    function Aprovar() {
+
+        var id = $('#PropostaId').val();
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: id
+            },
+            url: urlbase + '/propostas/AprovarProposta',
+            success: function (data) {
+                $("#GridAutorizar").hide();
+                $("#formproposta").removeAttr('hidden')
+                $("#formproposta").html(data);
+                $("#formproposta").show();
+            }
+        });
+    }
+
+
+
+
+    function BuscarImagens() {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Id: $("#Id").val()
+            },
+            url: urlbase + '/proposta/GetImagens',
+            success: function (data) {
+                $("#imagensdocumentos").empty();
+                $("#imagensdocumentos").html(data);
+            }
+        });
+    }
+
+
+
+
+
+
+    function EditarComprador(id) {
+        alert("editar");
+    }
+
+
+    function BuscarFormaPagamento(id) {
+        $("#Entrada").val("");
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Loteamento: $("#Loteamento").val(),
+                Quadra: $("#Quadra").val(),
+                Lote: $("#Lote").val(),
+                Entrada: $("#Entrada").val(),
+            },
+            url: urlbase + '/proposta/GetDadosPagamento',
+            success: function (data) {
+                if (id == 1) {
+                    $("#Entrada").val(data[0].precoVista.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
+                    $("#Parcelamento").prop("disabled", true);
+                } else {
+                    $("#Parcelamento").prop("disabled", false);
+                    $.each(data, function (i, item) {
+                        $('#Parcelamento').append($('<option>', {
+                            value: item.nrParcelas,
+                            text: item.nrParcelas + " X"
+                        }));
+                    });
+                }
+            }
+        });
+    }
+
+    function BuscarParcelaValores(id) {
+
+        $("#Entrada").val("");
+        $("#Parcela").val("");
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Loteamento: $("#Loteamento").val(),
+                Quadra: $("#Quadra").val(),
+                Lote: $("#Lote").val(),
+                Parcelas: id
+            },
+            url: urlbase + '/proposta/GetValorParcela',
+            success: function (data) {
+                console.log(data)
+                $("#Entrada").val(data.entradaMinima.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
+                $("#Parcela").val(data.valorParcela.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
+
+            }
+        });
+    }
+
+    function BuscarParcelaValoresEntrada() {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                Loteamento: $("#Loteamento").val(),
+                Quadra: $("#Quadra").val(),
+                Lote: $("#Lote").val(),
+                Entrada: $("#Entrada").val(),
+                Parcelas: $("#Parcelamento").val()
+            },
+            url: urlbase + '/proposta/GetValorParcela',
+            success: function (data) {
+                console.log(data)
+                $("#Entrada").val(data.entradaMinima.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
+                $("#Parcela").val(data.valorParcela.toLocaleString("pt-BR", { minimumFractionDigits: 2 }))
+
+            }
+        });
+    }
+
+
+    function VerificarComprador() {
+        if ($("#CpfComprador").val() == "") {
+            SwalPopUpErro("Erro", "Cpf Inválido", "success");
+            return;
+        }
+        $("#Cpf").val($("#CpfComprador").val())
+
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: {
+                cpf: $("#CpfComprador").val(),
+
+            },
+            url: urlbase + '/proposta/GetComprador',
+            success: function (data) {
+                if (data) {
+                    $("#NomeComprador").val(data.nome);
+                    $("#IdComprador").val(data.id);
+
+                } else {
+                    SwalPopUpConfirm("Comprador Não Cadastrado", "Gostaria de cadastrar um novo comprador", CadastrarComprador, $("#CpfComprador").val(), "Cadastrar")
+
+                }
+            }
+        });
+
+    }
+
+
+    function Refresh() {
+        $('#proposta').DataTable().ajax.reload();
+        setTimeout(() => {
+            var table = $('#comprador').DataTable();
+            if (!table.data().any()) {
+                $(".btnimprimir").hide();
+
+            } else {
+                $(".btnimprimir").show();
+            }
+        }, 300);
+    }
+
+
+    function Refresh2() {
+        $('#comprador').DataTable().ajax.reload();
+        if ($("#comprador > tbody > tr").length > 0) {
+            $(".btnimprimir").show();
+        } else {
+            $(".btnimprimir").show();
+        }
+    }
+
+
+    function SalvarImagem() {
+        Aguarde();
+        var model = new FormData();
+        var files = $("#imagem")[0].files;
+        if (files.length > 0) {
+            model.append("Imagem", files[0]);
+        }
+        var form = $('form');
+        var token = $('input[name="__RequestVerificationToken"]', form).val();
+        model.append("__RequestVerificationToken", token);
+
+        model.append("id", $("#Id").val());
+        $.ajax({
+            cache: false,
+            contentType: false,
+            processData: false,
+            type: 'POST',
+            data: model,
+            url: urlbase + '/proposta/SalvarImagem',
+            success: function (data) {
+                RemoveAguarde();
+                if (data.result == true) {
+                    BuscarImagens();
+                    $("#imagemexibir").empty();
+                    document.getElementById('imagem').value = null;
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+                }
+            }, error: function (request, status, error) {
+                RemoveAguarde();
+            }
+        });
+
+    }
+
+    function AtualizarGridCompradores(propostaid) {
+        $.ajax({
+            cache: false,
+            type: 'POST',
+            data: { id: propostaid },
+            url: urlbase + '/propostas/AtualizarGridCompradores',
+            success: function (data) {
+                if (data.result == true) {
+                    Refresh2();
+                    $('#cadastro').trigger("reset");
+                    $('#cadastroComprador').modal('hide')
+
+                    SwalPopUpSucess("Sucesso", data.message, "success");
+
+                } else {
+                    SwalPopUpErro("Sucesso", data.message, "success");
+                }
+            }
+        });
+
+    }
+
+
+
+
+    function Inicio() {
+        window.location = urlbase + "/Propostas/Autorizar";
+    }
+
+    function Imprimir() {
+
+        window.open(urlbase + "/Propostas/ImprimirProposta?Id=" + $("#PropostaId").val(), '_blank');
+    }
+
+    function ImprimirContrato() {
+
+        window.open(urlbase + "/Propostas/ImpressaoContrato?Id=" + $("#PropostaId").val(), '_blank');
+    }
+
+
+
+    $("#imagem").on('change', function () {
+        if (typeof (FileReader) != "undefined") {
+            $("#salvardocumento").show();
+            var image_holder = $("#imagemexibir");
+            image_holder.empty();
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $("<img  />", {
+                    "src": e.target.result,
+                    "style": "width:200px"
+                }).appendTo(image_holder);
+            }
+            image_holder.show();
+            reader.readAsDataURL($(this)[0].files[0]);
+        } else {
+            alert("Este navegador nao suporta FileReader.");
+        }
+    });
+
+</script>
+
+<style type="text/css">
+    input[type="file"] {
+        display: none;
+    }
+
+    .custom-file-upload {
+        border: 1px solid #ccc;
+        display: inline-block;
+        padding: 6px 12px;
+        cursor: pointer;
+    }
+
+    .casamento {
+        padding: 10px 0px 10px 25px;
+    }
+
+    .conjuge {
+        padding: 10px 0px 10px 25px;
+    }
+
+</style>
+
+
+

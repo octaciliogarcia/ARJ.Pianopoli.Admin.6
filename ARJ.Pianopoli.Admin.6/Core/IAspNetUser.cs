@@ -14,5 +14,6 @@ namespace ARJ.Pianopoli.Admin._6.Core
         bool IsInRole(string role);
         IEnumerable<Claim> GetClaims();
         HttpContext GetHttpContext();
+       
     }
 }

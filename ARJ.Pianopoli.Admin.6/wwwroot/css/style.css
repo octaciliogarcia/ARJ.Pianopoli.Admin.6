@@ -9848,3 +9848,8 @@ body.md-skin {
 .direita {
     text-align: right;
 }
+
+.form-label {
+    font-weight: bold;
+    margin-top: 5px;
+}

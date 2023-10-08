@@ -346,7 +346,6 @@
             else {
                 $("#Parcelamento").focus();
             }
-
         }
         else {
             $("#Entrada").focus();
@@ -589,11 +588,15 @@
             },
             url: urlbase + '/propostas/EditarProposta',
             success: function (data) {
-                $("#grid").hide();
-                $("#formproposta").removeAttr('hidden')
-                $("#formproposta").html(data);
-                $("#formproposta").show();
-                $("#Entrada").focus();
+                if(data.result != null){
+                    SwalPopUpErro("Erro", data.message, "error");
+                }else{
+                    $("#grid").hide();
+                    $("#formproposta").removeAttr('hidden')
+                    $("#formproposta").html(data);
+                    $("#formproposta").show();
+                    $("#Entrada").focus();
+                }
             }
 
         });
@@ -601,8 +604,8 @@
 
 
     function EditarProposta(e) {
-        Novo();
-        $('#comprador').dataTable().fnDestroy();
+        
+        
         $("Editar").val("S");
         var dataRow = $('#proposta').DataTable().row($(e).closest('tr')).data();
 
@@ -623,6 +626,7 @@
             },
             url: urlbase + '/proposta/EditarProposta',
             success: function (data) {
+                $('#comprador').dataTable().fnDestroy();
                 $("#Loteamento").val(data.loteamentoId);
                 $("#Quadra").val(data.quadra);
                 $("#Lote").val(data.lote);

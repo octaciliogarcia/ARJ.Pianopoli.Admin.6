@@ -10,6 +10,8 @@ namespace ARJ.Pianopoli.Admin._6.Data
         public string Cpf { get; set; }
         public string Creci { get; set; }
         public int ImobiliariaId { get; set; }
+        public string Email { get; set; }
+        public string UserId { get; set; }
         public DateTime DataHora { get; set; } = DateTime.Now;
         public string Usuario { get; set; }
         public DateTime? DataExclusao { get; set; }

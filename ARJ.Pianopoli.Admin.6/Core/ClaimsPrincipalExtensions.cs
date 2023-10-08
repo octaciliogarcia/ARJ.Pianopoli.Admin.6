@@ -46,5 +46,6 @@ namespace ARJ.Pianopoli.Admin._6.Core
             var claim = principal.FindFirst("RefreshToken");
             return claim?.Value;
         }
+        
     }
 }

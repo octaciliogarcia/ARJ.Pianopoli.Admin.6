@@ -4,7 +4,9 @@ using ARJ.Pianopoli.Admin._6.Models;
 using ARJ.Pianopoli.Admin._6.Utils;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
+using Microsoft.AspNet.Identity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -27,18 +29,26 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
         static BaseFont fontebase = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, false);
         private IWebHostEnvironment _hostingEnvironment;
         private readonly IAspNetUser _user;
+        private readonly Microsoft.AspNetCore.Identity.UserManager<IdentityUser> _userManager;
 
-
-
-        public PropostasController(DBContext db, IWebHostEnvironment hostingEnvironment, IAspNetUser user)
+        public PropostasController(DBContext db, IWebHostEnvironment hostingEnvironment, IAspNetUser user, Microsoft.AspNetCore.Identity.UserManager<IdentityUser> userManager )
         {
             this.db = db;
             _hostingEnvironment = hostingEnvironment;
             _user = user;
+            _userManager = userManager;
         }
+
+        // public IActionResult ControlePainel() => Content("Controle Painel");
+
+
+
         [Authorize]
         public IActionResult Index()
         {
+            //var user = await _userManager.GetUserAsync(User);
+            //var roles = await _userManager.GetRolesAsync(user);
+            
 
             ViewBag.Corretor = (from f in db.Corretores
                                 where f.DataExclusao == null
@@ -642,16 +652,25 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
         {
             var lista = await db.Procedures.SP_LISTAR_LOTESAsync(7);
 
-            var retorno = (from x in lista
-                           select new ListaLotesViewModel()
-                           {
-                               Id = x.Id,
-                               LoteamentoId = (int)x.LoteamentoId,
-                               Quadra = x.Quadra,
-                               Lote = (int)x.Lote,
-                               Area = String.Format("{0:0,0.00}", x.Area),
-                               SituacaoNoSite = ""
-                           }).ToList();
+            // pega o id do usuario logado
+            var id = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            
+            // pega o nome do usuario logado
+            var nome = User.FindFirst(ClaimTypes.Name).Value;
+
+
+
+             var  retorno = (from x in lista
+                               select new ListaLotesViewModel()
+                               {
+                                   Id = x.Id,
+                                   LoteamentoId = (int)x.LoteamentoId,
+                                   Quadra = x.Quadra,
+                                   Lote = (int)x.Lote,
+                                   Area = String.Format("{0:0,0.00}", x.Area),
+                                   SituacaoNoSite = ""
+                               }).ToList();
+
 
             foreach (var item in retorno)
             {
@@ -659,7 +678,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 {
                     var obj = db.Propostas.Where(c => c.LoteamentoId == item.LoteamentoId && c.Quadra == item.Quadra && c.Lote == item.Lote).FirstOrDefault();
                     if (obj != null)
-                        item.SituacaoNoSite = obj.Contrato == null ? "Reservado" : "Vendido";
+                        item.SituacaoNoSite = obj.Status== 2 ? "Reservado" : "Vendido";
                     else
                         item.SituacaoNoSite = "Disponível";
 
@@ -697,10 +716,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 modelo.LoteamentoId = Loteamento;
                 modelo.PrecoM2 = db.TabelaM2.Where(c => c.CategoriaId == lote.CategoriaId).FirstOrDefault().ValorM2;
                 modelo.CorFundo = db.TabelaM2.Where(c => c.CategoriaId == lote.CategoriaId).FirstOrDefault().CorFundo ?? "#ffffff";
+                modelo.result = true;
 
                 if (lote.SituacaoNoSite == "1")
                 {
                     modelo.StatusNoSite = "Disponível";
+                    
                     // busca o valor total do lote quando este ainda está disponível e sem proposta enviada.
                     var precoVenda = Math.Round(modelo.PrecoM2 * lote.Area, 2); //db.TabelaPrecoLotes.Where(c => c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault().PrecoVenda;
 
@@ -769,12 +790,22 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 }
                 else
                 {
-
                     var proposta = db.Propostas.Where(c => c.LoteamentoId == Loteamento && c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault();
+
+                    if (!User.IsInRole("Perfil-Admin"))
+                    {
+                        if(proposta.Usuario != usuario)
+                        {
+                            return Json(new
+                            {
+                                result = false,
+                                message = "Essa proposta é de outro corretor."
+                            });
+                        }
+                    }
+
                     if (proposta != null)
                     {
-
-
                         modelo.ValorTotal = proposta.ValorTotal;
                         modelo.DataProposta = proposta.DataProposta;
                         var propostaCondicoes = db.PropostasCondicoesComerciais.Where(c => c.PropostaId == proposta.Id).FirstOrDefault();
@@ -837,7 +868,8 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                             TestemunhaEnd1 = proposta.TestemunhaEnd1,
                             TestemunhaEnd2 = proposta.TestemunhaEnd2,
                             TestemunhaRg1 = proposta.TestemunhaRg1,
-                            TestemunhaRg2 = proposta.TestemunhaRg2
+                            TestemunhaRg2 = proposta.TestemunhaRg2,
+                            result = true
                         };
                         return PartialView("EditarPropostaPreenchida", retorno);
                     }
@@ -1963,12 +1995,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
 
-                    cell = new PdfPCell(new Phrase("RG: " + item.Rg, fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("RG: " + item.Rg==null?"": item.Rg, fonteParagrafo));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
 
-                    cell = new PdfPCell(new Phrase("EXP: " + item.RgExpPor, fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("EXP: " + item.RgExpPor==null?"": item.RgExpPor, fonteParagrafo));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
@@ -1984,7 +2016,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
 
-                    cell = new PdfPCell(new Phrase("Profissão: " + item.Profissao.TrimEnd(), fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("Profissão: " + (item.Profissao==null?"": item.Profissao.TrimEnd()), fonteParagrafo));
                     cell.Colspan = 2;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
@@ -1995,36 +2027,36 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     table.AddCell(cell);
 
                     // -- linha
-                    cell = new PdfPCell(new Phrase("E-mail: " + item.Email.ToLower().TrimEnd(), fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("E-mail: " + (item.Email == null ? "":item.Email.ToLower().TrimEnd()), fonteParagrafo)) ;
                     cell.Colspan = 2;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
 
-                    cell = new PdfPCell(new Phrase("Fone: " + Convert.ToUInt64(item.Celular).ToString(@"\(00\) 00000\-0000"), fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("Fone: " + (item.Celular==null?"":  Convert.ToUInt64(item.Celular).ToString(@"\(00\) 00000\-0000")), fonteParagrafo));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
                     //---
 
                     // -- linha
-                    cell = new PdfPCell(new Phrase("Endereço: " + item.Logradouro.TrimEnd() + " " + item.Numero.TrimEnd() + " " + (item.Complemento.TrimEnd() ?? ""), fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("Endereço: " + (item.Logradouro==null?"": item.Logradouro.TrimEnd()) + " " + (item.Numero==null?"": item.Numero.TrimEnd()) + " " + (item.Complemento.TrimEnd() ?? ""), fonteParagrafo));
                     cell.Colspan = 3;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
                     //---
 
                     // -- linha
-                    cell = new PdfPCell(new Phrase("Cidade: " + item.Municipio.TrimEnd(), fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("Cidade: " + (item.Municipio == null ? "" : item.Municipio.TrimEnd()), fonteParagrafo));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
 
-                    cell = new PdfPCell(new Phrase("Bairro: " + item.Bairro.TrimEnd(), fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("Bairro: " + (item.Bairro == null ? "" : item.Bairro.TrimEnd()), fonteParagrafo));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
 
-                    cell = new PdfPCell(new Phrase("Cep: " + Convert.ToUInt64(item.Cep).ToString(@"00000\-000"), fonteParagrafo));
+                    cell = new PdfPCell(new Phrase("Cep: " + (item.Cep == null ? "" : Convert.ToUInt64(item.Cep).ToString(@"00000\-000")), fonteParagrafo));
                     cell.Colspan = 1;
                     cell.BorderWidth = 0;
                     table.AddCell(cell);
@@ -2071,7 +2103,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
 
-                        cell = new PdfPCell(new Phrase("Cartório:" + item.CasamentoEscrRegistro.TrimEnd() ?? "", fonteParagrafo));
+                        cell = new PdfPCell(new Phrase("Cartório:" + (item.CasamentoEscrRegistro.TrimEnd() ?? ""), fonteParagrafo));
                         cell.Colspan = 1;
                         cell.BorderWidth = 0;
                         table.AddCell(cell);
@@ -2481,9 +2513,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     // Col 2
                     var frase_1_1 = new Phrase();
                     frase_1_1.Add(new Chunk("De um lado, como outorgante vendedora e credora fiduciária, ", fonteParagrafo));
-                    frase_1_1.Add(new Chunk("ARJ EMPREENDIMENTOS IMOBILIÁRIOS LTDA.", fonteBold));
+                    frase_1_1.Add(new Chunk("MAZZA EMPREENDIMENTOS IMOBILIÁRIOS LTDA.", fonteBold));
                     frase_1_1.Add(new Chunk(", com sede em Ribeirão Preto – SP, na Rua Américo Brasiliense, 1856, Vila Seixas, CEP 14015-050, inscrita no CNPJ/MF sob n.º 18.739.252/0001-00, com seu contrato social registrado na Junta Comercial do Estado de São Paulo sob o NIRE  nº 35.227.734.539 em 23.08.2013 e última alteração contratual sob nº 451.536/19-8 em 04.09.2019, neste ato representada, na forma de seu contrato social, pelos seus representantes ao final assinados, daqui em diante chamada, simplesmente, por", fonteParagrafo));
-                    frase_1_1.Add(new Chunk(" “ARJ”;\n\n", fonteBold));
+                    frase_1_1.Add(new Chunk(" “MAZZA”;\n\n", fonteBold));
 
                     cell = new PdfPCell(frase_1_1);
                     cell.SetLeading(0.0f, 1.2f);
@@ -2735,7 +2767,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     frase_3_1_2.Add(new Chunk("O ", fonteParagrafo));
                     frase_3_1_2.Add(new Chunk("COMPRADOR", fonteBold));
                     frase_3_1_2.Add(new Chunk(" é o único e exclusivo responsável pelo pagamento da despesa com os serviços de corretagem diretamente ao credor respectivo (a empresa imobiliária e/ou o corretor associado, a seguir identificados), não podendo, sob qualquer hipótese, ser a ", fonteParagrafo));
-                    frase_3_1_2.Add(new Chunk("ARJ", fonteBold));
+                    frase_3_1_2.Add(new Chunk("MAZZA", fonteBold));
                     frase_3_1_2.Add(new Chunk(" responsabilizada pelo pagamento da referida despesa.\n\n", fonteParagrafo));
 
                     cell = new PdfPCell(frase_3_1_2);
@@ -2921,7 +2953,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     var frase_3_1_6 = new Phrase();
                     frase_3_1_6.Add(new Chunk("É imprescindível que o Corretor / imobiliária sempre consulte a ", fonteParagrafo));
-                    frase_3_1_6.Add(new Chunk("ARJ", fonteBold));
+                    frase_3_1_6.Add(new Chunk("MAZZA", fonteBold));
                     frase_3_1_6.Add(new Chunk(" sobre a quitação do boleto de entrada, antes de depositar em sua conta o valor recebido pela comissão, evitando ter de restituir o valor recebido em casos de desistência do ", fonteParagrafo));
                     frase_3_1_6.Add(new Chunk("COMPRADOR.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_3_1_6);
@@ -2978,7 +3010,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     frase_4_1a.Add(new Chunk(", a parcela de R$ " + String.Format("{0:0,0.00}", condicoes.ValorEntrada) + " (a “Parcela de Sinal”), por meio de boleto bancário emitido neste ato, e da qual a ", fonteParagrafo));
                     frase_4_1a.Add(new Chunk("neste ato", fonteBold));
                     frase_4_1a.Add(new Chunk(", e da qual a ", fonteParagrafo));
-                    frase_4_1a.Add(new Chunk("ARJ", fonteBold));
+                    frase_4_1a.Add(new Chunk("MAZZA", fonteBold));
                     frase_4_1a.Add(new Chunk(" dá a devida quitação, condicionada à efetiva compensação de boleto bancário nº " + boletonumero + " emitido pelo banco ITAÚ S/A ou usando pagamento eletrônico como PIX, TED ou TEF, Termo de Proposta nº " + proposta.Id.ToString().PadLeft(6, '0') + ". \n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_1a);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
@@ -3129,7 +3161,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var frase_4_4 = new Phrase();
                     frase_4_4.Add(new Chunk("Caso o ", fonteParagrafo));
                     frase_4_4.Add(new Chunk("COMPRADOR", fonteBold));
-                    frase_4_4.Add(new Chunk(" não pague o boleto de entrada no prazo de até 05 (cinco) dias úteis da data do seu vencimento operar-se-á o Distrato Automático do presente contrato, voltando o referido lote do presente contrato ao estoque da ARJ que poderá imediatamente comercializá-lo a outro interessado.\n\n\n", fonteParagrafo));
+                    frase_4_4.Add(new Chunk(" não pague o boleto de entrada no prazo de até 05 (cinco) dias úteis da data do seu vencimento operar-se-á o Distrato Automático do presente contrato, voltando o referido lote do presente contrato ao estoque da MAZZA que poderá imediatamente comercializá-lo a outro interessado.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_4_4);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -3224,7 +3256,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     var frase_5_3 = new Phrase();
                     frase_5_3.Add(new Chunk("As partes estabelecem que o Loteamento será tido como entregue na data de postagem de carta registrada a ser enviada pela ", fonteParagrafo));
-                    frase_5_3.Add(new Chunk("ARJ", fonteBold));
+                    frase_5_3.Add(new Chunk("MAZZA", fonteBold));
                     frase_5_3.Add(new Chunk(" ao ", fonteParagrafo));
                     frase_5_3.Add(new Chunk("COMPRADOR", fonteBold));
                     frase_5_3.Add(new Chunk(", comunicando (“Comunicação”) a conclusão das Obras de infraestrutura do Loteamento, caracterizada pelo ", fonteParagrafo));
@@ -3263,7 +3295,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     frase_6_1.Add(new Chunk("Superadas as Condições Suspensivas, abaixo previstas, o ", fonteParagrafo));
                     frase_6_1.Add(new Chunk("COMPRADOR", fonteBold));
                     frase_6_1.Add(new Chunk(" ficará automaticamente imitido na posse direta do Imóvel, ficando a ", fonteParagrafo));
-                    frase_6_1.Add(new Chunk("ARJ", fonteParagrafo));
+                    frase_6_1.Add(new Chunk("MAZZA", fonteParagrafo));
                     frase_6_1.Add(new Chunk(" com a posse indireta, na qualidade de credora fiduciária.\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_6_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
@@ -3317,7 +3349,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     var frase_7_1 = new Phrase();
                     frase_7_1.Add(new Chunk("Direito de Arrependimento: ", fonteBold));
                     frase_7_1.Add(new Chunk("Como o Contrato foi celebrado em estande de venda ou fora da sede da ", fonteSublinhada));
-                    frase_7_1.Add(new Chunk("ARJ", fonteBold));
+                    frase_7_1.Add(new Chunk("MAZZA", fonteBold));
                     frase_7_1.Add(new Chunk(", o ", fonteSublinhada));
                     frase_7_1.Add(new Chunk("COMPRADOR", fonteBold));
                     frase_7_1.Add(new Chunk(" tem assegurado o direito de arrependimento, durante o prazo improrrogável de 7 (sete) dias, contados desta data, conforme regrado no ", fonteSublinhada));
@@ -3580,7 +3612,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     frase_10_1.Add(new Chunk("O ", fonteParagrafo));
                     frase_10_1.Add(new Chunk("COMPRADOR", fonteBold));
                     frase_10_1.Add(new Chunk(" tem ciência e está de acordo com as restrições que a ", fonteParagrafo));
-                    frase_10_1.Add(new Chunk("ARJ", fonteBold));
+                    frase_10_1.Add(new Chunk("MAZZA", fonteBold));
                     frase_10_1.Add(new Chunk(" estabeleceu para o Loteamento, constantes no Regulamento Construtivo (ANEXO V), integrante do presente instrumento.\n\n\n", fonteParagrafo));
                     cell = new PdfPCell(frase_10_1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
@@ -3722,7 +3754,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     frase_12_1a.Add(new Chunk("a) -\tcompensação, ", fonteParagrafo));
                     frase_12_1a.Add(new Chunk("em até 05 (cinco) dias úteis", fonteBold));
                     frase_12_1a.Add(new Chunk(", contados da data de vencimento do(s) boleto(s) representativos da Parcela de Sinal na conta da ", fonteParagrafo));
-                    frase_12_1a.Add(new Chunk("ARJ;\n\n", fonteBold));
+                    frase_12_1a.Add(new Chunk("MAZZA;\n\n", fonteBold));
                     cell = new PdfPCell(frase_12_1a);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -3764,7 +3796,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
                     var frase_12_1b1 = new Phrase();
                     frase_12_1b1.Add(new Chunk("     b.1) essa condição suspensiva não é aplicável para contratos assinados na sede da ", fonteParagrafo));
-                    frase_12_1b1.Add(new Chunk("ARJ;\n\n\n", fonteBold));
+                    frase_12_1b1.Add(new Chunk("MAZZA;\n\n\n", fonteBold));
                     cell = new PdfPCell(frase_12_1b1);
                     cell.HorizontalAlignment = Element.ALIGN_JUSTIFIED;
                     cell.SetLeading(0.0f, 1.3f);
@@ -3954,7 +3986,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                     table.AddCell(cell);
 
                     // assinaturas ARJ b)
-                    var texto_assinaturaARJb = "ARJ EMPREENDIMENTOS IMOBILIÁRIOS LTDA\n";
+                    var texto_assinaturaARJb = "MAZZA EMPREENDIMENTOS IMOBILIÁRIOS LTDA\n";
 
                     var frase_assinaturaARJb = new Phrase();
                     frase_assinaturaARJb.Add(new Chunk(texto_assinaturaARJb + "\n\n", fonteBold));
@@ -4110,7 +4142,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
                 tbHeader.DefaultCell.Border = 0;
 
                 tbHeader.AddCell(new Paragraph());
-                PdfPCell _cell = new PdfPCell(new Paragraph("ARJ Empreendimentos"));
+                PdfPCell _cell = new PdfPCell(new Paragraph("MAZZA Empreendimentos"));
                 _cell.HorizontalAlignment = Element.ALIGN_CENTER;
                 _cell.Border = 0;
                 tbHeader.AddCell(_cell);
@@ -4354,6 +4386,207 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
             }
         }
+        [Authorize]
+        public IActionResult Autorizar()
+        {
+
+            ViewBag.Corretor = (from f in db.Corretores
+                                where f.DataExclusao == null
+                                select new SelectListItem
+                                {
+                                    Text = f.Nome,
+                                    Value = f.Id.ToString()
+                                });
+
+            ViewBag.Loteamento = (from f in db.Loteamentos
+                                  select new SelectListItem
+                                  {
+                                      Text = f.Nome,
+                                      Value = f.Id.ToString()
+                                  });
+
+            ViewBag.EstadoCivil = (from f in db.EstadoCivil
+                                   select new SelectListItem
+                                   {
+                                       Text = f.Descricao,
+                                       Value = f.Id.ToString()
+                                   });
+            if (User.Identity.IsAuthenticated)
+            {
+                return View();
+            }
+            else
+            {
+                return RedirectToPage("/");
+            }
+        }
+
+        [Authorize]
+        public async Task<IActionResult> ListarPropostasAutorizar()
+        {
+            var lista = await db.Procedures.SP_LISTAR_LOTESAsync(7);
+
+            var retorno = (from x in lista
+                           where x.DataExclusao == null
+                           where x.SituacaoNoSite == "2"
+                           select new ListaLotesViewModel()
+                           {
+                               Id = x.Id,
+                               LoteamentoId = (int)x.LoteamentoId,
+                               Quadra = x.Quadra,
+                               Lote = (int)x.Lote,
+                               Area = String.Format("{0:0,0.00}", x.Area),
+                               SituacaoNoSite = ""
+                           }).ToList();
+
+            foreach (var item in retorno)
+            {
+                try
+                {
+                    var obj = db.Propostas.Where(c => c.LoteamentoId == item.LoteamentoId && c.Quadra == item.Quadra && c.Lote == item.Lote).FirstOrDefault();
+                    if (obj != null)
+                        item.SituacaoNoSite = obj.Contrato == null ? "Reservado" : "Vendido";
+                    else
+                        item.SituacaoNoSite = "Disponível";
+
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+            }
+
+            return Json(new { data = retorno });
+        }
+
+
+        [Authorize]
+        public IActionResult AutorizarProposta(int Loteamento, string Quadra, int Lote)
+        {
+
+            if (ModelState.IsValid)
+            {
+                var usuario = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var modelo = new PropostaViewModel();
+                var lote = db.Lotes.Where(c => c.LoteamentoId == Loteamento && c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault();
+        
+                // monta dados do lote 
+                modelo.Lote = Lote;
+                modelo.Quadra = Quadra;
+                modelo.Area = lote.Area;
+                modelo.LoteamentoId = Loteamento;
+                modelo.PrecoM2 = db.TabelaM2.Where(c => c.CategoriaId == lote.CategoriaId).FirstOrDefault().ValorM2;
+                modelo.CorFundo = db.TabelaM2.Where(c => c.CategoriaId == lote.CategoriaId).FirstOrDefault().CorFundo ?? "#ffffff";
+
+                if(lote.SituacaoNoSite== "2" || lote.SituacaoNoSite == "3")
+                {
+                    var proposta = db.Propostas.Where(c => c.LoteamentoId == Loteamento && c.Quadra == Quadra && c.Lote == Lote).FirstOrDefault();
+                    if (proposta != null)
+                    {
+
+                        modelo.StatusNoSite = lote.SituacaoNoSite=="2" ? "Reservado" : "Vendido";   
+                        modelo.ValorTotal = proposta.ValorTotal;
+                        modelo.DataProposta = proposta.DataProposta;
+                        var propostaCondicoes = db.PropostasCondicoesComerciais.Where(c => c.PropostaId == proposta.Id).FirstOrDefault();
+                        var compradores = (from x in db.PropostasCompradores
+                                           join c in db.Comprador on x.CompradorId equals c.Id
+                                           where x.PropostaId == proposta.Id
+                                           select c).ToList();
+
+                        foreach (var item in compradores)
+                        {
+                            item.Celular = Convert.ToUInt64(item.Celular).ToString(@"(00) 00000-0000");
+                            item.Cpf = Convert.ToUInt64(item.Cpf).ToString(@"000\.000\.000\-00");
+                        }
+
+
+                        var statusnosite = "";
+                        if (proposta.Status == 2)
+                            statusnosite = "Reservado";
+                        else
+                            statusnosite = "Vendido";
+
+                        //var valorConverter = 2421457943.54m;
+
+                        //var extenso = ValorExtenso.ExtensoReal(valorConverter);
+
+
+                        var retorno = new PropostaViewModel()
+                        {
+                            StatusNoSite = statusnosite,
+                            Id = proposta.Id,
+                            PropostaId = proposta.Id,
+                            LoteamentoId = Loteamento,
+                            Lote = Lote,
+                            Quadra = Quadra,
+                            Area = lote.Area,
+                            PrecoM2 = modelo.PrecoM2,
+                            CorFundo = modelo.CorFundo,
+                            DataProposta = proposta.DataProposta,
+                            DataAprovacao = proposta.DataAprovacao,
+                            Entrada = String.Format("{0:0,0.00}", propostaCondicoes.ValorEntrada),
+                            ValorTotal = propostaCondicoes.ValorTotal,
+                            ValorCorretagem = proposta.ValorCorretagem,
+                            SaldoPagar = String.Format("{0:0,0.00}", (proposta.ValorTotal - propostaCondicoes.ValorEntrada)),
+                            TipoPagamento = proposta.ValorTotal == propostaCondicoes.ValorEntrada ? "a vista" : "a prazo",
+                            Parcelamento = propostaCondicoes.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaMensal) + " + " + propostaCondicoes.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaSemestral),
+                            ParcelamentoMensal = propostaCondicoes.NrParcelasMensais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaMensal),
+                            ParcelamentoSemestral = propostaCondicoes.NrParcelasSemestrais.ToString() + " x R$ " + String.Format("{0:0,0.00}", propostaCondicoes.ValorParcelaSemestral),
+                            Compradores = compradores,
+                            PrimeiroVencMensal = (DateTime)proposta.PrimeiroVencMensal,
+                            PrimeiroVencSemestral = (DateTime)proposta.PrimeiroVencSemestral,
+                            TotalParcelas = String.Format("{0:0,0.00}", propostaCondicoes.TotalParcelas),
+                            SaldoQuitacao = String.Format("{0:0,0.00}", propostaCondicoes.SaldoQuitacao),
+                            PrecoVendaCorrigido = String.Format("{0:0,0.00}", propostaCondicoes.PrecoVendaCorrigido),
+                            JurosCobrados = String.Format("{0:0,0.00}", propostaCondicoes.JurosPeriodo),
+                            BancoCliente = proposta.BancoCliente,
+                            AgenciaCliente = proposta.AgenciaCliente,
+                            ContaCliente = proposta.ContaCliente,
+                            TestemunhaNome1 = proposta.TestemunhaNome1,
+                            TestemunhaNome2 = proposta.TestemunhaNome2,
+                            TestemunhaEnd1 = proposta.TestemunhaEnd1,
+                            TestemunhaEnd2 = proposta.TestemunhaEnd2,
+                            TestemunhaRg1 = proposta.TestemunhaRg1,
+                            TestemunhaRg2 = proposta.TestemunhaRg2
+                        };
+                        return PartialView("EditarPropostaPreenchidaAprovacao", retorno);
+                    }
+                    return BadRequest();
+                }
+                else
+                {
+                    return PartialView("EditarPropostaPreenchidaAprovacao", new PropostaViewModel());
+                }
+
+            }
+            else
+            {
+                return BadRequest();
+            }
+
+        }
+
+        public IActionResult AprovarProposta(int Id)
+        {
+            if(!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+            var proposta = db.Propostas.Where(c => c.Id == Id).FirstOrDefault();
+            proposta.Status = 4;
+            proposta.DataAprovacao = DateTime.Now;
+            db.SaveChanges();
+
+            var lote = db.Lotes.Where(c => c.LoteamentoId == proposta.LoteamentoId && c.Quadra==proposta.Quadra && c.Lote==proposta.Lote).FirstOrDefault();
+            lote.SituacaoNoSite = "3";
+            db.SaveChanges();
+
+
+            return RedirectToAction("PropostaPreenchida", "Propostas");
+        }
+
 
 
         //

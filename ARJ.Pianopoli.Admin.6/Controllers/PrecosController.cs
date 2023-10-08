@@ -1,8 +1,11 @@
 ﻿using ARJ.Pianopoli.Admin._6.Core;
 using ARJ.Pianopoli.Admin._6.Data;
 using ARJ.Pianopoli.Admin._6.Models;
+using DocumentFormat.OpenXml.InkML;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using DocumentFormat.OpenXml.Spreadsheet;
+using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -13,6 +16,7 @@ using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using OpenXmlPowerTools;
 using System.Drawing;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace ARJ.Pianopoli.Admin._6.Controllers
@@ -168,9 +172,12 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
         }
 
-        [Authorize]
+        [Authorize(Roles = "Perfil-Admin")]
         public IActionResult PlanilhaPrecos()
         {
+
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+
             ExcelPackage pck = new ExcelPackage();
 
 
@@ -240,10 +247,18 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             }
             ws.Cells["O1:O4"].Style.Numberformat.Format = "#,##0.00";
 
-            ws.Cells["O1"].Value = 800;
-            ws.Cells["O2"].Value = 780;
-            ws.Cells["O3"].Value = 750;
-            ws.Cells["O4"].Value = 400;
+            // busca os preços na base de dados
+            //
+            var precos = db.TabelaM2.ToList();
+            var o1 = precos.Where(c => c.CategoriaId == 1).FirstOrDefault().ValorM2;
+            var o2 = precos.Where(c => c.CategoriaId == 2).FirstOrDefault().ValorM2;
+            var o3 = precos.Where(c => c.CategoriaId == 3).FirstOrDefault().ValorM2;
+            var o4 = precos.Where(c => c.CategoriaId == 4).FirstOrDefault().ValorM2;
+
+            ws.Cells["O1"].Value = o1;
+            ws.Cells["O2"].Value = o2;
+            ws.Cells["O3"].Value = o3;
+            ws.Cells["O4"].Value = o4;
 
             // Metragens dos lotes
             ws.Cells["C3"].Value = 500.05;
@@ -325,7 +340,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             ws.Cells["C79"].Value = 627.82;
             ws.Cells["C80"].Value = 630.94;
             ws.Cells["C81"].Value = 646.93;
-            ws.Cells["C82"].Value = 5689.14; 
+            ws.Cells["C82"].Value = 5689.14;
             ws.Cells["C83"].Value = 500.42;
             ws.Cells["C84"].Value = 524.84;
             ws.Cells["C85"].Value = 555.26;
@@ -341,7 +356,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
 
             ws.Cells["B3:C94"].Style.Numberformat.Format = "#,##0.00";
 
-            ws.Cells["A1"].Value = "OS CÁLCULOS ABAIXO ESTÃO M2 BRANCO";
+            //ws.Cells["A1"].Value = "OS CÁLCULOS ABAIXO ESTÃO M2 BRANCO";
             ws.Cells["B2"].Value = "Valor";
             ws.Cells["C2"].Value = "Área";
             ws.Cells["B2:C2"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
@@ -390,9 +405,9 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             //ws.Cells["G19"].Formula = "=E19*B19/O3*O1";
 
             // buscar os lotes por categoria (verde) e depois procura pela referência da metragem e depois monta e grava a fórmula
-            var lotes = ( from x in db.Lotes
-                          where x.LoteamentoId==7 && x.CategoriaId==1 && x.SituacaoNoSite.CompareTo("0") > 0
-                          select x).ToList();
+            var lotes = (from x in db.Lotes
+                         where x.LoteamentoId == 7 && x.CategoriaId == 1 && x.SituacaoNoSite.CompareTo("0") > 0
+                         select x).ToList();
             foreach (var lote in lotes)
             {
                 // procura onde se encontra a metragem na planilha
@@ -449,7 +464,7 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             // buscar os lotes por categoria (branco) e depois procura pela referência da metragem e depois monta e grava a fórmula
             lotes = null;
             lotes = (from x in db.Lotes
-                                where x.LoteamentoId == 7 && x.CategoriaId == 3 && x.SituacaoNoSite.CompareTo("0") > 0
+                     where x.LoteamentoId == 7 && x.CategoriaId == 3 && x.SituacaoNoSite.CompareTo("0") > 0
                      select x).ToList();
 
             foreach (var lote in lotes)
@@ -481,9 +496,8 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             foreach (var lote in lotes)
             {
                 // procura onde se encontra a metragem na planilha
-                var findValue = lote.Area.ToString().Replace(".",",");
-                var findrange = ws.Cells.FirstOrDefault(cell => cell.Text.Replace(".","") == findValue);
-                //var findrange = ws.Cells.FirstOrDefault(cell => cell.Formula == $"\"{findValue}\"");
+                var findValue = lote.Area.ToString("#,##0.00");
+                var findrange = ws.Cells.FirstOrDefault(cell => cell.Text == findValue);
                 if (findrange != null)
                 {
                     var row = findrange.Start.Row;
@@ -520,8 +534,8 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             ws.Cells["J95"].Style.Font.Italic = true;
 
             ws.Cells["P1:R4"].Merge = true;
-            ws.Cells["P1:R4"].Style.WrapText= true;
-            ws.Cells["P1:R4"].Style.VerticalAlignment =ExcelVerticalAlignment.Center;
+            ws.Cells["P1:R4"].Style.WrapText = true;
+            ws.Cells["P1:R4"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
             ws.Cells["P1:R4"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
             ws.Cells["P1"].Value = "ESSES VALORES PODEM SER ALTERADOS";
             ws.Cells["P1:R4"].Style.Font.Bold = true;
@@ -531,21 +545,37 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             celulas.Style.Border.Left.Style = ExcelBorderStyle.Thin;
             celulas.Style.Border.Right.Style = ExcelBorderStyle.Thin;
             celulas.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
-            ws.View.ShowGridLines= true;
+            ws.View.ShowGridLines = true;
+
+            ws.Column(13).Width = 24;
+            ws.Cells["M7:S10"].Merge = true;
+            ws.Cells["M7"].Style.Font.SetFromFont("Arial", 12, true, true, true, false);
+            ws.Cells["M7"].Style.WrapText = true;
+            ws.Cells["M7"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+
+            ws.Cells["M7"].Value = "OBS: NENHUM OUTRO VALOR DA PLANILA PODE SER ALTERADO. ELES SÃO CALCULADOS AUTOMATICAMENTE";
 
             #endregion
+
+            /////////////////////////////////////////////
+            ///
+            /// Planilha Tabela de Vendas
+            /// 
+            /////////////////////////////////////////////
+
 
             #region Planilha Tabela de Vendas
 
             var tabv = pck.Workbook.Worksheets.Add("Tabela de Vendas");
             pck.Workbook.Worksheets.MoveBefore("Tabela de Vendas", "Base");
 
-            
-            for (var rowitem =1;rowitem<=30;rowitem++)
+
+            for (var rowitem = 1; rowitem <= 30; rowitem++)
             {
                 tabv.Column(rowitem).Width = 16;
             }
-            
+
 
             tabv.Cells["A3:C3"].Style.Fill.PatternType = ExcelFillStyle.Solid;
             tabv.Cells["A3:C3"].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(255, 255, 0));
@@ -578,6 +608,440 @@ namespace ARJ.Pianopoli.Admin._6.Controllers
             tabv.Cells["F4:G4"].Merge = true;
             tabv.Cells["F4:G4"].Style.Font.Bold = true;
             tabv.Cells["F4:G4"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            tabv.Column(9).Width = 30.5;
+            tabv.Column(10).Width = 21;
+            tabv.Column(11).Width = 21;
+            tabv.Column(12).Width = 21;
+            tabv.Column(13).Width = 21;
+            tabv.Column(14).Width = 21;
+            tabv.Cells["I1:Y15"].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            tabv.Cells["I1:Y15"].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(255, 0, 0));
+            // 
+            tabv.Cells["I2"].Value = "semestrais trazidas a VP6";
+            tabv.Cells["I3"].Value = "semestrais trazidas a VP12";
+            tabv.Cells["I4"].Value = "semestrais trazidas a VP18";
+            tabv.Cells["I5"].Value = "semestrais trazidas a VP24";
+            tabv.Cells["I6"].Value = "semestrais trazidas a VP30";
+            tabv.Cells["I7"].Value = "semestrais trazidas a VP36";
+            tabv.Cells["I8"].Value = "semestrais trazidas a VP42";
+            tabv.Cells["I9"].Value = "semestrais trazidas a VP48";
+            tabv.Cells["I10"].Value = "semestrais trazidas a VP54";
+            tabv.Cells["I11"].Value = "semestrais trazidas a VP60";
+            //// 1o. Semestre
+            tabv.Cells["K1"].Value = "1a. SEMESTRAL";
+            tabv.Cells["K1:L1"].Merge = true;
+            tabv.Cells["K1:L1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            tabv.Cells["K2"].Value = "FV=";
+            tabv.Cells["K3"].Value = "N=";
+            tabv.Cells["K4"].Value = "I=";
+            tabv.Cells["K9"].Value = "FV=";
+            tabv.Cells["K10"].Value = "N=";
+            tabv.Cells["K11"].Value = "I=";
+            tabv.Cells["K2:K4"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["K9:K11"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            tabv.Cells["N2"].Value = "FV=";
+            tabv.Cells["N3"].Value = "N=";
+            tabv.Cells["N4"].Value = "I=";
+            tabv.Cells["N9"].Value = "FV=";
+            tabv.Cells["N10"].Value = "N=";
+            tabv.Cells["N11"].Value = "I=";
+            tabv.Cells["N2:N4"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["N9:N11"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            tabv.Cells["Q2"].Value = "FV=";
+            tabv.Cells["Q3"].Value = "N=";
+            tabv.Cells["Q4"].Value = "I=";
+            tabv.Cells["Q9"].Value = "FV=";
+            tabv.Cells["Q10"].Value = "N=";
+            tabv.Cells["Q11"].Value = "I=";
+            tabv.Cells["Q2:Q4"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["Q9:Q11"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            tabv.Cells["T2"].Value = "FV=";
+            tabv.Cells["T3"].Value = "N=";
+            tabv.Cells["T4"].Value = "I=";
+            tabv.Cells["T9"].Value = "FV=";
+            tabv.Cells["T10"].Value = "N=";
+            tabv.Cells["T11"].Value = "I=";
+            tabv.Cells["T2:T4"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["T9:T11"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+
+            tabv.Cells["W2"].Value = "FV=";
+            tabv.Cells["W3"].Value = "N=";
+            tabv.Cells["W4"].Value = "I=";
+            tabv.Cells["W9"].Value = "FV=";
+            tabv.Cells["W10"].Value = "N=";
+            tabv.Cells["W11"].Value = "I=";
+            tabv.Cells["W2:W4"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["W9:W11"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+
+
+            tabv.Cells["L2"].Formula = "=C3";
+            tabv.Cells["L3"].Value = 6;
+            tabv.Cells["L4"].Formula = "=F3/100";
+            tabv.Cells["J2:J11"].Style.Numberformat.Format = "#,##0.00";
+            tabv.Cells["J2"].Formula = "=L2/(Power((1+L4),L3))";
+
+            //// 2o. Semestre
+            tabv.Cells["N1"].Value = "2a. SEMESTRAL";
+            tabv.Cells["N1:O1"].Merge = true;
+            tabv.Cells["N1:O1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["O2"].Formula = "=C3";
+            tabv.Cells["O3"].Value = 12;
+            tabv.Cells["O4"].Formula = "=F3/100";
+            tabv.Cells["J3"].Formula = "=O2/(Power((1+O4),O3))";
+            //// 3o. Semestre
+            tabv.Cells["Q1"].Value = "3a. SEMESTRAL";
+            tabv.Cells["Q1:R1"].Merge = true;
+            tabv.Cells["Q1:R1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["R2"].Formula = "=C3";
+            tabv.Cells["R3"].Value = 18;
+            tabv.Cells["R4"].Formula = "=F3/100";
+            tabv.Cells["J4"].Formula = "=R2/(Power((1+R4),R3))";
+            //// 4o. Semestre
+            tabv.Cells["T1"].Value = "4a. SEMESTRAL";
+            tabv.Cells["T1:U1"].Merge = true;
+            tabv.Cells["T1:U1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["U2"].Formula = "=C3";
+            tabv.Cells["U3"].Value = 24;
+            tabv.Cells["U4"].Formula = "=F3/100";
+            tabv.Cells["J5"].Formula = "=U2/(Power((1+U4),U3))";
+            //// 5o. Semestre
+            tabv.Cells["k7"].Value = "5a. SEMESTRAL";
+            tabv.Cells["k7:l7"].Merge = true;
+            tabv.Cells["K7:L7"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["L9"].Formula = "=C3";
+            tabv.Cells["L10"].Value = 30;
+            tabv.Cells["L11"].Formula = "=F3/100";
+            tabv.Cells["J6"].Formula = "=L9/(Power((1+L11),L10))";
+            //// 6o. Semestre
+            tabv.Cells["N7"].Value = "6a. SEMESTRAL";
+            tabv.Cells["N7:O7"].Merge = true;
+            tabv.Cells["N7:O7"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["O9"].Formula = "=C3";
+            tabv.Cells["O10"].Value = 36;
+            tabv.Cells["O11"].Formula = "=F3/100";
+            tabv.Cells["J7"].Formula = "=O9/(Power((1+O11),O10))";
+            //// 7o. Semestre
+            tabv.Cells["W7"].Value = "7a. SEMESTRAL";
+            tabv.Cells["W7:X7"].Merge = true;
+            tabv.Cells["W7:X7"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["X9"].Formula = "=C3";
+            tabv.Cells["X10"].Value = 42;
+            tabv.Cells["X11"].Formula = "=F3/100";
+            tabv.Cells["J8"].Formula = "=X9/(Power((1+X11),X10))";
+            //// 8o. Semestre
+            tabv.Cells["Q7"].Value = "8a. SEMESTRAL";
+            tabv.Cells["Q7:R7"].Merge = true;
+            tabv.Cells["Q7:R7"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["R9"].Formula = "=C3";
+            tabv.Cells["R10"].Value = 48;
+            tabv.Cells["R11"].Formula = "=F3/100";
+            tabv.Cells["J9"].Formula = "=R9/(Power((1+R11),R10))";
+            //// 9o. Semestre
+            tabv.Cells["T7"].Value = "9a. SEMESTRAL";
+            tabv.Cells["T7:U7"].Merge = true;
+            tabv.Cells["T7:U7"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["U9"].Formula = "=C3";
+            tabv.Cells["U10"].Value = 54;
+            tabv.Cells["U11"].Formula = "=F3/100";
+            tabv.Cells["J10"].Formula = "=U9/(Power((1+U11),U10))";
+
+            //// 10o. Semestre
+            tabv.Cells["W1"].Value = "10a. SEMESTRAL";
+            tabv.Cells["W1:X1"].Merge = true;
+            tabv.Cells["W1:X1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["X2"].Formula = "=C3";
+            tabv.Cells["X3"].Value = 60;
+            tabv.Cells["X4"].Formula = "=F3/100";
+            tabv.Cells["J11"].Formula = "=X2/(Power((1+X4),X3))";
+
+            tabv.Cells["J13"].Value = "NÃO MEXER !!!!  CALCULOS REALIZADOS AUTOMATICAMENTE";
+            tabv.Cells["J13"].Style.Font.Bold = true;
+            tabv.Cells["J13"].Style.Font.UnderLine = true;
+            tabv.Cells["J13:P13"].Merge = true;
+            tabv.Cells["J13:P13"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            tabv.Cells["A10"].Value = "OBS: NÃO MEXER NOS DADOS APRESENTADOS!!! ELES SÃO CALCULADOS AUTOMATICAMENTE. SOMENTE OS DADOS EM AMARELO PODERÃO SER MODIFICADOS.";
+            tabv.Cells["A10"].Style.Font.Bold = true;
+            tabv.Cells["A10"].Style.Font.UnderLine = true;
+            tabv.Cells["A10"].Style.Font.Size = 12;
+
+            tabv.Cells["A10:G13"].Merge = true;
+            tabv.Cells["A10:G13"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            tabv.Cells["A10:G13"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            tabv.Cells["A10:G13"].Style.WrapText = true;
+            tabv.Cells["A10:G13"].Style.Fill.PatternType = ExcelFillStyle.Solid;
+            tabv.Cells["A10:G13"].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(217, 217, 217));
+
+            tabv.Column(3).Width = 27;
+            tabv.Column(4).Width = 19;
+            tabv.Column(5).Width = 19;
+            tabv.Column(6).Width = 19;
+            tabv.Column(7).Width = 19;
+            tabv.Column(8).Width = 19;
+            lotes = null;
+            lotes = db.Lotes.Where(c => c.LoteamentoId == 7).ToList();
+
+            var linha = 16;
+            var ref_m2 = 3;
+            var plano = 1;
+            var nrSemestrais = 2;
+            var corcategoria = "";
+            var m2categoria = 0.0m;
+            var idcategoria = 0;
+            var celulainicial = "";
+            var celulafinal = "";
+            
+
+            //for (int zi = 1; zi <= 460; zi++)
+
+            for (int zi = 1; zi <= 460; zi++)
+            {
+                var celula = "";
+                var refer = "C" + ref_m2.ToString();
+
+                if (plano == 1)
+                {
+                    celula = "A" + linha.ToString();
+
+                    //////// 
+                    ////////  Busca a categoria do lote e depois a cor da categoria
+                    /// 
+                    m2categoria = decimal.Parse( ws.Cells[refer].Value.ToString());
+
+                    idcategoria = (from x in db.Lotes
+                                    where x.LoteamentoId == 7 && x.Area == m2categoria
+                                    select x.CategoriaId).FirstOrDefault();
+
+                    corcategoria = (from x in db.TabelaM2 where x.Id == idcategoria select x.CorFundo).FirstOrDefault();
+
+
+                    tabv.Cells[celula].Value = "LOTE DE " + ws.Cells[refer].Value.ToString().Replace(".", ",") + " m2";
+                    linha++;
+
+                    celulainicial = "B" + (linha).ToString();
+                    celulafinal = "M" + (linha+5).ToString();
+                    tabv.Cells["" +celulainicial+ ":" + celulafinal + ""].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    tabv.Cells["" + celulainicial + ":" + celulafinal + ""].Style.Fill.BackgroundColor.SetColor(System.Drawing.ColorTranslator.FromHtml(corcategoria));
+
+                    celula = "B" + (linha).ToString();
+                    tabv.Cells[celula].Value = "Planos";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+
+                    celula = "C" + linha.ToString();
+                    tabv.Cells[celula].Value = "Preço de Venda R$";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                    celula = "D" + linha.ToString();
+                    tabv.Cells[celula].Value = "Entrada R$";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                    celula = "E" + linha.ToString();
+                    tabv.Cells[celula].Value = "Saldo de R$";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                    celula = "F" + linha.ToString();
+                    tabv.Cells[celula].Value = "Mensais até";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                    celula = "G" + linha.ToString();
+                    tabv.Cells[celula].Value = "Mensais R$";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                    celula = "I" + linha.ToString();
+                    tabv.Cells[celula].Value = "Semestrais R$";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                    celula = "J" + linha.ToString();
+                    tabv.Cells[celula].Value = "Vr total pc pagas R$";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                    celula = "K" + linha.ToString();
+                    tabv.Cells[celula].Value = "Saldo rem p/ quitar R$";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                    celula = "L" + linha.ToString();
+                    tabv.Cells[celula].Value = "Preço Venda Corrig R$";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                    celula = "M" + linha.ToString();
+                    tabv.Cells[celula].Value = "Juros Período R$";
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                    linha++;
+
+                }
+
+                // Planos
+                celula = "B" + linha.ToString();
+                tabv.Cells[celula].Value = plano;
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                // Preços de venda
+                celula = "C" + linha.ToString();
+                var temp = "=base!B" + ref_m2.ToString();
+                tabv.Cells[celula].Formula = temp;
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                tabv.Cells[celula].Style.Numberformat.Format = "#,##0.00";
+
+                // segue os parâmetros de preços conforme a categoria de preço do lote/metragem
+                var valorws = ws.Cells[refer].Value.ToString();
+                decimal findValue = Decimal.Parse(valorws);
+                var procura = lotes.Where(c => c.Area == findValue).FirstOrDefault();
+                if (procura != null)
+                {
+                    var col = procura.CategoriaId.ToString();
+
+                    celula = "C" + linha.ToString();
+                    temp = "$O$" + col.ToString();
+                    var formula = "=(base!" + temp + "*" + procura.Area.ToString() + ")";
+                    tabv.Cells[celula].Formula = formula;
+                }
+
+
+
+                // Entrada
+                celula = "D" + linha.ToString();
+                temp = "=C" + linha.ToString() + "*0.15";
+                tabv.Cells[celula].Formula = temp;
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                tabv.Cells[celula].Style.Numberformat.Format = "#,##0.00";
+
+                // Saldo
+                celula = "E" + linha.ToString();
+                temp = "=C" + linha.ToString() + "-D" + linha.ToString();
+                tabv.Cells[celula].Formula = temp;
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                tabv.Cells[celula].Style.Numberformat.Format = "#,##0.00";
+
+                // Mensais até
+                celula = "F" + linha.ToString();
+                tabv.Cells[celula].Value = (12 * plano).ToString() + " X";
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                // Valor Mensal
+                celula = "G" + linha.ToString();
+                if (plano == 1)
+                {
+                    tabv.Cells[celula].Value = 7000;
+                }
+                if (plano == 2)
+                {
+                    temp = "=((E" + linha.ToString() + "*0.6)-($J$2+$J$3+$J$4+$J$5))*((($F$3/100)*(POWER(1+($F$3/100)," + (plano * 12).ToString() + "))/(POWER(1+($F$3/100)," + (plano * 12).ToString() + ")))-1)/-" + (plano * 12).ToString();
+                    tabv.Cells[celula].Formula = temp;
+                }
+                if (plano == 3)
+                {
+                    temp = "=((E" + linha.ToString() + "*0.6)-($J$2+$J$3+$J$4+$J$5+$J$6+$J$7))*((($F$3/100)*(POWER(1+($F$3/100)," + (plano * 12).ToString() + "))/(POWER(1+($F$3/100)," + (plano * 12).ToString() + ")))-1)/-" + (plano * 12).ToString();
+                    tabv.Cells[celula].Formula = temp;
+                }
+                if (plano == 4)
+                {
+                    temp = "=((E" + linha.ToString() + "*0.6)-($J$2+$J$3+$J$4+$J$5+$J$6+$J$7+$J$8+$J$9))*((($F$3/100)*(POWER(1+($F$3/100)," + (plano * 12).ToString() + "))/(POWER(1+($F$3/100)," + (plano * 12).ToString() + ")))-1)/-" + (plano * 12).ToString();
+                    tabv.Cells[celula].Formula = temp;
+                }
+                if (plano == 5)
+                {
+                    temp = "=((E" + linha.ToString() + "*0.6)-($J$2+$J$3+$J$4+$J$5+$J$6+$J$7+$J$8+$J$9+$J$10+$J$11))*((($F$3/100)*(POWER(1+($F$3/100)," + (plano * 12).ToString() + "))/(POWER(1+($F$3/100)," + (plano * 12).ToString() + ")))-1)/-" + (plano * 12).ToString();
+                    tabv.Cells[celula].Formula = temp;
+                }
+
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                tabv.Cells[celula].Style.Numberformat.Format = "#,##0.00";
+
+                // Semestrais até
+                celula = "H" + linha.ToString();
+                tabv.Cells[celula].Value = (2 * plano).ToString() + " X";
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+
+                //// Semestrais R$
+                celula = "I" + linha.ToString();
+                tabv.Cells[celula].Formula = "=$C$3";
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                tabv.Cells[celula].Style.Numberformat.Format = "#,##0.00";
+
+                // Total parc pagas
+                celula = "J" + linha.ToString();
+                temp = "=(I" + linha.ToString() + "*" + (nrSemestrais * plano).ToString() + ") + (G" + linha.ToString() + "*" + (plano * 12).ToString() + ")";
+                tabv.Cells[celula].Formula = temp;
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                tabv.Cells[celula].Style.Numberformat.Format = "#,##0.00";
+
+                // Saldo rem para quitação
+                if (plano == 1)
+                {
+                    celula = "K" + linha.ToString();
+                    tabv.Cells[celula].Formula = "=E" + linha.ToString() + "-J" + linha.ToString();
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                    tabv.Cells[celula].Style.Numberformat.Format = "#,##0.00";
+                }
+                else
+                {
+                    celula = "K" + linha.ToString();
+                    temp = "=(E" + linha.ToString() + "*0.4)*(POWER(1+($F$3/100)," + (plano * 12).ToString() + "))";
+                    tabv.Cells[celula].Formula = temp;
+                    tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                    tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                    tabv.Cells[celula].Style.Numberformat.Format = "#,##0.00";
+                }
+
+                // preço de venda corrigido
+                celula = "L" + linha.ToString();
+                tabv.Cells[celula].Formula = "=K" + linha.ToString() + "+J" + linha.ToString() + "+D" + linha.ToString();
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                tabv.Cells[celula].Style.Numberformat.Format = "#,##0.00";
+
+                // Juros cobrados no período
+                celula = "M" + linha.ToString();
+                if (plano == 1)
+                {
+                    tabv.Cells[celula].Value = 0;
+                }
+                else
+                {
+                    tabv.Cells[celula].Formula = "=L" + linha.ToString() + "-C" + linha.ToString();
+                }
+                tabv.Cells[celula].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
+                tabv.Cells[celula].Style.Border.BorderAround(ExcelBorderStyle.Thin, System.Drawing.Color.Black);
+                tabv.Cells[celula].Style.Numberformat.Format = "#,##0.00";
+
+                linha++;
+
+                plano++;
+                if (plano > 5)
+                {
+                    plano = 1;
+                    linha += 2;
+                    ref_m2++;
+                }
+            }
 
             #endregion
 

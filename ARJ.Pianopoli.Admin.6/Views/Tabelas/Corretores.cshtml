@@ -1,27 +1,30 @@
-﻿<div class="row">
-    <div class="col-md-4">
-        <div class="btn btn-success" onclick="NovoCorretor()" style="margin: 0px 0px 0px 80px">Cadastrar Corretor</div>
-    </div>
-</div>
-<div class="container">
-    <div class="grid-left">
-        <div id="grid">
-            <table id="corretores" class="display" style="width:100%;">
-                <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>ImobiliariaId</th>
-                        <th>Nome</th>
-                        <th>Imobiliária</th>
-                        <th></th>
-                    </tr>
-                </thead>
-            </table>
+﻿<div id="grade">
+
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="btn btn-success" onclick="NovoCorretor()" style="margin: 0px 0px 0px 80px">Cadastrar Corretor</div>
         </div>
     </div>
+    <div class="container">
+        <div class="grid-left">
+            <div id="grid">
+                <table id="corretores" class="display" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>ImobiliariaId</th>
+                            <th>Nome</th>
+                            <th>Imobiliária</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
-
-
 <div class="modal inmodal" id="cadastroCorretor" style="margin-left:400px" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="static">
     <div class="modal-dialog-centered modal-lg" style="width:600px;" role="document">
         <div class="modal-content animated bounceInRight">
@@ -52,6 +55,11 @@
         </div>
     </div>
 </div>
+
+
+<div id="formcorretor" class="mx-auto" hidden></div>
+
+
 
 
 <script type="text/javascript">
@@ -88,7 +96,7 @@
                 {
                     "render": function (data, type, row, meta) {
 
-                        return row.situacaoNoSite == "Ativo" ? '<div style="width:100%; text-align:right" > <button onclick="EditarCorretor(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-pencil-square-o"></i></button></div>' : '<div style="width:100%; text-align:right"> <button class="btn btn-warning"><i class="fa-solid fa-lock"></i></button></div>';
+                        return row.situacaoNoSite == "Ativo" ? '<div style="width:100%; text-align:right"> <button onclick="EditarCorretorLocal(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-pencil-square-o"></i></button></div>' : '<div style="width:100%; text-align:right"> <button class="btn btn-warning"><i class="fa-solid fa-lock"></i></button></div>';
                     }
                 }
             ],
@@ -99,133 +107,143 @@
         });
     });
 
-    function NovoCorretor() {
-        Aguarde();
+    //function NovoCorretor() {
+    //    Aguarde();
 
-        $.ajax({
-            cache: false,
-            type: 'POST',
-            data: {
-                Id: 0
-            },
-            url: '' + urlbase + '/Tabelas/EditarCorretor',
-            success: function (data) {
-                RemoveAguarde();
-                $('#cadastroCorretor').modal('show')
-                $("#conteudoCorretor").html(data);
-                $("#Nome").focus();
+    //    $.ajax({
+    //        cache: false,
+    //        type: 'POST',
+    //        data: {
+    //            Id: 0
+    //        },
+    //        url: '' + urlbase + '/Tabelas/EditarCorretor',
+    //        success: function (data) {
+    //            RemoveAguarde();
+    //            $('#cadastroCorretor').modal('show')
+    //            $("#conteudoCorretor").html(data);
+    //            $("#Nome").focus();
 
-            },
-            error: function (data) {
-                RemoveAguarde();
-                SwalPopUpErro("Erro", data.Message, "Error");
-            }
-        });
+    //        },
+    //        error: function (data) {
+    //            RemoveAguarde();
+    //            SwalPopUpErro("Erro", data.Message, "Error");
+    //        }
+    //    });
 
-    }
+    //}
 
-    function EditarCorretor(e) {
+    //function EditarCorretorLocal(e) {
 
-        var dataRow = $('#corretores').DataTable().row($(e).closest('tr')).data();
+    //    var dataRow = $('#corretores').DataTable().row($(e).closest('tr')).data();
+    
+    //    $.ajax({
+    //        cache: false,
+    //        type: 'POST',
+    //        data: {
+    //            Id: dataRow.id
+    //        },
+    //        url: urlbase + '/tabelas/EditarCorretor',
+    //        success: function (data) {
+    //            RemoveAguarde();
+    //            $("#grade").attr('hidden',true);
 
-        $.ajax({
-            cache: false,
-            type: 'POST',
-            data: {
-                Id: dataRow.id
-            },
-            url: urlbase + '/tabelas/EditarCorretor',
-            success: function (data) {
-                RemoveAguarde();
-                $('#cadastroCorretor').modal('show')
-                $("#conteudoCorretor").html(data);
-                $("#exclusao").attr('hidden',false);
-                $("#Nome").focus();
-            },
-            error: function (data) {
-                RemoveAguarde();
-                SwalPopUpErro("Erro", data.Message, "Error");
-            }
-        });
-    }
+    //            $("#formcorretor").html(data);
+    //            $("#formcorretor").show();
 
-    function SalvarCorretor() {
-
-        var conteudo = $("#Nome").val();
-        var creci = $("#Creci").val();
-
-        if (conteudo == "") {
-            document.getElementById('mensagem').innerHTML = 'O nome é obrigatório';
-            $("#toast1").toast('show');
-            $("#Nome").focus();
-            return;
-        }
-
-        if (creci == "") {
-            document.getElementById('mensagem').innerHTML = 'O CRECI é obrigatório';
-            $("#toast1").toast('show');
-            $("#Creci").focus();
-            return;
-        }
+    //            //$('#cadastroCorretor').modal('show')
+    //            //$("#conteudoCorretor").html(data);
+    //            $("#exclusao").attr('hidden', false);
+    //            $("#Nome").focus();
+    //        },
+    //        error: function (data) {
+    //            RemoveAguarde();
+    //            SwalPopUpErro("Erro", data.Message, "Error");
+    //        }
+    //    });
+    //}
 
 
-        var form = $("#formCorretor").serialize();
 
-        $.ajax({
-            cache: false,
-            type: 'POST',
-            data: form,
-            url: urlbase + '/tabelas/SalvarCorretor',
-            success: function (data) {
-                if (data.result == true) {
-                    $('#cadastroCorretor').trigger("reset");
-                    $('#cadastroCorretor').modal('hide')
-                    $('#corretores').DataTable().ajax.reload();
-                    SwalPopUpSucess("Sucesso", data.message, "success");
-                } else {
-                    SwalPopUpErro("Sucesso", data.message, "success");
-                }
-            }
-        });
-    }
+    //function SalvarCorretor() {
 
-    function ExcluirCorretor() {
-        var ID = document.getElementById('Id').value;
+    //    var conteudo = $("#Nome").val();
+    //    var creci = $("#Creci").val();
 
-        $.ajax({
-            cache: false,
-            type: 'POST',
-            data: {
-                Id: ID
-            },
-            url: urlbase + '/tabelas/ExcluirCorretor',
-            success: function (data) {
-                if (data.result == true) {
-                    $('#cadastroCorretor').trigger("reset");
-                    $('#cadastroCorretor').modal('hide')
-                    $('#corretores').DataTable().ajax.reload();
-                    SwalPopUpSucess("Sucesso", data.message, "success");
-                } else {
-                    SwalPopUpErro("Sucesso", data.message, "success");
-                }
-            }
-        });
-    }
+    //    if (conteudo == "") {
+    //        document.getElementById('mensagem').innerHTML = 'O nome é obrigatório';
+    //        $("#toast1").toast('show');
+    //        $("#Nome").focus();
+    //        return;
+    //    }
 
-    function ValidarCpfCorretor() {
-        var cpf = $("#Cpf").val();
+    //    if (creci == "") {
+    //        document.getElementById('mensagem').innerHTML = 'O CRECI é obrigatório';
+    //        $("#toast1").toast('show');
+    //        $("#Creci").focus();
+    //        return;
+    //    }
 
-        if (cpf != "") {
-            if (TestaCPF(cpf) == false) {
-                $(".cpf").val("");
-                document.getElementById('mensagem').innerHTML = 'O CPF digitado não é válido';
-                $("#toast1").toast('show');
-                $("#Cpf").focus();
 
-            }
-        }
+    //    var form = $("#formCorretor").serialize();
 
-    }
+    //    $.ajax({
+    //        cache: false,
+    //        type: 'POST',
+    //        data: form,
+    //        url: urlbase + '/tabelas/SalvarCorretor',
+    //        success: function (data) {
+    //            if (data.result == true) {
+    //                $('#cadastroCorretor').trigger("reset");
+    //                $('#cadastroCorretor').modal('hide')
+    //                $('#corretores').DataTable().ajax.reload();
+    //                SwalPopUpSucess("Sucesso", data.message, "success");
+    //            } else {
+    //                $('#cadastroCorretor').trigger("reset");
+    //                $('#cadastroCorretor').modal('hide')
+    //                $('#corretores').DataTable().ajax.reload();
+    //                SwalPopUpErro("Sucesso", data.message, "error");
+    //            }
+    //        }
+    //    });
+    //}
+
+    //function ExcluirCorretor() {
+    //    var ID = document.getElementById('Id').value;
+
+    //    $.ajax({
+    //        cache: false,
+    //        type: 'POST',
+    //        data: {
+    //            Id: ID
+    //        },
+    //        url: urlbase + '/tabelas/ExcluirCorretor',
+    //        success: function (data) {
+    //            if (data.result == true) {
+    //                $('#cadastroCorretor').trigger("reset");
+    //                $('#cadastroCorretor').modal('hide')
+    //                $('#corretores').DataTable().ajax.reload();
+    //                SwalPopUpSucess("Sucesso", data.message, "success");
+    //            } else {
+    //                SwalPopUpErro("Sucesso", data.message, "success");
+    //            }
+    //        }
+    //    });
+    //}
+
+    //function ValidarCpfCorretor() {
+    //    var cpf = $("#Cpf").val();
+
+    //    if (cpf != "") {
+    //        if (TestaCPF(cpf) == false) {
+    //            $(".cpf").val("");
+    //            document.getElementById('mensagem').innerHTML = 'O CPF digitado não é válido';
+    //            $("#toast1").toast('show');
+    //            $("#Cpf").focus();
+
+    //        }
+    //    }
+
+    //}
 
 
 

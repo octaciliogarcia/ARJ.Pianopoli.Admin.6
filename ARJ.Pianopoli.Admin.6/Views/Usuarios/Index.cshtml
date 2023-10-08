@@ -1,0 +1,106 @@
+﻿<div class="container">
+    <div id="GridAutorizar">
+        <div style="text-align:center;padding: 0px 0px 20px 0px;">
+            <h3>Usuários</h3>
+        </div>
+        <div style="text-align:left">
+            <button class="btn btn-success" onclick="NovoUsuario()">Novo Usuário</button>
+        </div>
+        <div class="grid-left">
+            <div id="grid">
+                <table id="tbusuarios" class="display" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Nome</th>
+                            <th>Login</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="formulario" hidden>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#tbusuarios').DataTable({
+            "lengthChange": false,
+            "ajax": urlbase + '/Usuarios/ListarUsuarios',
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": true,
+                    "searchable": true
+                },
+                {
+                    "targets": [2],
+                    "visible": true,
+                    "searchable": false,
+                    "orderable": true
+                },
+            ],
+            "columns": [
+                { "data": "id" },
+                { "data": "username" },
+                { "data": "email" },
+                {
+                    "render": function (data, type, row, meta) {
+
+                        return '<div style="width:100%; text-align:right" > <button onclick="EditarUsuario(this)" class="btn btn-primary btn-action editar"><i class="fa-solid fa-search"></i></button></div>';
+                    }
+                },
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.11.4/i18n/pt_br.json",
+
+            }
+        });
+
+    });
+
+    function NovoUsuario() {
+
+        $.ajax({
+            url: urlbase + '/Usuarios/NovoUsuario',
+            type: 'Post',
+            success: function (data) {
+                $('#formulario').html(data);
+                $('#formulario').show();
+                $('#GridAutorizar').hide();
+            }
+        });
+    }
+
+    //function SalvarUsuario() {
+    //    var form = $('#formUsuario');
+    //    Aguarde();
+    //    $.ajax({
+    //        url: urlbase + '/Usuarios/SalvarUsuario',
+    //        type: 'Post',
+    //        data: form.serialize(),
+    //        success: function (data) {
+    //            RemoveAguarde();
+    //            if(data.Result== true){
+    //                $('#formulario').html("");
+    //                $('#formulario').hide();
+    //                $('#GridAutorizar').show();
+    //            }
+    //            if (data.Result == false) {
+    //                SwalPopUpErro("Erro", data.Message, "error");
+    //            }
+
+    //        }
+    //    });
+    //})
+
+</script>
